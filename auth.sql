@@ -1,0 +1,12 @@
+USE estoque;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    perfil ENUM('admin','operador') NOT NULL DEFAULT 'operador',
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    ultimo_login DATETIME NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

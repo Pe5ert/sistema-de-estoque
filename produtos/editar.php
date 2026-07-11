@@ -3,7 +3,14 @@
 $root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
 include_once $root . '/config/conexao.php';
 include_once $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
 $id = $_GET['id'];
+
+if ($_POST) {
+    csrfCheck();
+}
 
 // Buscar produto
 $stmt = $pdo->prepare("SELECT * FROM produtos WHERE id = ?");
@@ -40,6 +47,7 @@ if ($_POST) {
 <?php endif; ?>
 <!-- Formulário de Edição -->
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
     <div class="mb-3">
         <label for="nome" class="form-label">Nome do Produto</label>
         <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars($produto['nome']); ?>" required>

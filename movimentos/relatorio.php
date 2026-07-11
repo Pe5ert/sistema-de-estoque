@@ -1,5 +1,8 @@
 <?php
-include '../config/conexao.php';
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 // Definir período padrão (últimos 30 dias)
 $data_inicio = isset($_GET['data_inicio']) ? $_GET['data_inicio'] : date('Y-m-d', strtotime('-30 days'));

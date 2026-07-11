@@ -3,6 +3,8 @@
 $root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
 include $root . '/config/conexao.php';
 include $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 // Buscar movimentos com nome do produto
 $stmt = $pdo->query("

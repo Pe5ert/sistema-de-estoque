@@ -3,6 +3,8 @@
 $root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
 include_once $root . '/config/conexao.php';
 include_once $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 // Buscar produtos com estoque baixo
 $stmt = $pdo->prepare("SELECT * FROM produtos WHERE qtd < ? ORDER BY qtd ASC");

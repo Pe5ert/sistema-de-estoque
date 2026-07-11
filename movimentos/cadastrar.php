@@ -1,5 +1,8 @@
 <?php
-include '../config/conexao.php';
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 // Buscar produtos para o select
 $stmt = $pdo->query("SELECT id, nome, qtd FROM produtos ORDER BY nome");
@@ -10,6 +13,7 @@ $produto_id_sugerido = isset($_GET['produto_id']) ? $_GET['produto_id'] : '';
 $qtd_sugerido = isset($_GET['qtd_sugerido']) ? $_GET['qtd_sugerido'] : '';
 
 if ($_POST) {
+    csrfCheck();
     $produto_id = $_POST['produto_id'];
     $tipo = $_POST['tipo'];
     $qtd = $_POST['qtd'];
@@ -61,6 +65,7 @@ if ($_POST) {
 <?php endif; ?>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
     <div class="mb-3">
         <label for="produto_id" class="form-label">Produto</label>
         <select class="form-control" id="produto_id" name="produto_id" required>

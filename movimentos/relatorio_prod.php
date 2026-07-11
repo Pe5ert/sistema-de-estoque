@@ -1,5 +1,8 @@
 <?php
-include '../config/conexao.php';
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 // Buscar produtos com estoque
 $sql_produtos = "

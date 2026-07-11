@@ -1,5 +1,8 @@
 <?php
-include '../config/conexao.php';
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
 
 if (!isset($_GET['id'])) {
     header('Location: index.php?erro=id_nao_informado');
