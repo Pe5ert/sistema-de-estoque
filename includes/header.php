@@ -35,6 +35,9 @@ $usuario_logado = currentUser();
             <div class="navbar-nav me-auto">
                 <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
                 <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+                <?php if ($usuario_logado['perfil'] === 'admin'): ?>
+                    <a class="nav-link" href="/Estoque/usuarios/index.php">Usuários</a>
+                <?php endif; ?>
             </div>
             <?php if ($usuario_logado): ?>
             <div class="navbar-nav">

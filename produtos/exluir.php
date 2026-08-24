@@ -4,12 +4,19 @@ include_once $root . '/config/conexao.php';
 include_once $root . '/config/auth.php';
 requireLogin();
 
-if (!isset($_GET['id'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
     header('Location: index.php?erro=id_nao_informado');
     exit;
 }
 
-$id = $_GET['id'];
+csrfCheck();
+
+$id = $_POST['id'];
 
 try {
     // Buscar movimento para saber o tipo e quantidade

@@ -4,7 +4,19 @@ include_once $root . '/config/conexao.php';
 include_once $root . '/config/auth.php';
 requireLogin();
 
-$id = $_GET['id'];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+csrfCheck();
+
+$id = $_POST['id'];
 
 // Buscar movimento para saber o tipo e quantidade
 $stmt = $pdo->prepare("SELECT * FROM movimentos WHERE id = ?");
@@ -28,4 +40,5 @@ if ($movimento) {
 }
 
 header('Location: index.php?sucesso=movimentacao_excluida');
+exit;
 ?>

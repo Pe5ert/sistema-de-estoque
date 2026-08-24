@@ -27,6 +27,10 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
 
 <?php include '../includes/header.php'; ?>
 
+<?php if (isset($_GET['sucesso']) && $_GET['sucesso'] === 'importacao_concluida'): ?>
+    <div class="alert alert-success">Importação concluída. Produtos importados: <?php echo (int) ($_GET['total'] ?? 0); ?></div>
+<?php endif; ?>
+
 <div class="container-fluid">
     <!-- Cards de Estatísticas -->
     <div class="row mb-4">
@@ -120,6 +124,9 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
                 <a href="adicionar.php" class="btn btn-light btn-sm">
                     <i class="fas fa-plus text-primary"></i> Adicionar Produto
                 </a>
+                <a href="importar.php" class="btn btn-light btn-sm ms-2">
+                    <i class="fas fa-file-csv text-success"></i> Importar CSV
+                </a>
                 <a href="alertas.php" class="btn btn-warning btn-sm">
                     <i class="fas fa-exclamation-triangle"></i> Ver Alertas
                     <?php if ($total_estoque_baixo > 0): ?>
@@ -207,12 +214,14 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
                                            title="Adicionar Estoque">
                                             <i class="fas fa-plus"></i>
                                         </a>
-                                        <a href="excluir.php?id=<?php echo $produto['id']; ?>" 
-                                           class="btn btn-outline-danger" 
-                                           title="Excluir Produto"
-                                           onclick="return confirm('Tem certeza que deseja excluir este produto?')">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <form method="POST" action="excluir.php" class="d-inline ms-1"
+                                              onsubmit="return confirm('Tem certeza que deseja excluir este produto?')">
+                                            <input type="hidden" name="id" value="<?php echo $produto['id']; ?>">
+                                            <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Produto">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

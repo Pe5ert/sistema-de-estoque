@@ -1,0 +1,5074 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+comparativos/
+  exportar_comparativo.php
+  index.php
+config/
+  auth.php
+  conexao.php
+  config.php
+  env.php
+  paths.php
+css/
+  style.css
+includes/
+  footer.php
+  header.php
+js/
+  effects.js
+movimentos/
+  cadastrar.php
+  excluir.php
+  index.php
+  relatorio_prod.php
+  relatorio.php
+produtos/
+  adicionar.php
+  alertas.php
+  editar.php
+  excluir.php
+  exluir.php
+  importar.php
+  index.php
+  modelo_importacao.php
+usuarios/
+  adicionar.php
+  alternar_status.php
+  editar.php
+  index.php
+.env.example
+auth.sql
+criar_admin.php
+estoque.sql
+index.php
+login.php
+logout.php
+README_macOS.md
+README.md
+testeconc.php
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="config/env.php">
+<?php
+// config/env.php
+// Carrega variáveis de um arquivo .env para o ambiente (getenv/$_ENV), sem sobrescrever variáveis já definidas.
+
+function loadEnv(string $path): void
+{
+    if (!file_exists($path)) {
+        return;
+    }
+
+    $linhas = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($linhas as $linha) {
+        $linha = trim($linha);
+        if ($linha === '' || str_starts_with($linha, '#')) {
+            continue;
+        }
+        if (!str_contains($linha, '=')) {
+            continue;
+        }
+
+        [$chave, $valor] = explode('=', $linha, 2);
+        $chave = trim($chave);
+        $valor = trim($valor);
+        $valor = trim($valor, "\"'");
+
+        if (getenv($chave) === false) {
+            putenv("$chave=$valor");
+            $_ENV[$chave] = $valor;
+        }
+    }
+}
+
+function env(string $chave, $padrao = null)
+{
+    $valor = getenv($chave);
+    return $valor !== false ? $valor : $padrao;
+}
+</file>
+
+<file path="produtos/importar.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+$maxFileSize = 5 * 1024 * 1024; // 5 MB
+$errors = [];
+$preview = [];
+$valid_lines = [];
+$total_valid = 0;
+$total_errors = 0;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $etapa = $_POST['etapa'] ?? '1';
+
+    if ($etapa === '1') {
+        // Etapa 1: upload e pré-visualização
+        if (!isset($_FILES['arquivo_csv']) || $_FILES['arquivo_csv']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Envie um arquivo CSV válido.';
+        } else {
+            if ($_FILES['arquivo_csv']['size'] > $maxFileSize) {
+                $errors[] = 'Arquivo excede o tamanho máximo de 5 MB.';
+            }
+
+            $tmp = $_FILES['arquivo_csv']['tmp_name'];
+            $name = $_FILES['arquivo_csv']['name'];
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if ($ext !== 'csv') {
+                $errors[] = 'A extensão do arquivo deve ser .csv.';
+            }
+
+            if (empty($errors)) {
+                if (($handle = fopen($tmp, 'r')) === false) {
+                    $errors[] = 'Não foi possível ler o arquivo enviado.';
+                } else {
+                    $linha = 0;
+                    $expectedHeader = ['nome','preco_custo','preco_venda','qtd'];
+                    while (($data = fgetcsv($handle, 0, ';')) !== false) {
+                        $linha++;
+                        // Skip empty lines
+                        if (count($data) === 1 && trim($data[0]) === '') {
+                            continue;
+                        }
+
+                        if ($linha === 1) {
+                            $header = array_map(function($v){ return mb_strtolower(trim($v)); }, $data);
+                            if ($header !== $expectedHeader) {
+                                $errors[] = 'Cabeçalho inválido. Use: nome;preco_custo;preco_venda;qtd';
+                                break;
+                            }
+                            continue;
+                        }
+
+                        // Pad to 4 columns
+                        $row = array_map('trim', $data);
+                        $row += array_fill(0, 4 - count($row), '');
+
+                        $rowAssoc = [
+                            'nome' => $row[0],
+                            'preco_custo' => $row[1],
+                            'preco_venda' => $row[2],
+                            'qtd' => $row[3],
+                        ];
+
+                        $rowErrors = [];
+                        if ($rowAssoc['nome'] === '') {
+                            $rowErrors[] = 'nome vazio';
+                        }
+
+                        // Normalizar decimais
+                        $pc = str_replace(',', '.', $rowAssoc['preco_custo']);
+                        $pv = str_replace(',', '.', $rowAssoc['preco_venda']);
+
+                        if ($pc === '' || !is_numeric($pc) || floatval($pc) < 0) {
+                            $rowErrors[] = 'preço de custo inválido';
+                        }
+                        if ($pv === '' || !is_numeric($pv) || floatval($pv) < 0) {
+                            $rowErrors[] = 'preço de venda inválido';
+                        }
+
+                        if ($rowAssoc['qtd'] === '' || !ctype_digit($rowAssoc['qtd']) || intval($rowAssoc['qtd']) < 0) {
+                            $rowErrors[] = 'quantidade inválida';
+                        }
+
+                        if (!empty($rowErrors)) {
+                            $preview[] = ['linha' => $linha, 'dados' => $rowAssoc, 'erro' => implode('; ', $rowErrors)];
+                            $total_errors++;
+                        } else {
+                            // normalize numeric values
+                            $valid = [
+                                'nome' => $rowAssoc['nome'],
+                                'preco_custo' => number_format((float)$pc, 2, '.', ''),
+                                'preco_venda' => number_format((float)$pv, 2, '.', ''),
+                                'qtd' => intval($rowAssoc['qtd']),
+                            ];
+                            $preview[] = ['linha' => $linha, 'dados' => $valid, 'erro' => null];
+                            $valid_lines[] = $valid;
+                            $total_valid++;
+                        }
+                    }
+                    fclose($handle);
+                }
+            }
+        }
+    } elseif ($etapa === '2') {
+        // Etapa 2: confirmação e gravação
+        csrfCheck();
+        $json = $_POST['linhas_validas'] ?? '[]';
+        $linhas = json_decode($json, true);
+        if (!is_array($linhas)) {
+            $errors[] = 'Dados de importação inválidos.';
+        } else {
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("INSERT INTO produtos (nome, preco_custo, preco_venda, qtd) VALUES (?, ?, ?, ?)");
+                $count = 0;
+                foreach ($linhas as $l) {
+                    $stmt->execute([$l['nome'], $l['preco_custo'], $l['preco_venda'], $l['qtd']]);
+                    $count++;
+                }
+                $pdo->commit();
+                header('Location: index.php?sucesso=importacao_concluida&total=' . $count);
+                exit;
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                error_log('Import error: ' . $e->getMessage());
+                $errors[] = 'Erro ao importar produtos. Nenhuma linha foi gravada.';
+            }
+        }
+    }
+}
+
+?>
+<?php include '../includes/header.php'; ?>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Importar Produtos (CSV)</h1>
+    <div>
+        <a href="modelo_importacao.php" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-download"></i> Baixar modelo de planilha
+        </a>
+        <a href="index.php" class="btn btn-secondary btn-sm">Cancelar</a>
+    </div>
+</div>
+
+<?php if (!empty($errors)): ?>
+    <div class="alert alert-danger"><?php echo htmlspecialchars(implode(' - ', $errors)); ?></div>
+<?php endif; ?>
+
+<?php if (empty($preview) && ($_SERVER['REQUEST_METHOD'] !== 'POST' || ($_SERVER['REQUEST_METHOD'] === 'POST' && ($etapa ?? '') !== '1'))): ?>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="etapa" value="1">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+    <div class="mb-3">
+        <label for="arquivo_csv" class="form-label">Arquivo CSV (delimitador: ; )</label>
+        <input type="file" class="form-control" id="arquivo_csv" name="arquivo_csv" accept=".csv" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Analisar arquivo</button>
+    <a href="index.php" class="btn btn-secondary">Voltar</a>
+</form>
+
+<?php else: ?>
+
+    <div class="mb-3">
+        <p><strong><?php echo $total_valid; ?></strong> produtos prontos para importar, <strong><?php echo $total_errors; ?></strong> linhas com erro que serão ignoradas.</p>
+    </div>
+
+    <form method="POST">
+        <input type="hidden" name="etapa" value="2">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+        <input type="hidden" name="linhas_validas" value="<?php echo htmlspecialchars(json_encode($valid_lines)); ?>">
+
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Linha</th>
+                        <th>Nome</th>
+                        <th>Preço Custo</th>
+                        <th>Preço Venda</th>
+                        <th>Qtd</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($preview as $p): ?>
+                        <tr class="<?php echo $p['erro'] ? 'table-danger' : 'table-success'; ?>">
+                            <td><?php echo (int)$p['linha']; ?></td>
+                            <td><?php echo htmlspecialchars($p['dados']['nome']); ?></td>
+                            <td><?php echo htmlspecialchars($p['dados']['preco_custo']); ?></td>
+                            <td><?php echo htmlspecialchars($p['dados']['preco_venda']); ?></td>
+                            <td><?php echo htmlspecialchars($p['dados']['qtd']); ?></td>
+                            <td><?php echo $p['erro'] ? htmlspecialchars($p['erro']) : 'OK'; ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-success">Confirmar importação (<?php echo $total_valid; ?>)</button>
+        <a href="index.php" class="btn btn-secondary">Cancelar</a>
+    </form>
+
+<?php endif; ?>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="produtos/modelo_importacao.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename="modelo_importacao_produtos.csv"');
+
+$output = fopen('php://output', 'w');
+// Cabeçalho
+fputcsv($output, ['nome','preco_custo','preco_venda','qtd'], ';');
+// Exemplos
+fputcsv($output, ['Camiseta Branca', '10,00', '25,00', '100'], ';');
+fputcsv($output, ['Caneca Azul', '5,50', '12,00', '50'], ';');
+fputcsv($output, ['Caderno A5', '3.20', '8.00', '200'], ';');
+
+fclose($output);
+exit;
+</file>
+
+<file path="usuarios/adicionar.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+require_once $root . '/config/auth.php';
+requireAdmin();
+
+$nome = '';
+$email = '';
+$perfil = 'operador';
+$erro = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfCheck();
+
+    $nome = trim($_POST['nome'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $senha = $_POST['senha'] ?? '';
+    $confirmacao = $_POST['confirmacao_senha'] ?? '';
+    $perfil = $_POST['perfil'] ?? 'operador';
+
+    if (strlen($senha) < 8) {
+        $erro = 'A senha deve ter pelo menos 8 caracteres.';
+    } elseif ($senha !== $confirmacao) {
+        $erro = 'A senha e a confirmação devem ser iguais.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erro = 'Informe um e-mail válido.';
+    }
+
+    if (!$erro) {
+        $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+        try {
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, perfil, ativo, criado_em) VALUES (?, ?, ?, ?, 1, NOW())");
+            $stmt->execute([$nome, $email, $senha_hash, $perfil]);
+            header('Location: index.php?sucesso=usuario_criado');
+            exit;
+        } catch (PDOException $e) {
+            if ($e->errorInfo[1] === 1062) {
+                $erro = 'Este e-mail já está cadastrado.';
+            } else {
+                $erro = 'Erro ao cadastrar usuário.';
+            }
+        }
+    }
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="m-0"><i class="fas fa-user-plus"></i> Adicionar Usuário</h4>
+        </div>
+        <div class="card-body">
+            <?php if ($erro): ?>
+                <div class="alert alert-danger"><?php echo htmlspecialchars($erro); ?></div>
+            <?php endif; ?>
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars($nome); ?>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="senha" name="senha" minlength="8" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="confirmacao_senha" class="form-label">Confirmar Senha</label>
+                        <input type="password" class="form-control" id="confirmacao_senha" name="confirmacao_senha" minlength="8" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="perfil" class="form-label">Perfil</label>
+                    <select class="form-control" id="perfil" name="perfil" required>
+                        <option value="admin" <?php echo $perfil === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                        <option value="operador" <?php echo $perfil === 'operador' ? 'selected' : ''; ?>>Operador</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Cadastrar</button>
+                <a href="index.php" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="usuarios/alternar_status.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+require_once $root . '/config/auth.php';
+requireAdmin();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+csrfCheck();
+
+$id = $_POST['id'];
+
+if ($id == currentUser()['id']) {
+    header('Location: index.php?erro=nao_pode_desativar_a_si_mesmo');
+    exit;
+}
+
+$stmt = $pdo->prepare("UPDATE usuarios SET ativo = NOT ativo WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php?sucesso=status_atualizado');
+exit;
+?>
+</file>
+
+<file path="usuarios/editar.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+require_once $root . '/config/auth.php';
+requireAdmin();
+
+if (!isset($_GET['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+$id = $_GET['id'];
+$erro = '';
+
+$stmt = $pdo->prepare("SELECT id, nome, email, perfil, ativo FROM usuarios WHERE id = ?");
+$stmt->execute([$id]);
+$usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$usuario) {
+    header('Location: index.php?erro=usuario_nao_encontrado');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfCheck();
+
+    $nome = trim($_POST['nome'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $perfil = $_POST['perfil'] ?? 'operador';
+    $senha = $_POST['senha'] ?? '';
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erro = 'Informe um e-mail válido.';
+    }
+
+    if (!$erro && $senha !== '' && strlen($senha) < 8) {
+        $erro = 'A senha deve ter pelo menos 8 caracteres.';
+    }
+
+    if (!$erro && $usuario['id'] == currentUser()['id'] && $usuario['perfil'] === 'admin' && $perfil !== 'admin') {
+        $erro = 'Você não pode remover seu próprio acesso de administrador.';
+    }
+
+    if (!$erro) {
+        try {
+            if ($senha !== '') {
+                $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ?, perfil = ?, senha = ? WHERE id = ?");
+                $stmt->execute([$nome, $email, $perfil, $senha_hash, $id]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ?, perfil = ? WHERE id = ?");
+                $stmt->execute([$nome, $email, $perfil, $id]);
+            }
+
+            header('Location: index.php?sucesso=usuario_atualizado');
+            exit;
+        } catch (PDOException $e) {
+            if ($e->errorInfo[1] === 1062) {
+                $erro = 'Este e-mail já está cadastrado.';
+            } else {
+                $erro = 'Erro ao atualizar usuário.';
+            }
+        }
+    }
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="m-0"><i class="fas fa-user-edit"></i> Editar Usuário</h4>
+        </div>
+        <div class="card-body">
+            <?php if ($erro): ?>
+                <div class="alert alert-danger"><?php echo htmlspecialchars($erro); ?></div>
+            <?php endif; ?>
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars($usuario['nome']); ?>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($usuario['email']); ?>" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="senha" class="form-label">Senha (opcional)</label>
+                        <input type="password" class="form-control" id="senha" name="senha" minlength="8" placeholder="Digite para alterar">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="perfil" class="form-label">Perfil</label>
+                        <select class="form-control" id="perfil" name="perfil" required>
+                            <option value="admin" <?php echo $usuario['perfil'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                            <option value="operador" <?php echo $usuario['perfil'] === 'operador' ? 'selected' : ''; ?>>Operador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="index.php" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="usuarios/index.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/config.php';
+require_once $root . '/config/auth.php';
+requireAdmin();
+
+$stmt = $pdo->query("SELECT id, nome, email, perfil, ativo, ultimo_login, criado_em FROM usuarios ORDER BY nome");
+$usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt_total = $pdo->query("SELECT COUNT(*) as total FROM usuarios");
+$total_usuarios = $stmt_total->fetch()['total'];
+
+$stmt_admins = $pdo->query("SELECT COUNT(*) as total FROM usuarios WHERE perfil = 'admin'");
+$total_admins = $stmt_admins->fetch()['total'];
+
+$stmt_operadores = $pdo->query("SELECT COUNT(*) as total FROM usuarios WHERE perfil = 'operador'");
+$total_operadores = $stmt_operadores->fetch()['total'];
+
+$stmt_inativos = $pdo->query("SELECT COUNT(*) as total FROM usuarios WHERE ativo = 0");
+$total_inativos = $stmt_inativos->fetch()['total'];
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 card-hover-primary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Usuários</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $total_usuarios; ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 card-hover-info">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Admins</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $total_admins; ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-secondary shadow h-100 py-2 card-hover-secondary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Operadores</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $total_operadores; ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-cog fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2 card-hover-danger">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Contas Inativas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $total_inativos; ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-slash fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-primary">
+            <h4 class="m-0 font-weight-bold text-white"><i class="fas fa-user"></i> Gestão de Usuários</h4>
+            <a href="adicionar.php" class="btn btn-light btn-sm">
+                <i class="fas fa-plus text-primary"></i> Adicionar Usuário
+            </a>
+        </div>
+        <div class="card-body">
+            <?php if (isset($_GET['sucesso'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($_GET['sucesso']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['erro'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($_GET['erro']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th>Último login</th>
+                            <th>Criado em</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($usuarios as $usuario): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
+                                <td><?php echo htmlspecialchars($usuario['email']); ?></td>
+                                <td>
+                                    <span class="badge <?php echo $usuario['perfil'] === 'admin' ? 'bg-primary' : 'bg-secondary'; ?>">
+                                        <?php echo htmlspecialchars(ucfirst($usuario['perfil'])); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $usuario['ativo'] ? 'bg-success' : 'bg-danger'; ?>">
+                                        <?php echo $usuario['ativo'] ? 'Ativo' : 'Inativo'; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($usuario['ultimo_login']): ?>
+                                        <?php echo date('d/m/Y H:i', strtotime($usuario['ultimo_login'])); ?>
+                                    <?php else: ?>
+                                        Nunca
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo date('d/m/Y H:i', strtotime($usuario['criado_em'])); ?></td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="editar.php?id=<?php echo $usuario['id']; ?>" class="btn btn-outline-primary" title="Editar Usuário">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php if ($usuario['id'] != currentUser()['id']): ?>
+                                            <form method="POST" action="alternar_status.php" class="d-inline" onsubmit="return confirm('Tem certeza que deseja alterar o status deste usuário?');">
+                                                <input type="hidden" name="id" value="<?php echo $usuario['id']; ?>">
+                                                <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                                <button type="submit" class="btn btn-outline-<?php echo $usuario['ativo'] ? 'danger' : 'success'; ?> btn-sm" title="<?php echo $usuario['ativo'] ? 'Desativar' : 'Ativar'; ?> Usuário">
+                                                    <i class="fas <?php echo $usuario['ativo'] ? 'fa-user-slash' : 'fa-user-check'; ?>"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path=".env.example">
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=estoque
+DB_USER=root
+DB_PASS=
+DB_CHARSET=utf8
+
+APP_ENV=local
+APP_URL=http://localhost/Estoque
+# APP_PATH=/Estoque
+</file>
+
+<file path="README_macOS.md">
+Instruções macOS para configurar o Sistema de Estoque
+
+Requisitos: Homebrew (recomenda-se), terminal zsh.
+
+1) Instalar Homebrew (se necessário)
+
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+2) Instalar PHP e MySQL via Homebrew
+
+brew update
+brew install php mysql
+
+3) Iniciar MySQL (serviço)
+
+brew services start mysql
+
+Após a primeira instalação do MySQL, pode ser necessário executar:
+
+mysql_secure_installation
+
+4) Criar a base de dados e aplicar o schema de autenticação
+
+# Criar DB se não existir
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS estoque CHARACTER SET utf8 COLLATE utf8_general_ci;"
+
+# Importar o arquivo auth.sql
+mysql -u root -p estoque < /Users/joaopedro/sistema-de-estoque/auth.sql
+
+Observação: ajuste o path acima se o repositório não estiver em /Users/joaopedro/sistema-de-estoque.
+
+5) Ajustar credenciais de conexão
+
+O arquivo `config/conexao.php` lê variáveis de ambiente:
+
+- DB_HOST (padrão: 127.0.0.1)
+- DB_PORT (opcional)
+- DB_NAME (padrão: estoque)
+- DB_USER (padrão: root)
+- DB_PASS (padrão: vazio)
+- DB_SOCKET (opcional)
+
+Exemplo (export temporário no terminal):
+
+export DB_USER=root
+export DB_PASS=suasenha
+export DB_NAME=estoque
+
+6) Rodar servidor de desenvolvimento PHP (mapeando /Estoque)
+
+Para servir o caminho `/Estoque` (mantendo os links absolutos do projeto), execute o servidor embutido a partir do diretório usuário:
+
+cd /Users/joaopedro
+php -S localhost:8000 -t .
+
+Acesse: http://localhost:8000/Estoque/login.php
+
+7) Criar o primeiro administrador
+
+Acesse no navegador: http://localhost:8000/Estoque/criar_admin.php
+Crie o usuário administrador e então remova o arquivo `criar_admin.php` do servidor (importante).
+
+8) Testar login e logout
+
+- Login: http://localhost:8000/Estoque/login.php
+- Logout: http://localhost:8000/Estoque/logout.php
+
+9) Observações de segurança
+
+- Troque a senha do usuário MySQL e atualize `DB_PASS`.
+- Remova `criar_admin.php` após uso.
+- Em produção, configure um servidor web (Apache/Nginx) e HTTPS.
+
+Se quiser, eu posso criar um pequeno script `setup_mac.sh` que automatiza os passos 2-4. Deseja que eu gere esse script agora?
+</file>
+
+<file path="comparativos/index.php">
+<?php
+// comparativos/index.php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include $root . '/config/conexao.php';
+include $root . '/config/config.php';
+
+// Buscar dados para comparativos
+$sql_comparativo_produtos = "
+    SELECT 
+        p.id,
+        p.nome,
+        p.preco_custo,
+        p.preco_venda,
+        p.qtd as estoque_atual,
+        COALESCE(SUM(CASE WHEN m.tipo = 'E' THEN m.qtd ELSE 0 END), 0) as total_entradas,
+        COALESCE(SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END), 0) as total_saidas,
+        (p.preco_venda - p.preco_custo) as lucro_unitario,
+        ((p.preco_venda - p.preco_custo) * COALESCE(SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END), 0)) as lucro_total_vendido,
+        (p.preco_custo * p.qtd) as valor_estoque_atual,
+        (p.preco_venda * p.qtd) as valor_estoque_potencial
+    FROM produtos p
+    LEFT JOIN movimentos m ON p.id = m.produto_id
+    GROUP BY p.id, p.nome, p.preco_custo, p.preco_venda, p.qtd
+    ORDER BY lucro_total_vendido DESC
+";
+
+$stmt = $pdo->query($sql_comparativo_produtos);
+$comparativo_produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar dados mensais para gráfico
+$sql_dados_mensais = "
+    SELECT 
+        DATE_FORMAT(m.data, '%Y-%m') as mes,
+        p.nome as produto_nome,
+        SUM(CASE WHEN m.tipo = 'E' THEN m.qtd ELSE 0 END) as entradas,
+        SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END) as saidas,
+        SUM(CASE WHEN m.tipo = 'S' THEN (p.preco_venda - p.preco_custo) * m.qtd ELSE 0 END) as lucro_mensal
+    FROM movimentos m
+    LEFT JOIN produtos p ON m.produto_id = p.id
+    WHERE m.data >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    GROUP BY DATE_FORMAT(m.data, '%Y-%m'), p.nome
+    ORDER BY mes DESC, lucro_mensal DESC
+";
+
+$stmt = $pdo->query($sql_dados_mensais);
+$dados_mensais = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calcular totais gerais
+$total_lucro_vendido = 0;
+$total_valor_estoque = 0;
+$total_valor_potencial = 0;
+
+foreach ($comparativo_produtos as $produto) {
+    $total_lucro_vendido += $produto['lucro_total_vendido'];
+    $total_valor_estoque += $produto['valor_estoque_atual'];
+    $total_valor_potencial += $produto['valor_estoque_potencial'];
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<div class="container-fluid">
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 card-hover-success">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Lucro Total Vendido
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ <?php echo number_format($total_lucro_vendido, 2, ',', '.'); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 card-hover-primary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Valor em Estoque
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ <?php echo number_format($total_valor_estoque, 2, ',', '.'); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 card-hover-info">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Valor Potencial
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ <?php echo number_format($total_valor_potencial, 2, ',', '.'); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 card-hover-warning">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total de Produtos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo count($comparativo_produtos); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Principal de Comparativos -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-primary">
+            <h4 class="m-0 font-weight-bold text-white">
+                <i class="fas fa-chart-line"></i> Comparativos de Desempenho
+            </h4>
+            <div class="ms-auto me-3">
+                <a href="../produtos/index.php" class="btn btn-light btn-sm">
+                    <i class="fas fa-boxes text-primary"></i> Ver Produtos
+                </a>
+                <a href="../movimentos/index.php" class="btn btn-info btn-sm">
+                    <i class="fas fa-exchange-alt"></i> Ver Movimentos
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="20%">Produto</th>
+                            <th width="10%">Preço Custo</th>
+                            <th width="10%">Preço Venda</th>
+                            <th width="10%">Lucro Unitário</th>
+                            <th width="8%">Estoque</th>
+                            <th width="8%">Vendidos</th>
+                            <th width="12%">Lucro Total</th>
+                            <th width="8%">Margem %</th>
+                            <th width="14%">Desempenho</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($comparativo_produtos as $produto): 
+                            $margem = $produto['preco_custo'] > 0 ? (($produto['lucro_unitario'] / $produto['preco_custo']) * 100) : 0;
+                            $desempenho_class = $margem > 50 ? 'bg-success' : ($margem > 20 ? 'bg-warning' : 'bg-danger');
+                            
+                            // Status do estoque
+                            $status_estoque = '';
+                            $badge_class = '';
+                            
+                            if ($produto['estoque_atual'] == 0) {
+                                $status_estoque = 'Sem Estoque';
+                                $badge_class = 'bg-danger';
+                            } elseif ($produto['estoque_atual'] < ESTOQUE_BAIXO_LIMITE) {
+                                $status_estoque = 'Estoque Baixo';
+                                $badge_class = 'bg-warning';
+                            } else {
+                                $status_estoque = 'Normal';
+                                $badge_class = 'bg-success';
+                            }
+                        ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted">R$ </span>
+                                    <strong><?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="text-success">R$ </span>
+                                    <strong class="text-success"><?php echo number_format($produto['preco_venda'], 2, ',', '.'); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="text-success">R$ </span>
+                                    <strong class="text-success"><?php echo number_format($produto['lucro_unitario'], 2, ',', '.'); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $badge_class; ?>">
+                                        <?php echo $produto['estoque_atual']; ?> un
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <?php echo $produto['total_saidas']; ?> un
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        R$ <?php echo number_format($produto['lucro_total_vendido'], 2, ',', '.'); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $desempenho_class; ?>">
+                                        <?php echo number_format($margem, 1, ',', '.'); ?>%
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($produto['total_saidas'] > 0): ?>
+                                        <div class="progress" style="height: 20px;">
+                                            <?php 
+                                            $max_vendas = max(array_column($comparativo_produtos, 'total_saidas'));
+                                            $percentual = $max_vendas > 0 ? ($produto['total_saidas'] / $max_vendas) * 100 : 0;
+                                            ?>
+                                            <div class="progress-bar bg-info" role="progressbar" 
+                                                 style="width: <?php echo $percentual; ?>%"
+                                                 aria-valuenow="<?php echo $percentual; ?>" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                <?php echo $produto['total_saidas']; ?>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">Sem vendas</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                        <?php if (empty($comparativo_produtos)): ?>
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhum dado disponível para comparativos.</p>
+                                    <a href="../produtos/adicionar.php" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Adicionar Primeiro Produto
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Rentabilidade -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 bg-success text-white">
+                    <h5 class="m-0 font-weight-bold">
+                        <i class="fas fa-trophy"></i> Top 5 Produtos Mais Rentáveis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php 
+                    $produtos_ordenados = $comparativo_produtos;
+                    usort($produtos_ordenados, function($a, $b) {
+                        return $b['lucro_total_vendido'] - $a['lucro_total_vendido'];
+                    });
+                    $top5 = array_slice($produtos_ordenados, 0, 5);
+                    ?>
+                    <div class="list-group">
+                        <?php foreach ($top5 as $index => $produto): ?>
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <span class="badge bg-primary"><?php echo $index + 1; ?>º</span>
+                                    <?php echo htmlspecialchars($produto['nome']); ?>
+                                </h6>
+                                <strong class="text-success">
+                                    R$ <?php echo number_format($produto['lucro_total_vendido'], 2, ',', '.'); ?>
+                                </strong>
+                            </div>
+                            <p class="mb-1">
+                                <small>
+                                    Vendidos: <?php echo $produto['total_saidas']; ?> unidades | 
+                                    Margem: <?php echo number_format(($produto['lucro_unitario'] / $produto['preco_custo']) * 100, 1, ',', '.'); ?>%
+                                </small>
+                            </p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 bg-warning text-white">
+                    <h5 class="m-0 font-weight-bold">
+                        <i class="fas fa-chart-bar"></i> Produtos com Maior Estoque
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php 
+                    usort($comparativo_produtos, function($a, $b) {
+                        return $b['estoque_atual'] - $a['estoque_atual'];
+                    });
+                    $top_estoque = array_slice($comparativo_produtos, 0, 5);
+                    ?>
+                    <div class="list-group">
+                        <?php foreach ($top_estoque as $index => $produto): ?>
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <span class="badge bg-info"><?php echo $index + 1; ?>º</span>
+                                    <?php echo htmlspecialchars($produto['nome']); ?>
+                                </h6>
+                                <strong class="text-primary">
+                                    <?php echo $produto['estoque_atual']; ?> un
+                                </strong>
+                            </div>
+                            <p class="mb-1">
+                                <small>
+                                    Valor: R$ <?php echo number_format($produto['valor_estoque_atual'], 2, ',', '.'); ?> | 
+                                    Potencial: R$ <?php echo number_format($produto['valor_estoque_potencial'], 2, ',', '.'); ?>
+                                </small>
+                            </p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Mensais -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-info text-white">
+            <h5 class="m-0 font-weight-bold">
+                <i class="fas fa-calendar-alt"></i> Desempenho Mensal (Últimos 6 Meses)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mês</th>
+                            <th>Produto</th>
+                            <th>Entradas</th>
+                            <th>Saídas</th>
+                            <th>Lucro Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $meses_agrupados = [];
+                        foreach ($dados_mensais as $dado) {
+                            $meses_agrupados[$dado['mes']][] = $dado;
+                        }
+                        
+                        foreach ($meses_agrupados as $mes => $produtos_mes):
+                            $total_mes_entradas = 0;
+                            $total_mes_saidas = 0;
+                            $total_mes_lucro = 0;
+                            
+                            foreach ($produtos_mes as $produto_mes) {
+                                $total_mes_entradas += $produto_mes['entradas'];
+                                $total_mes_saidas += $produto_mes['saidas'];
+                                $total_mes_lucro += $produto_mes['lucro_mensal'];
+                            }
+                        ?>
+                        <tr class="table-active">
+                            <td colspan="2">
+                                <strong><?php echo date('m/Y', strtotime($mes . '-01')); ?></strong>
+                            </td>
+                            <td><strong><?php echo $total_mes_entradas; ?></strong></td>
+                            <td><strong><?php echo $total_mes_saidas; ?></strong></td>
+                            <td>
+                                <strong class="text-success">
+                                    R$ <?php echo number_format($total_mes_lucro, 2, ',', '.'); ?>
+                                </strong>
+                            </td>
+                        </tr>
+                        <?php foreach ($produtos_mes as $produto_mes): ?>
+                        <tr>
+                            <td></td>
+                            <td><?php echo htmlspecialchars($produto_mes['produto_nome']); ?></td>
+                            <td><?php echo $produto_mes['entradas']; ?></td>
+                            <td><?php echo $produto_mes['saidas']; ?></td>
+                            <td>R$ <?php echo number_format($produto_mes['lucro_mensal'], 2, ',', '.'); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mt-4">
+    <a href="exportar_comparativo.php" class="btn btn-danger">
+        <i class="fas fa-file-pdf"></i> Exportar Relatório PDF
+    </a>
+    <a href="../index.php" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+    </a>
+</div>
+<style>
+.card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-hover-primary:hover {
+    border-left-color: #2e59d9 !important;
+    border-color: #4e73df;
+}
+
+.card-hover-success:hover {
+    border-left-color: #17a673 !important;
+    border-color: #1cc88a;
+}
+
+.card-hover-info:hover {
+    border-left-color: #2c9faf !important;
+    border-color: #36b9cc;
+}
+
+.card-hover-warning:hover {
+    border-left-color: #e4b22b !important;
+    border-color: #f6c23e;
+}
+
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+
+.progress {
+    border-radius: 4px;
+}
+
+.list-group-item {
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+.list-group-item:hover {
+    border-left-color: #4e73df;
+    background-color: #f8f9fa;
+}
+</style>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="config/auth.php">
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start([
+        'cookie_httponly' => true,
+        'cookie_samesite' => 'Lax',
+    ]);
+}
+
+function isLoggedIn(): bool
+{
+    return isset($_SESSION['usuario_id']);
+}
+
+function currentUser(): ?array
+{
+    if (!isLoggedIn()) {
+        return null;
+    }
+
+    return [
+        'id' => $_SESSION['usuario_id'],
+        'nome' => $_SESSION['usuario_nome'],
+        'perfil' => $_SESSION['usuario_perfil'],
+    ];
+}
+
+function requireLogin(): void
+{
+    if (!isLoggedIn()) {
+        $_SESSION['redirect_apos_login'] = $_SERVER['REQUEST_URI'];
+        header('Location: /Estoque/login.php');
+        exit;
+    }
+}
+
+function requireAdmin(): void
+{
+    requireLogin();
+
+    if (!isset($_SESSION['usuario_perfil']) || $_SESSION['usuario_perfil'] !== 'admin') {
+        http_response_code(403);
+        die('Acesso negado.');
+    }
+}
+
+function csrfToken(): string
+{
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function csrfCheck(): void
+{
+    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        die('Requisição inválida.');
+    }
+}
+</file>
+
+<file path="config/conexao.php">
+<?php
+// config/conexao.php
+$host = 'localhost';
+$dbname = 'estoque';
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    die("Erro na conexão: " . $e->getMessage());
+}
+?>
+</file>
+
+<file path="config/config.php">
+<?php
+// config/config.php
+if (!defined('ESTOQUE_BAIXO_LIMITE')) {
+    define('ESTOQUE_BAIXO_LIMITE', 10); // Alerta quando estoque estiver abaixo de 10 unidades
+}
+
+if (!defined('SITE_NOME')) {
+    define('SITE_NOME', 'Sistema de Estoque');
+}
+?>
+</file>
+
+<file path="config/paths.php">
+<?php
+// config/paths.php - Caminhos universais
+$root_path = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+
+// Função para incluir arquivos de forma segura
+function includeSafe($file) {
+    global $root_path;
+    $full_path = $root_path . '/' . $file;
+    if (file_exists($full_path)) {
+        include $full_path;
+        return true;
+    }
+    return false;
+}
+?>
+</file>
+
+<file path="css/style.css">
+:root {
+  /* Cores principais da sua paleta */
+  --primary: #ff5031;
+  --primary-soft: #ff6b4a;
+  --secondary: #338499;
+  --accent: #5cd1d8;
+  --accent-soft: #7de0e6;
+  --dark: #004d61;
+  --light: #f8f9fa;
+  --gray: #64748b;
+  
+  /* Cores complementares harmoniosas */
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --info: #3498db;
+  
+  /* Gradientes */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-soft));
+  --gradient-secondary: linear-gradient(135deg, var(--secondary), #4a9fb1);
+  --gradient-accent: linear-gradient(135deg, var(--accent), var(--accent-soft));
+  --gradient-dark: linear-gradient(135deg, var(--dark), #006680);
+  --gradient-hero: linear-gradient(135deg, var(--dark), var(--secondary), var(--accent));
+  
+  /* Efeitos */
+  --shadow-sm: 0 2px 10px rgba(0, 77, 97, 0.1);
+  --shadow-md: 0 8px 25px rgba(0, 77, 97, 0.15);
+  --shadow-lg: 0 15px 40px rgba(0, 77, 97, 0.2);
+  --glow: 0 0 20px rgba(92, 209, 216, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Reset e Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: var(--dark);
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Fundo sutil com movimento leve */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 80%, rgba(92, 209, 216, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(255, 80, 49, 0.05) 0%, transparent 50%);
+  animation: subtleFloat 15s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Animações Globais Equilibradas */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: var(--shadow-md); }
+  50% { box-shadow: 0 0 25px rgba(92, 209, 216, 0.4); }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+/* Navbar Lúdica Refinada */
+.navbar {
+  background: var(--gradient-hero) !important;
+  border-bottom: 3px solid var(--accent);
+  box-shadow: var(--shadow-lg);
+  padding: 1rem 0;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 4s infinite;
+}
+
+.navbar-brand {
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: float 3s ease-in-out infinite;
+}
+
+.navbar-brand i {
+  color: var(--accent);
+  font-size: 2rem;
+}
+
+.nav-link {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600;
+  margin: 0 0.5rem;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: 50px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(92, 209, 216, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.nav-link:hover::before {
+  left: 100%;
+}
+
+.nav-link:hover {
+  background: rgba(92, 209, 216, 0.2);
+  color: white !important;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 5px 15px rgba(92, 209, 216, 0.3);
+}
+
+.nav-link i {
+  margin-right: 0.5rem;
+  font-size: 1.1em;
+}
+
+/* Container Principal */
+.container.mt-4 {
+  margin-top: 2.5rem !important;
+  animation: slideIn 0.8s ease-out;
+}
+
+/* Cards Lúdicos com Glassmorphism Leve */
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--glass-border);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  padding: 3px;
+  background: var(--gradient-accent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-lg), var(--glow);
+}
+
+.card-primary { border-left: 6px solid var(--primary); }
+.card-success { border-left: 6px solid var(--secondary); }
+.card-info { border-left: 6px solid var(--accent); }
+.card-warning { border-left: 6px solid var(--dark); }
+.card-danger { border-left: 6px solid var(--danger); }
+
+.card-header {
+  background: var(--gradient-dark) !important;
+  border-bottom: 3px solid var(--accent);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+}
+
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--gradient-accent);
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-body {
+  padding: 2rem;
+  position: relative;
+}
+
+/* Cards de Dashboard */
+.dashboard-card {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  background: var(--gradient-secondary);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dashboard-card .card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: bounce 2s infinite;
+}
+
+.dashboard-card .card-title {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-card .card-text {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Botões Lúdicos */
+.btn {
+  border: none;
+  border-radius: 15px;
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 80, 49, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 80, 49, 0.4);
+}
+
+.btn-secondary {
+  background: var(--gradient-secondary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(51, 132, 153, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(51, 132, 153, 0.4);
+}
+
+.btn-success {
+  background: var(--gradient-accent);
+  color: var(--dark);
+  box-shadow: 0 4px 15px rgba(92, 209, 216, 0.3);
+}
+
+.btn-success:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(92, 209, 216, 0.4);
+}
+
+.btn-info {
+  background: var(--gradient-dark);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 77, 97, 0.3);
+}
+
+.btn-info:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 77, 97, 0.4);
+}
+
+.btn-sm {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.8rem;
+  border-radius: 12px;
+}
+
+/* Títulos */
+h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  position: relative;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: var(--gradient-accent);
+  border-radius: 2px;
+}
+
+.lead {
+  font-size: 1.3rem;
+  color: var(--secondary);
+  text-align: center;
+  margin-bottom: 3rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* Tabelas Modernas */
+.table {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0;
+}
+
+.table th {
+  background: var(--gradient-dark);
+  color: white;
+  font-weight: 700;
+  border: none;
+  padding: 1.25rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+.table th::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--gradient-accent);
+}
+
+.table td {
+  padding: 1.25rem;
+  border-color: rgba(0, 77, 97, 0.1);
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(92, 209, 216, 0.05);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(92, 209, 216, 0.1);
+  transform: scale(1.01);
+  box-shadow: 0 2px 10px rgba(92, 209, 216, 0.2);
+}
+
+/* Badges Lúdicos */
+.badge {
+  font-weight: 700;
+  padding: 0.5em 0.8em;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.bg-primary { background: var(--gradient-primary) !important; }
+.badge.bg-success { background: var(--gradient-secondary) !important; }
+.badge.bg-info { background: var(--gradient-accent) !important; color: var(--dark); }
+.badge.bg-warning { background: var(--gradient-dark) !important; }
+.badge.bg-danger { background: var(--gradient-primary) !important; }
+
+/* Formulários Modernos */
+.form-control, .form-select {
+  border: 2px solid rgba(0, 77, 97, 0.1);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.3rem rgba(92, 209, 216, 0.2);
+  transform: translateY(-2px);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Alertas Especiais */
+.alert {
+  border: none;
+  border-radius: 15px;
+  padding: 1.5rem 2rem;
+  border-left: 6px solid;
+  background: white;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.alert::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+  animation: shimmer 2s infinite;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #ffeaea, #fff);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #e8f6f7, #fff);
+  color: var(--dark);
+  border-left-color: var(--accent);
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3e0, #fff);
+  color: var(--dark);
+}
+/* ===== EFEITOS TECNOLÓGICOS ADICIONAIS ===== */
+
+/* Efeito holográfico sutil nos cards */
+.card-holo {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-holo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    45deg,
+    transparent 0%,
+    rgba(92, 209, 216, 0.1) 25%,
+    rgba(255, 80, 49, 0.1) 50%,
+    rgba(92, 209, 216, 0.1) 75%,
+    transparent 100%
+  );
+  animation: holoShift 4s linear infinite;
+  z-index: 0;
+}
+
+@keyframes holoShift {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Partículas flutuantes no fundo do card */
+.card-particles {
+  position: relative;
+}
+
+.card-particles::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(92, 209, 216, 0.3) 1px, transparent 1px),
+    radial-gradient(circle at 90% 80%, rgba(255, 80, 49, 0.3) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(92, 209, 216, 0.2) 1px, transparent 1px),
+    radial-gradient(circle at 20% 70%, rgba(255, 80, 49, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px, 15px 15px, 25px 25px, 18px 18px;
+  animation: particleFloat 6s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 0;
+}
+
+.card:hover .card-particles::after {
+  opacity: 1;
+}
+
+@keyframes particleFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(90deg); }
+  50% { transform: translateY(-5px) rotate(180deg); }
+  75% { transform: translateY(-15px) rotate(270deg); }
+}
+
+/* Efeito de scan line digital */
+.card-scan {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-scan::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(92, 209, 216, 0.8), rgba(255, 80, 49, 0.8), transparent);
+  animation: scanLine 3s linear infinite;
+  z-index: 1;
+}
+
+@keyframes scanLine {
+  0% { top: 0; }
+  50% { top: 50%; }
+  100% { top: 100%; }
+}
+
+/* Brilho neon pulsante para elementos interativos */
+.neon-glow {
+  position: relative;
+  text-shadow: 0 0 5px rgba(92, 209, 216, 0.5), 0 0 10px rgba(92, 209, 216, 0.5), 0 0 15px rgba(92, 209, 216, 0.5);
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+  0% {
+    text-shadow: 0 0 5px rgba(92, 209, 216, 0.5), 0 0 10px rgba(92, 209, 216, 0.5), 0 0 15px rgba(92, 209, 216, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 10px rgba(255, 80, 49, 0.5), 0 0 20px rgba(255, 80, 49, 0.5), 0 0 30px rgba(255, 80, 49, 0.5);
+  }
+}
+
+/* Efeito de energia elétrica nas bordas */
+.card-energy {
+  position: relative;
+}
+
+.card-energy::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg,
+    rgba(92, 209, 216, 0.6),
+    rgba(255, 80, 49, 0.6),
+    rgba(92, 209, 216, 0.6)
+  );
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0;
+  animation: energyFlow 2s linear infinite;
+  transition: opacity 0.4s ease;
+}
+
+.card-energy:hover::before {
+  opacity: 1;
+}
+
+@keyframes energyFlow {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* Animação de entrada futurista com fade e scale */
+.card-future {
+  animation: futureEnter 0.8s ease-out;
+}
+
+@keyframes futureEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8) rotateX(20deg);
+    filter: blur(5px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(25px) scale(0.9) rotateX(10deg);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+
+/* Efeito de reflexo metálico nos títulos */
+.card-title-reflect {
+  position: relative;
+  display: inline-block;
+}
+
+.card-title-reflect::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(92, 209, 216, 0.4) 0%,
+    rgba(255, 80, 49, 0.4) 50%,
+    rgba(92, 209, 216, 0.4) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  transform: scaleY(-1);
+  transform-origin: center;
+  opacity: 0.3;
+  animation: reflectShimmer 3s ease-in-out infinite;
+}
+
+@keyframes reflectShimmer {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Efeito de distorção leve no hover */
+.card-distort:hover {
+  animation: distortEffect 0.5s ease-in-out;
+}
+
+@keyframes distortEffect {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.05) skewX(1deg); }
+  50% { transform: scale(1.02) skewX(-1deg); }
+  75% { transform: scale(1.05) skewX(0.5deg); }
+  100% { transform: scale(1); }
+}
+
+/* Brilho de laser nas bordas superiores */
+.card-laser {
+  position: relative;
+}
+
+.card-laser::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(92, 209, 216, 0.8),
+    rgba(255, 80, 49, 0.8),
+    transparent
+  );
+  animation: laserSweep 4s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes laserSweep {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: -100%; }
+}
+</file>
+
+<file path="includes/footer.php">
+<!-- Footer -->
+<footer class="footer mt-auto py-3 bg-light border-top">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <span class="text-muted">
+                    <i class="fas fa-boxes text-primary"></i> 
+                    <strong class="text-dark">Sistema de Estoque</strong> &copy; <?php echo date('Y'); ?>
+                </span>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <span class="text-muted">
+                    <i class="fas fa-cube text-primary"></i> 
+                    Gestão Inteligente
+                </span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts do Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Scripts Customizados -->
+<script>
+$(document).ready(function() {
+    // Inicializar DataTable
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+        },
+        "responsive": true,
+        "ordering": true,
+        "searching": true,
+        "pageLength": 10,
+        "lengthMenu": [10, 25, 50, 100]
+    });
+
+    // Auto-hide alerts após 5 segundos
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+</body>
+</html>
+</file>
+
+<file path="js/effects.js">
+
+</file>
+
+<file path="auth.sql">
+USE estoque;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    perfil ENUM('admin','operador') NOT NULL DEFAULT 'operador',
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    ultimo_login DATETIME NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</file>
+
+<file path="criar_admin.php">
+<?php
+// ATENÇÃO: ESTE ARQUIVO DEVE SER REMOVIDO DO SERVIDOR IMEDIATAMENTE APÓS CRIAR O PRIMEIRO ADMINISTRADOR.
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+
+$mensagem_sucesso = '';
+$erro = '';
+$admin_existe = false;
+
+try {
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM usuarios WHERE perfil = 'admin'");
+    $admin_existe = $stmt->fetch()['total'] > 0;
+} catch (PDOException $e) {
+    die('Erro ao verificar usuários administradores.');
+}
+
+if (!$admin_existe && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nome = trim($_POST['nome'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $senha = $_POST['senha'] ?? '';
+
+    if ($nome === '' || $email === '' || strlen($senha) < 8) {
+        $erro = 'Preencha todos os campos e use uma senha com pelo menos 8 caracteres.';
+    } else {
+        try {
+            $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, 'admin')");
+            $stmt->execute([$nome, $email, $senha_hash]);
+
+            $mensagem_sucesso = 'Administrador criado com sucesso. Apague este arquivo do servidor imediatamente após o uso.';
+            $admin_existe = true;
+        } catch (PDOException $e) {
+            if ($e->errorInfo[1] === 1062) {
+                $erro = 'Este e-mail já está em uso.';
+            } else {
+                $erro = 'Ocorreu um erro ao criar o administrador. Tente novamente.';
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Administrador - Sistema de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/Estoque/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title mb-3 text-center">Criar Administrador</h3>
+                        <div class="alert alert-warning">
+                            Este arquivo deve ser removido do servidor imediatamente após criar o primeiro administrador.
+                        </div>
+
+                        <?php if ($admin_existe): ?>
+                            <div class="alert alert-info">
+                                Já existe pelo menos um administrador cadastrado. A criação de novos administradores deve ser feita diretamente no banco de dados ou por outro caminho seguro.
+                            </div>
+                        <?php else: ?>
+                            <?php if ($mensagem_sucesso): ?>
+                                <div class="alert alert-success"><?php echo htmlspecialchars($mensagem_sucesso); ?></div>
+                            <?php endif; ?>
+
+                            <?php if ($erro): ?>
+                                <div class="alert alert-danger"><?php echo htmlspecialchars($erro); ?></div>
+                            <?php endif; ?>
+
+                            <form method="POST" novalidate>
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">E-mail</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="senha" class="form-label">Senha</label>
+                                    <input type="password" class="form-control" id="senha" name="senha" minlength="8" required>
+                                    <div class="form-text">Use pelo menos 8 caracteres.</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-user-shield"></i> Criar Administrador
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+</file>
+
+<file path="estoque.sql">
+-- Script SQL para criar o banco de dados 'estoque'
+-- Execute este script no phpMyAdmin ou em um cliente MySQL
+
+-- Criar o banco de dados
+CREATE DATABASE IF NOT EXISTS estoque CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+-- Usar o banco de dados
+USE estoque;
+
+-- Criar tabela produtos
+CREATE TABLE produtos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    preco_custo DECIMAL(10,2) NOT NULL,
+    preco_venda DECIMAL(10,2) NOT NULL,
+    qtd INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Criar tabela movimentos
+CREATE TABLE movimentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produto_id INT NOT NULL,
+    tipo CHAR(1) NOT NULL COMMENT 'E para Entrada, S para Saída',
+    qtd INT NOT NULL,
+    data DATETIME NOT NULL,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Inserir alguns dados de exemplo (opcional)
+INSERT INTO produtos (nome, preco_custo, preco_venda, qtd) VALUES
+('Produto Exemplo 1', 10.50, 15.00, 100),
+('Produto Exemplo 2', 20.00, 30.00, 50);
+</file>
+
+<file path="login.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+
+if (isLoggedIn()) {
+    header('Location: index.php');
+    exit;
+}
+
+$erro = '';
+$bloqueio_restante = 0;
+
+if (!isset($_SESSION['login_tentativas'])) {
+    $_SESSION['login_tentativas'] = 0;
+}
+
+if (isset($_SESSION['login_bloqueado_ate']) && time() < $_SESSION['login_bloqueado_ate']) {
+    $bloqueio_restante = $_SESSION['login_bloqueado_ate'] - time();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($bloqueio_restante > 0) {
+        $erro = 'Muitas tentativas falharam. Tente novamente em ' . $bloqueio_restante . ' segundos.';
+    } else {
+        csrfCheck();
+
+        $email = trim($_POST['email'] ?? '');
+        $senha = $_POST['senha'] ?? '';
+
+        if ($email === '' || $senha === '') {
+            $erro = 'E-mail ou senha inválidos.';
+        } else {
+            try {
+                $stmt = $pdo->prepare("SELECT id, nome, senha, perfil FROM usuarios WHERE email = ? AND ativo = 1 LIMIT 1");
+                $stmt->execute([$email]);
+                $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($usuario && password_verify($senha, $usuario['senha'])) {
+                    session_regenerate_id(true);
+                    $_SESSION['usuario_id'] = $usuario['id'];
+                    $_SESSION['usuario_nome'] = $usuario['nome'];
+                    $_SESSION['usuario_perfil'] = $usuario['perfil'];
+
+                    unset($_SESSION['login_tentativas'], $_SESSION['login_bloqueado_ate']);
+
+                    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?");
+                    $stmt->execute([$usuario['id']]);
+
+                    $redirect = $_SESSION['redirect_apos_login'] ?? 'index.php';
+                    unset($_SESSION['redirect_apos_login']);
+
+                    header('Location: ' . $redirect);
+                    exit;
+                }
+
+                $_SESSION['login_tentativas']++;
+                if ($_SESSION['login_tentativas'] >= 5) {
+                    $_SESSION['login_bloqueado_ate'] = time() + 300;
+                    $erro = 'Muitas tentativas falharam. Tente novamente em 5 minutos.';
+                } else {
+                    $erro = 'E-mail ou senha inválidos.';
+                }
+            } catch (PDOException $e) {
+                $erro = 'Ocorreu um erro durante o login. Tente novamente.';
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/Estoque/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4 text-center">Acesso ao Sistema</h3>
+
+                        <?php if ($erro): ?>
+                            <div class="alert alert-danger"><?php echo htmlspecialchars($erro); ?></div>
+                        <?php endif; ?>
+
+                        <form method="POST" novalidate>
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="senha" name="senha" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt"></i> Entrar
+                            </button>
+                        </form>
+
+                        <div class="mt-4 text-center text-muted small">
+                            Use seu e-mail e senha para acessar o sistema.
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3 text-muted small">
+                    <p>Se ainda não existe um usuário administrador, acesse <strong>criar_admin.php</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+</file>
+
+<file path="logout.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/auth.php';
+
+$_SESSION = [];
+if (ini_get('session.use_cookies')) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params['path'],
+        $params['domain'],
+        $params['secure'],
+        $params['httponly']
+    );
+}
+
+session_destroy();
+header('Location: login.php');
+exit;
+</file>
+
+<file path="README.md">
+# Sistema de Estoque
+
+Este é um sistema de gerenciamento de estoque desenvolvido em PHP, utilizando MySQL para armazenamento de dados. Permite cadastrar produtos, registrar movimentos (entradas e saídas), gerar relatórios e alertas de estoque baixo.
+
+## Funcionalidades
+
+- **Produtos**: Adicionar, editar, excluir e visualizar produtos.
+- **Movimentos**: Registrar entradas e saídas de produtos.
+- **Relatórios**: Gerar relatórios de produtos e movimentos.
+- **Comparativos**: Exportar comparativos de dados.
+- **Alertas**: Notificações para produtos com estoque baixo.
+
+## Tecnologias Utilizadas
+
+- **Backend**: PHP
+- **Banco de Dados**: MySQL
+- **Frontend**: HTML, CSS, JavaScript
+- **Servidor**: XAMPP (ou similar)
+
+## Instalação
+
+1. **Clone o repositório**:
+   ```
+   git clone https://github.com/seu-usuario/estoque.git
+   cd estoque
+   ```
+
+2. **Configure o banco de dados**:
+   - Importe o arquivo `estoque.sql` para o MySQL.
+   - Atualize as configurações de conexão em `config/conexao.php`.
+
+3. **Configure o servidor**:
+   - Coloque a pasta do projeto no diretório `htdocs` do XAMPP.
+   - Inicie o Apache e MySQL no painel de controle do XAMPP.
+
+4. **Acesse o sistema**:
+   - Abra o navegador e vá para `http://localhost/estoque`.
+
+## Uso
+
+- Navegue pelas seções: Produtos, Movimentos, Comparativos.
+- Use os formulários para adicionar ou editar dados.
+- Gere relatórios conforme necessário.
+
+## Estrutura do Projeto
+
+- `config/`: Arquivos de configuração (conexão, caminhos).
+- `produtos/`: Páginas relacionadas a produtos.
+- `movimentos/`: Páginas de movimentos de estoque.
+- `comparativos/`: Funcionalidades de comparativos.
+- `includes/`: Cabeçalho e rodapé.
+- `css/`: Estilos CSS.
+- `js/`: Scripts JavaScript.
+- `estoque.sql`: Script do banco de dados.
+
+## Contribuição
+
+Sinta-se à vontade para contribuir com melhorias. Faça um fork, crie uma branch e envie um pull request.
+
+## Licença
+
+Este projeto é de código aberto. Consulte a licença para mais detalhes.
+</file>
+
+<file path="testeconc.php">
+<?php
+include 'config/conexao.php';
+
+echo "<h1>Teste de Conexão</h1>";
+
+try {
+    // Testar conexão
+    $stmt = $pdo->query("SELECT 1");
+    echo "<div class='alert alert-success'>Conexão com o banco de dados estabelecida com sucesso!</div>";
+    
+    // Testar se tabelas existem
+    $stmt = $pdo->query("SHOW TABLES LIKE 'produtos'");
+    if ($stmt->rowCount() > 0) {
+        echo "<div class='alert alert-success'>Tabela 'produtos' existe!</div>";
+    } else {
+        echo "<div class='alert alert-warning'>Tabela 'produtos' não existe!</div>";
+    }
+    
+    $stmt = $pdo->query("SHOW TABLES LIKE 'movimentos'");
+    if ($stmt->rowCount() > 0) {
+        echo "<div class='alert alert-success'>Tabela 'movimentos' existe!</div>";
+    } else {
+        echo "<div class='alert alert-warning'>Tabela 'movimentos' não existe!</div>";
+    }
+    
+} catch(PDOException $e) {
+    echo "<div class='alert alert-danger'>Erro: " . $e->getMessage() . "</div>";
+}
+?>
+</file>
+
+<file path="comparativos/exportar_comparativo.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar dados para comparativos (mesma query do index)
+$sql_comparativo_produtos = "
+    SELECT 
+        p.id,
+        p.nome,
+        p.preco_custo,
+        p.preco_venda,
+        p.qtd as estoque_atual,
+        COALESCE(SUM(CASE WHEN m.tipo = 'E' THEN m.qtd ELSE 0 END), 0) as total_entradas,
+        COALESCE(SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END), 0) as total_saidas,
+        (p.preco_venda - p.preco_custo) as lucro_unitario,
+        ((p.preco_venda - p.preco_custo) * COALESCE(SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END), 0)) as lucro_total_vendido,
+        (p.preco_custo * p.qtd) as valor_estoque_atual,
+        (p.preco_venda * p.qtd) as valor_estoque_potencial
+    FROM produtos p
+    LEFT JOIN movimentos m ON p.id = m.produto_id
+    GROUP BY p.id, p.nome, p.preco_custo, p.preco_venda, p.qtd
+    ORDER BY lucro_total_vendido DESC
+";
+
+$stmt = $pdo->query($sql_comparativo_produtos);
+$comparativo_produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calcular totais
+$total_lucro_vendido = 0;
+$total_valor_estoque = 0;
+$total_valor_potencial = 0;
+
+foreach ($comparativo_produtos as $produto) {
+    $total_lucro_vendido += $produto['lucro_total_vendido'];
+    $total_valor_estoque += $produto['valor_estoque_atual'];
+    $total_valor_potencial += $produto['valor_estoque_potencial'];
+}
+
+// Gerar PDF
+$html = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Comparativos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .resumo { background-color: #f9f9f9; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .text-success { color: #28a745; }
+        .text-primary { color: #007bff; }
+        .text-info { color: #17a2b8; }
+        .badge { padding: 3px 8px; border-radius: 3px; font-size: 12px; color: white; }
+        .bg-success { background-color: #28a745; }
+        .bg-warning { background-color: #ffc107; color: black; }
+        .bg-danger { background-color: #dc3545; }
+        .bg-primary { background-color: #007bff; }
+        .bg-info { background-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Relatório de Comparativos de Desempenho</h1>
+        <p>Data do Relatório: ' . date('d/m/Y H:i') . '</p>
+    </div>
+    
+    <div class="resumo">
+        <h3>Resumo Geral</h3>
+        <p><strong>Lucro Total Vendido:</strong> <span class="text-success">R$ ' . number_format($total_lucro_vendido, 2, ',', '.') . '</span></p>
+        <p><strong>Valor em Estoque:</strong> <span class="text-primary">R$ ' . number_format($total_valor_estoque, 2, ',', '.') . '</span></p>
+        <p><strong>Valor Potencial:</strong> <span class="text-info">R$ ' . number_format($total_valor_potencial, 2, ',', '.') . '</span></p>
+    </div>
+    
+    <h3>Comparativo entre Produtos</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Preço Custo</th>
+                <th>Preço Venda</th>
+                <th>Lucro Unitário</th>
+                <th>Estoque</th>
+                <th>Vendido</th>
+                <th>Lucro Total</th>
+                <th>Margem %</th>
+            </tr>
+        </thead>
+        <tbody>';
+
+foreach ($comparativo_produtos as $produto) {
+    $margem = $produto['preco_custo'] > 0 ? (($produto['lucro_unitario'] / $produto['preco_custo']) * 100) : 0;
+    $margem_class = $margem > 50 ? 'bg-success' : ($margem > 20 ? 'bg-warning' : 'bg-danger');
+    
+    $html .= '
+            <tr>
+                <td><strong>' . htmlspecialchars($produto['nome']) . '</strong></td>
+                <td>R$ ' . number_format($produto['preco_custo'], 2, ',', '.') . '</td>
+                <td>R$ ' . number_format($produto['preco_venda'], 2, ',', '.') . '</td>
+                <td>R$ ' . number_format($produto['lucro_unitario'], 2, ',', '.') . '</td>
+                <td>' . $produto['estoque_atual'] . ' un</td>
+                <td>' . $produto['total_saidas'] . ' un</td>
+                <td><span class="badge bg-success">R$ ' . number_format($produto['lucro_total_vendido'], 2, ',', '.') . '</span></td>
+                <td><span class="badge ' . $margem_class . '">' . number_format($margem, 1, ',', '.') . '%</span></td>
+            </tr>';
+}
+
+$html .= '
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 30px; text-align: center; color: #666;">
+        <p>Relatório gerado pelo Sistema de Estoque - Comparativos de Desempenho</p>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+</body>
+</html>';
+
+header('Content-Type: text/html; charset=utf-8');
+echo $html;
+exit;
+?>
+</file>
+
+<file path="includes/header.php">
+<?php
+// includes/header.php - USANDO CAMINHO ABSOLUTO
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+
+// Proteção: garante que só usuários logados vejam qualquer página que inclua este header.
+// Observação: páginas que consultam o banco ANTES de incluir este header também devem
+// chamar requireLogin() no topo do próprio arquivo, antes dessas consultas.
+requireLogin();
+
+// Buscar produtos com estoque baixo
+$stmt = $pdo->prepare("SELECT nome, qtd FROM produtos WHERE qtd < ? ORDER BY qtd ASC");
+$stmt->execute([ESTOQUE_BAIXO_LIMITE]);
+$produtos_estoque_baixo = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$usuario_logado = currentUser();
+?>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque da loja</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/Estoque/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/Estoque/index.php">Estoque da loja</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
+                <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+                <?php if ($usuario_logado['perfil'] === 'admin'): ?>
+                    <a class="nav-link" href="/Estoque/usuarios/index.php">Usuários</a>
+                <?php endif; ?>
+            </div>
+            <?php if ($usuario_logado): ?>
+            <div class="navbar-nav">
+                <span class="nav-link text-white-50">
+                    <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($usuario_logado['nome']); ?>
+                    <small>(<?php echo htmlspecialchars($usuario_logado['perfil']); ?>)</small>
+                </span>
+                <a class="nav-link" href="/Estoque/logout.php">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <!-- Alertas de Estoque Baixo -->
+    <?php if (!empty($produtos_estoque_baixo)): ?>
+    <div class="alert alert-warning alert-dismissible fade show mb-0" role="alert">
+        <div class="container">
+            <strong><i class="fas fa-exclamation-triangle"></i> Alerta de Estoque Baixo!</strong>
+            Os seguintes produtos estão com estoque abaixo do limite:
+            <?php 
+            $alertas = [];
+            foreach ($produtos_estoque_baixo as $produto) {
+                $alertas[] = htmlspecialchars($produto['nome']) . ' (' . (int)$produto['qtd'] . ' unidades)';
+            }
+            echo implode(', ', $alertas);
+            ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <div class="container mt-4">
+</file>
+
+<file path="movimentos/cadastrar.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar produtos para o select
+$stmt = $pdo->query("SELECT id, nome, qtd FROM produtos ORDER BY nome");
+$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Verificar se há produto_id e quantidade sugerida na URL
+$produto_id_sugerido = isset($_GET['produto_id']) ? $_GET['produto_id'] : '';
+$qtd_sugerido = isset($_GET['qtd_sugerido']) ? $_GET['qtd_sugerido'] : '';
+
+if ($_POST) {
+    csrfCheck();
+    $produto_id = $_POST['produto_id'];
+    $tipo = $_POST['tipo'];
+    $qtd = $_POST['qtd'];
+    
+    // Validações
+    if ($qtd <= 0) {
+        $erro = "A quantidade deve ser maior que zero!";
+    } else {
+        // Verificar estoque para saídas
+        if ($tipo == 'S') {
+            $stmt = $pdo->prepare("SELECT qtd FROM produtos WHERE id = ?");
+            $stmt->execute([$produto_id]);
+            $produto = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($produto['qtd'] < $qtd) {
+                $erro = "Estoque insuficiente! Disponível: " . $produto['qtd'] . " unidades";
+            }
+        }
+        
+        if (!isset($erro)) {
+            // Inserir movimento
+            $stmt = $pdo->prepare("INSERT INTO movimentos (produto_id, tipo, qtd, data) VALUES (?, ?, ?, NOW())");
+            
+            if ($stmt->execute([$produto_id, $tipo, $qtd])) {
+                // Atualizar estoque do produto
+                if ($tipo == 'E') {
+                    $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd + ? WHERE id = ?");
+                } else {
+                    $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd - ? WHERE id = ?");
+                }
+                $stmt->execute([$qtd, $produto_id]);
+                
+                header('Location: index.php?sucesso=movimentacao_registrada');
+                exit;
+            } else {
+                $erro = "Erro ao registrar movimentação!";
+            }
+        }
+    }
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<h1>Nova Movimentação</h1>
+
+<?php if (isset($erro)): ?>
+    <div class="alert alert-danger"><?php echo $erro; ?></div>
+<?php endif; ?>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+    <div class="mb-3">
+        <label for="produto_id" class="form-label">Produto</label>
+        <select class="form-control" id="produto_id" name="produto_id" required>
+            <option value="">Selecione um produto</option>
+            <?php foreach ($produtos as $produto): ?>
+            <option value="<?php echo $produto['id']; ?>" 
+                    data-estoque="<?php echo $produto['qtd']; ?>"
+                    <?php echo ($produto['id'] == $produto_id_sugerido) ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($produto['nome']); ?> 
+                (Estoque: <?php echo $produto['qtd']; ?>)
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo de Movimentação</label>
+        <select class="form-control" id="tipo" name="tipo" required>
+            <option value="E">Entrada (Aumenta estoque)</option>
+            <option value="S">Saída (Diminui estoque)</option>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label for="qtd" class="form-label">Quantidade</label>
+        <input type="number" class="form-control" id="qtd" name="qtd" min="1" 
+               value="<?php echo $qtd_sugerido ? $qtd_sugerido : ''; ?>" required>
+        <small class="form-text text-muted" id="estoque-info"></small>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Registrar Movimentação</button>
+    <a href="index.php" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const produtoSelect = document.getElementById('produto_id');
+    const tipoSelect = document.getElementById('tipo');
+    const qtdInput = document.getElementById('qtd');
+    const estoqueInfo = document.getElementById('estoque-info');
+    
+    function atualizarInfoEstoque() {
+        const selectedOption = produtoSelect.options[produtoSelect.selectedIndex];
+        const estoque = selectedOption.getAttribute('data-estoque') || 0;
+        
+        if (tipoSelect.value === 'S') {
+            qtdInput.max = estoque;
+            estoqueInfo.textContent = 'Estoque atual: ' + estoque + ' unidades (Máximo para saída: ' + estoque + ')';
+        } else {
+            qtdInput.removeAttribute('max');
+            estoqueInfo.textContent = 'Estoque atual: ' + estoque + ' unidades';
+        }
+    }
+    
+    produtoSelect.addEventListener('change', atualizarInfoEstoque);
+    tipoSelect.addEventListener('change', atualizarInfoEstoque);
+    
+    // Inicializar
+    atualizarInfoEstoque();
+});
+</script>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="movimentos/excluir.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+csrfCheck();
+
+$id = $_POST['id'];
+
+// Buscar movimento para saber o tipo e quantidade
+$stmt = $pdo->prepare("SELECT * FROM movimentos WHERE id = ?");
+$stmt->execute([$id]);
+$movimento = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($movimento) {
+    // Reverter o estoque
+    if ($movimento['tipo'] == 'E') {
+        // Se era entrada, subtrai do estoque
+        $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd - ? WHERE id = ?");
+    } else {
+        // Se era saída, adiciona ao estoque
+        $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd + ? WHERE id = ?");
+    }
+    $stmt->execute([$movimento['qtd'], $movimento['produto_id']]);
+    
+    // Excluir movimento
+    $stmt = $pdo->prepare("DELETE FROM movimentos WHERE id = ?");
+    $stmt->execute([$id]);
+}
+
+header('Location: index.php?sucesso=movimentacao_excluida');
+exit;
+?>
+</file>
+
+<file path="movimentos/index.php">
+<?php
+// movimentos/index.php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include $root . '/config/conexao.php';
+include $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar movimentos com nome do produto
+$stmt = $pdo->query("
+    SELECT m.*, p.nome as produto_nome 
+    FROM movimentos m 
+    LEFT JOIN produtos p ON m.produto_id = p.id 
+    ORDER BY m.data DESC
+");
+$movimentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar estatísticas para os cards
+$stmt_total = $pdo->query("SELECT COUNT(*) as total FROM movimentos");
+$total_movimentos = $stmt_total->fetch()['total'];
+
+$stmt_entradas = $pdo->query("SELECT COUNT(*) as total FROM movimentos WHERE tipo = 'E'");
+$total_entradas = $stmt_entradas->fetch()['total'];
+
+$stmt_saidas = $pdo->query("SELECT COUNT(*) as total FROM movimentos WHERE tipo = 'S'");
+$total_saidas = $stmt_saidas->fetch()['total'];
+
+$stmt_ultimo_mes = $pdo->query("
+    SELECT COUNT(*) as total 
+    FROM movimentos 
+    WHERE data >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+");
+$total_ultimo_mes = $stmt_ultimo_mes->fetch()['total'];
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<div class="container-fluid">
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 card-hover-primary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Movimentos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_movimentos; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 card-hover-success">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Entradas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_entradas; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2 card-hover-danger">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Saídas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_saidas; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 card-hover-warning">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Últimos 30 Dias
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_ultimo_mes; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-primary">
+            <h4 class="m-0 font-weight-bold text-white">
+                <i class="fas fa-exchange-alt"></i> Gerenciar Movimentos
+            </h4>
+            <div class="ms-auto me-3">
+                <a href="cadastrar.php" class="btn btn-light btn-sm">
+                    <i class="fas fa-plus text-primary"></i> Nova Movimentação
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <?php if (isset($_GET['sucesso'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> Movimentação <?php echo $_GET['sucesso']; ?> com sucesso!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['erro'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> Erro ao processar a solicitação.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="35%">Produto</th>
+                            <th width="15%">Tipo</th>
+                            <th width="15%">Quantidade</th>
+                            <th width="20%">Data</th>
+                            <th width="10%" class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($movimentos as $movimento): 
+                            $tipo_badge = $movimento['tipo'] == 'E' ? 'bg-success' : 'bg-danger';
+                            $tipo_texto = $movimento['tipo'] == 'E' ? 'Entrada' : 'Saída';
+                            $tipo_icone = $movimento['tipo'] == 'E' ? 'fa-arrow-down' : 'fa-arrow-up';
+                        ?>
+                            <tr>
+                                <td class="fw-bold">#<?php echo $movimento['id']; ?></td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($movimento['produto_nome']); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $tipo_badge; ?>">
+                                        <i class="fas <?php echo $tipo_icone; ?>"></i>
+                                        <?php echo $tipo_texto; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $movimento['tipo'] == 'E' ? 'bg-success' : 'bg-danger'; ?>">
+                                        <?php echo $movimento['qtd']; ?> un
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        <?php echo date('d/m/Y H:i', strtotime($movimento['data'])); ?>
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <form method="POST" action="excluir.php" class="d-inline"
+                                          onsubmit="return confirm('Tem certeza que deseja excluir esta movimentação?')">
+                                        <input type="hidden" name="id" value="<?php echo $movimento['id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Movimentação">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                        <?php if (empty($movimentos)): ?>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhuma movimentação registrada.</p>
+                                    <a href="cadastrar.php" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Registrar Primeira Movimentação
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Hover para card azul */
+.card-hover-primary:hover {
+    border-left-color: #2e59d9 !important;
+    border-color: #4e73df;
+}
+
+/* Hover para card amarelo */
+.card-hover-warning:hover {
+    border-left-color: #e4b22b !important;
+    border-color: #f6c23e;
+}
+
+/* Hover para card vermelho */
+.card-hover-danger:hover {
+    border-left-color: #d52a1e !important;
+    border-color: #e74a3b;
+}
+
+/* Hover para card verde */
+.card-hover-success:hover {
+    border-left-color: #17a673 !important;
+    border-color: #1cc88a;
+}
+
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-danger {
+    border-left: 4px solid #e74a3b !important;
+}
+
+.table-actions .btn-group {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.table-actions:hover .btn-group {
+    opacity: 1;
+}
+
+/* Estilo para badges de entrada/saída */
+.bg-success {
+    background-color: #1cc88a !important;
+}
+.bg-danger {
+    background-color: #e74a3b !important;
+}
+</style>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="movimentos/relatorio_prod.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar produtos com estoque
+$sql_produtos = "
+    SELECT p.*, 
+           COALESCE(SUM(CASE WHEN m.tipo = 'E' THEN m.qtd ELSE 0 END), 0) as total_entradas,
+           COALESCE(SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END), 0) as total_saidas
+    FROM produtos p
+    LEFT JOIN movimentos m ON p.id = m.produto_id
+    GROUP BY p.id
+    ORDER BY p.nome
+";
+
+$stmt = $pdo->query($sql_produtos);
+$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Exportar para PDF
+if (isset($_GET['exportar']) && $_GET['exportar'] == 'pdf') {
+    $html = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Relatório de Produtos</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .totais { margin-top: 20px; padding: 10px; background-color: #f9f9f9; }
+            .badge-estoque { padding: 2px 6px; border-radius: 3px; font-size: 12px; color: white; }
+            .estoque-positivo { background-color: #28a745; }
+            .estoque-zero { background-color: #dc3545; }
+            .tfoot { background-color: #e9ecef; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Relatório de Produtos em Estoque</h1>
+            <p>Data do Relatório: ' . date('d/m/Y H:i') . '</p>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Preço Custo</th>
+                    <th>Preço Venda</th>
+                    <th>Qtd Estoque</th>
+                    <th>Total Entradas</th>
+                    <th>Total Saídas</th>
+                    <th>Valor Total Estoque</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    $valor_total_geral = 0;
+    foreach ($produtos as $produto) {
+        $valor_total = $produto['qtd'] * $produto['preco_custo'];
+        $valor_total_geral += $valor_total;
+        $estoque_class = $produto['qtd'] > 0 ? 'estoque-positivo' : 'estoque-zero';
+        
+        $html .= '
+                <tr>
+                    <td>' . $produto['id'] . '</td>
+                    <td>' . htmlspecialchars($produto['nome']) . '</td>
+                    <td>R$ ' . number_format($produto['preco_custo'], 2, ',', '.') . '</td>
+                    <td>R$ ' . number_format($produto['preco_venda'], 2, ',', '.') . '</td>
+                    <td><span class="badge-estoque ' . $estoque_class . '">' . $produto['qtd'] . '</span></td>
+                    <td>' . $produto['total_entradas'] . '</td>
+                    <td>' . $produto['total_saidas'] . '</td>
+                    <td>R$ ' . number_format($valor_total, 2, ',', '.') . '</td>
+                </tr>';
+    }
+    
+    if (empty($produtos)) {
+        $html .= '
+                <tr>
+                    <td colspan="8" style="text-align: center;">Nenhum produto cadastrado.</td>
+                </tr>';
+    }
+    
+    $html .= '
+            </tbody>
+            <tfoot>
+                <tr class="tfoot">
+                    <td colspan="7" style="text-align: right;"><strong>Valor Total Geral em Estoque:</strong></td>
+                    <td><strong>R$ ' . number_format($valor_total_geral, 2, ',', '.') . '</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div style="margin-top: 30px; text-align: center; color: #666;">
+            <p>Relatório gerado pelo Sistema de Estoque</p>
+        </div>
+        
+        <script>
+            window.onload = function() {
+                window.print();
+            }
+        </script>
+    </body>
+    </html>';
+    
+    header('Content-Type: text/html; charset=utf-8');
+    echo $html;
+    exit;
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<h1>Relatório de Produtos</h1>
+
+<div class="d-flex justify-content-between mb-3">
+    <h4>Estoque de Produtos</h4>
+    <div>
+        <a href="relatorio_prod.php?exportar=pdf" class="btn btn-danger" target="_blank">
+            Exportar PDF
+        </a>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Preço Custo</th>
+            <th>Preço Venda</th>
+            <th>Qtd Estoque</th>
+            <th>Total Entradas</th>
+            <th>Total Saídas</th>
+            <th>Valor Total Estoque</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php 
+        $valor_total_geral = 0;
+        foreach ($produtos as $produto): 
+            $valor_total = $produto['qtd'] * $produto['preco_custo'];
+            $valor_total_geral += $valor_total;
+        ?>
+        <tr>
+            <td><?php echo $produto['id']; ?></td>
+            <td><?php echo htmlspecialchars($produto['nome']); ?></td>
+            <td>R$ <?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?></td>
+            <td>R$ <?php echo number_format($produto['preco_venda'], 2, ',', '.'); ?></td>
+            <td>
+                <span class="badge <?php echo $produto['qtd'] > 0 ? 'bg-success' : 'bg-danger'; ?>">
+                    <?php echo $produto['qtd']; ?>
+                </span>
+            </td>
+            <td><?php echo $produto['total_entradas']; ?></td>
+            <td><?php echo $produto['total_saidas']; ?></td>
+            <td>R$ <?php echo number_format($valor_total, 2, ',', '.'); ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (empty($produtos)): ?>
+        <tr>
+            <td colspan="8" class="text-center">Nenhum produto cadastrado.</td>
+        </tr>
+        <?php endif; ?>
+    </tbody>
+    <tfoot>
+        <tr class="table-primary">
+            <td colspan="7" class="text-end"><strong>Valor Total Geral em Estoque:</strong></td>
+            <td><strong>R$ <?php echo number_format($valor_total_geral, 2, ',', '.'); ?></strong></td>
+        </tr>
+    </tfoot>
+</table>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="movimentos/relatorio.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Definir período padrão (últimos 30 dias)
+$data_inicio = isset($_GET['data_inicio']) ? $_GET['data_inicio'] : date('Y-m-d', strtotime('-30 days'));
+$data_fim = isset($_GET['data_fim']) ? $_GET['data_fim'] : date('Y-m-d');
+
+// Buscar dados para relatório
+$where_conditions = [];
+$params = [];
+
+if ($data_inicio) {
+    $where_conditions[] = "m.data >= ?";
+    $params[] = $data_inicio;
+}
+
+if ($data_fim) {
+    $where_conditions[] = "m.data <= ?";
+    $params[] = $data_fim . ' 23:59:59';
+}
+
+$where_sql = "";
+if (!empty($where_conditions)) {
+    $where_sql = "WHERE " . implode(" AND ", $where_conditions);
+}
+
+// Buscar movimentações
+$sql_movimentos = "
+    SELECT m.*, p.nome as produto_nome 
+    FROM movimentos m 
+    LEFT JOIN produtos p ON m.produto_id = p.id 
+    $where_sql
+    ORDER BY m.data DESC
+";
+
+$stmt = $pdo->prepare($sql_movimentos);
+$stmt->execute($params);
+$movimentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar totais
+$sql_totais = "
+    SELECT 
+        COUNT(*) as total_movimentos,
+        SUM(CASE WHEN m.tipo = 'E' THEN m.qtd ELSE 0 END) as total_entradas,
+        SUM(CASE WHEN m.tipo = 'S' THEN m.qtd ELSE 0 END) as total_saidas
+    FROM movimentos m
+    $where_sql
+";
+
+$stmt = $pdo->prepare($sql_totais);
+$stmt->execute($params);
+$totais = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Exportar para CSV
+if (isset($_GET['exportar']) && $_GET['exportar'] == 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=relatorio_movimentacoes_' . date('Y-m-d') . '.csv');
+    
+    $output = fopen('php://output', 'w');
+    
+    // Cabeçalho CSV
+    fputcsv($output, [
+        'ID', 'Produto', 'Tipo', 'Quantidade', 'Data', 'Descrição Tipo'
+    ], ';');
+    
+    // Dados
+    foreach ($movimentos as $movimento) {
+        $tipo_desc = $movimento['tipo'] == 'E' ? 'Entrada' : 'Saída';
+        
+        fputcsv($output, [
+            $movimento['id'],
+            $movimento['produto_nome'],
+            $movimento['tipo'],
+            $movimento['qtd'],
+            date('d/m/Y H:i', strtotime($movimento['data'])),
+            $tipo_desc
+        ], ';');
+    }
+    
+    fclose($output);
+    exit;
+}
+
+// Exportar para PDF (Versão Simplificada - HTML para impressão)
+if (isset($_GET['exportar']) && $_GET['exportar'] == 'pdf') {
+    // Gerar HTML para impressão que pode ser salvo como PDF
+    $html = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Relatório de Movimentações</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .totais { margin-top: 20px; padding: 10px; background-color: #f9f9f9; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Relatório de Movimentações</h1>
+            <p>Período: ' . date('d/m/Y', strtotime($data_inicio)) . ' a ' . date('d/m/Y', strtotime($data_fim)) . '</p>
+            <p>Data do Relatório: ' . date('d/m/Y H:i') . '</p>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Tipo</th>
+                    <th>Quantidade</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    foreach ($movimentos as $movimento) {
+        $tipo_desc = $movimento['tipo'] == 'E' ? 'Entrada' : 'Saída';
+        $tipo_badge = $movimento['tipo'] == 'E' ? 'background-color: #28a745; color: white; padding: 2px 6px; border-radius: 3px;' 
+                                                : 'background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 3px;';
+        
+        $html .= '
+                <tr>
+                    <td>' . $movimento['id'] . '</td>
+                    <td>' . htmlspecialchars($movimento['produto_nome']) . '</td>
+                    <td><span style="' . $tipo_badge . '">' . $tipo_desc . '</span></td>
+                    <td>' . $movimento['qtd'] . '</td>
+                    <td>' . date('d/m/Y H:i', strtotime($movimento['data'])) . '</td>
+                </tr>';
+    }
+    
+    if (empty($movimentos)) {
+        $html .= '
+                <tr>
+                    <td colspan="5" style="text-align: center;">Nenhuma movimentação encontrada no período selecionado.</td>
+                </tr>';
+    }
+    
+    $html .= '
+            </tbody>
+        </table>
+        
+        <div class="totais">
+            <h3>Totais do Período</h3>
+            <p><strong>Total de Movimentos:</strong> ' . $totais['total_movimentos'] . '</p>
+            <p><strong>Total de Entradas:</strong> ' . $totais['total_entradas'] . '</p>
+            <p><strong>Total de Saídas:</strong> ' . $totais['total_saidas'] . '</p>
+        </div>
+        
+        <script>
+            window.onload = function() {
+                window.print();
+                setTimeout(function() {
+                    window.close();
+                }, 500);
+            }
+        </script>
+    </body>
+    </html>';
+    
+    header('Content-Type: text/html; charset=utf-8');
+    echo $html;
+    exit;
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<h1>Relatórios de Movimentações</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Filtros do Relatório</h5>
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="data_inicio" class="form-label">Data Início</label>
+                <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                       value="<?php echo $data_inicio; ?>">
+            </div>
+            <div class="col-md-4">
+                <label for="data_fim" class="form-label">Data Fim</label>
+                <input type="date" class="form-control" id="data_fim" name="data_fim" 
+                       value="<?php echo $data_fim; ?>">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                <a href="relatorio.php" class="btn btn-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Movimentos</h5>
+                <h2 class="card-text"><?php echo $totais['total_movimentos']; ?></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total Entradas</h5>
+                <h2 class="card-text"><?php echo $totais['total_entradas']; ?></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Total Saídas</h5>
+                <h2 class="card-text"><?php echo $totais['total_saidas']; ?></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between mb-3">
+    <h4>Movimentações do Período</h4>
+    <div>
+        <a href="relatorio.php?<?php echo http_build_query($_GET); ?>&exportar=csv" 
+           class="btn btn-success me-2">
+            Exportar CSV
+        </a>
+        <a href="relatorio.php?<?php echo http_build_query($_GET); ?>&exportar=pdf" 
+           class="btn btn-danger" target="_blank">
+            Exportar PDF
+        </a>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Produto</th>
+            <th>Tipo</th>
+            <th>Quantidade</th>
+            <th>Data</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($movimentos as $movimento): ?>
+        <tr>
+            <td><?php echo $movimento['id']; ?></td>
+            <td><?php echo htmlspecialchars($movimento['produto_nome']); ?></td>
+            <td>
+                <?php if ($movimento['tipo'] == 'E'): ?>
+                    <span class="badge bg-success">Entrada</span>
+                <?php else: ?>
+                    <span class="badge bg-danger">Saída</span>
+                <?php endif; ?>
+            </td>
+            <td><?php echo $movimento['qtd']; ?></td>
+            <td><?php echo date('d/m/Y H:i', strtotime($movimento['data'])); ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (empty($movimentos)): ?>
+        <tr>
+            <td colspan="5" class="text-center">Nenhuma movimentação encontrada no período selecionado.</td>
+        </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="produtos/adicionar.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+if ($_POST) {
+    csrfCheck();
+    $nome = $_POST['nome'];
+    $preco_custo = str_replace(',', '.', $_POST['preco_custo']);
+    $preco_venda = str_replace(',', '.', $_POST['preco_venda']);
+    $qtd = $_POST['qtd'];
+    
+    $stmt = $pdo->prepare("INSERT INTO produtos (nome, preco_custo, preco_venda, qtd) VALUES (?, ?, ?, ?)");
+    
+    if ($stmt->execute([$nome, $preco_custo, $preco_venda, $qtd])) {
+        header('Location: index.php?sucesso=cadastrado');
+        exit;
+    } else {
+        $erro = "Erro ao cadastrar produto!";
+    }
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<h1>Adicionar Produto</h1>
+
+<?php if (isset($erro)): ?>
+    <div class="alert alert-danger"><?php echo $erro; ?></div>
+<?php endif; ?>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+    <div class="mb-3">
+        <label for="nome" class="form-label">Nome do Produto</label>
+        <input type="text" class="form-control" id="nome" name="nome" required>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="preco_custo" class="form-label">Preço de Custo</label>
+                <input type="text" class="form-control" id="preco_custo" name="preco_custo" required>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="preco_venda" class="form-label">Preço de Venda</label>
+                <input type="text" class="form-control" id="preco_venda" name="preco_venda" required>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="qtd" class="form-label">Quantidade Inicial</label>
+                <input type="number" class="form-control" id="qtd" name="qtd" value="0" required>
+            </div>
+        </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Cadastrar</button>
+    <a href="index.php" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="produtos/alertas.php">
+<?php
+// produtos/alertas.php - VERSÃO CORRIGIDA
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar produtos com estoque baixo
+$stmt = $pdo->prepare("SELECT * FROM produtos WHERE qtd < ? ORDER BY qtd ASC");
+$stmt->execute([ESTOQUE_BAIXO_LIMITE]);
+$produtos_estoque_baixo = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar produtos sem estoque
+$stmt = $pdo->query("SELECT * FROM produtos WHERE qtd = 0 ORDER BY nome");
+$produtos_sem_estoque = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar produtos que precisam de reposição (abaixo de 5 unidades)
+$stmt = $pdo->prepare("SELECT * FROM produtos WHERE qtd > 0 AND qtd < 5 ORDER BY qtd ASC");
+$stmt->execute();
+$produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/Estoque/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card-alerta {
+            transition: transform 0.2s;
+            height: 100%;
+        }
+        .card-alerta:hover {
+            transform: translateY(-5px);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .progress {
+            height: 8px;
+        }
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .badge-alerta {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/Estoque/index.php">Estoque da loja</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
+                <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="mb-4"><i class="fas fa-exclamation-triangle text-warning"></i> Alertas de Estoque</h1>
+
+        <!-- Cards de Resumo Melhorados -->
+        <div class="row mb-4">
+            <!-- Produtos com Estoque Baixo -->
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2 card-alerta">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Estoque Baixo
+                                </div>
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col-auto">
+                                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                            <?php echo count($produtos_estoque_baixo); ?>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="progress progress-sm mr-2">
+                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                 style="width: <?php echo min(100, (count($produtos_estoque_baixo)/max(1, count($produtos_estoque_baixo) + 5))*100); ?>%"
+                                                 aria-valuenow="<?php echo count($produtos_estoque_baixo); ?>" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="<?php echo max(10, count($produtos_estoque_baixo) + 5); ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Abaixo de <?php echo ESTOQUE_BAIXO_LIMITE; ?> unidades</small>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos Sem Estoque -->
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-left-danger shadow h-100 py-2 card-alerta">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Sem Estoque
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <?php echo count($produtos_sem_estoque); ?>
+                                </div>
+                                <small class="text-muted">Produtos com estoque zerado</small>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos para Reposição -->
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2 card-alerta">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Reposição Urgente
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <?php echo count($produtos_reposicao); ?>
+                                </div>
+                                <small class="text-muted">Abaixo de 5 unidades</small>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-shopping-cart fa-2x text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Produtos com Estoque Baixo -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-warning shadow card-alerta">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-circle"></i> Estoque Baixo
+                        </h5>
+                        <span class="badge bg-danger"><?php echo count($produtos_estoque_baixo); ?></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <?php if (!empty($produtos_estoque_baixo)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-warning">
+                                        <tr>
+                                            <th width="40%">Produto</th>
+                                            <th width="20%">Estoque</th>
+                                            <th width="40%">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($produtos_estoque_baixo as $produto): ?>
+                                        <tr>
+                                            <td class="align-middle">
+                                                <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-warning text-dark"><?php echo $produto['qtd']; ?> un</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="editar.php?id=<?php echo $produto['id']; ?>" class="btn btn-outline-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="../movimentos/cadastrar.php?produto_id=<?php echo $produto['id']; ?>" class="btn btn-outline-success">
+                                                        <i class="fas fa-plus"></i> Repor
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <p class="text-muted mb-0">Nenhum produto com estoque baixo</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos Sem Estoque -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-danger shadow card-alerta">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-times-circle"></i> Sem Estoque
+                        </h5>
+                        <span class="badge bg-dark"><?php echo count($produtos_sem_estoque); ?></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <?php if (!empty($produtos_sem_estoque)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th width="40%">Produto</th>
+                                            <th width="20%">Estoque</th>
+                                            <th width="40%">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($produtos_sem_estoque as $produto): ?>
+                                        <tr>
+                                            <td class="align-middle">
+                                                <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-danger"><?php echo $produto['qtd']; ?> un</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="editar.php?id=<?php echo $produto['id']; ?>" class="btn btn-outline-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="../movimentos/cadastrar.php?produto_id=<?php echo $produto['id']; ?>" class="btn btn-outline-success">
+                                                        <i class="fas fa-plus"></i> Repor
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <p class="text-muted mb-0">Nenhum produto sem estoque</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos que Precisam de Reposição Urgente -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="card border-info shadow card-alerta">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shopping-cart"></i> Necessidade de Reposição Urgente
+                        </h5>
+                        <span class="badge bg-warning"><?php echo count($produtos_reposicao); ?></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <?php if (!empty($produtos_reposicao)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-info">
+                                        <tr>
+                                            <th width="25%">Produto</th>
+                                            <th width="15%">Estoque</th>
+                                            <th width="15%">Preço Custo</th>
+                                            <th width="15%">Quantidade</th>
+                                            <th width="15%">Valor Estimado</th>
+                                            <th width="15%">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($produtos_reposicao as $produto): 
+                                            $qtd_recomendada = ESTOQUE_BAIXO_LIMITE + 10;
+                                            $qtd_repor = $qtd_recomendada - $produto['qtd'];
+                                            $valor_estimado = $qtd_repor * $produto['preco_custo'];
+                                        ?>
+                                        <tr>
+                                            <td class="align-middle">
+                                                <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-info"><?php echo $produto['qtd']; ?> un</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                R$ <?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-warning text-dark"><?php echo $qtd_repor; ?> un</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <strong>R$ <?php echo number_format($valor_estimado, 2, ',', '.'); ?></strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <a href="../movimentos/cadastrar.php?produto_id=<?php echo $produto['id']; ?>&qtd_sugerido=<?php echo $qtd_repor; ?>" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-cart-plus"></i> Repor
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <p class="text-muted mb-0">Nenhum produto precisa de reposição urgente</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="index.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar para Produtos
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+</file>
+
+<file path="produtos/editar.php">
+<?php
+// produtos/alertas.php - VERSÃO FINAL CORRIGIDA
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+$id = $_GET['id'];
+
+if ($_POST) {
+    csrfCheck();
+}
+
+// Buscar produto
+$stmt = $pdo->prepare("SELECT * FROM produtos WHERE id = ?");
+$stmt->execute([$id]);
+$produto = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$produto) {
+    die("Produto não encontrado!");
+}
+
+if ($_POST) {
+    $nome = $_POST['nome'];
+    $preco_custo = str_replace(',', '.', $_POST['preco_custo']);
+    $preco_venda = str_replace(',', '.', $_POST['preco_venda']);
+    $qtd = $_POST['qtd'];
+    
+    $stmt = $pdo->prepare("UPDATE produtos SET nome = ?, preco_custo = ?, preco_venda = ?, qtd = ? WHERE id = ?");
+    
+    if ($stmt->execute([$nome, $preco_custo, $preco_venda, $qtd, $id])) {
+        header('Location: index.php?sucesso=atualizado');
+        exit;
+    } else {
+        $erro = "Erro ao atualizar produto!";
+    }
+}
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<h1>Editar Produto</h1>
+
+<?php if (isset($erro)): ?>
+    <div class="alert alert-danger"><?php echo $erro; ?></div>
+<?php endif; ?>
+<!-- Formulário de Edição -->
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+    <div class="mb-3">
+        <label for="nome" class="form-label">Nome do Produto</label>
+        <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars($produto['nome']); ?>" required>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="preco_custo" class="form-label">Preço de Custo</label>
+                <input type="text" class="form-control" id="preco_custo" name="preco_custo" value="<?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?>" required>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="preco_venda" class="form-label">Preço de Venda</label>
+                <input type="text" class="form-control" id="preco_venda" name="preco_venda" value="<?php echo number_format($produto['preco_venda'], 2, ',', '.'); ?>" required>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="qtd" class="form-label">Quantidade</label>
+                <input type="number" class="form-control" id="qtd" name="qtd" value="<?php echo $produto['qtd']; ?>" required>
+            </div>
+        </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Atualizar</button>
+    <a href="index.php" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="produtos/excluir.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+csrfCheck();
+
+$id = $_POST['id'];
+
+try {
+    // Verificar se existem movimentações para este produto
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total_movimentos FROM movimentos WHERE produto_id = ?");
+    $stmt->execute([$id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($result['total_movimentos'] > 0) {
+        header('Location: index.php?erro=produto_com_movimentacoes');
+        exit;
+    }
+    
+    // Excluir produto
+    $stmt = $pdo->prepare("DELETE FROM produtos WHERE id = ?");
+    
+    if ($stmt->execute([$id])) {
+        header('Location: index.php?sucesso=excluido');
+        exit;
+    } else {
+        header('Location: index.php?erro=erro_exclusao');
+        exit;
+    }
+    
+} catch(PDOException $e) {
+    header('Location: index.php?erro=erro_banco_dados');
+    exit;
+}
+?>
+</file>
+
+<file path="produtos/exluir.php">
+<?php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include_once $root . '/config/conexao.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_POST['id'])) {
+    header('Location: index.php?erro=id_nao_informado');
+    exit;
+}
+
+csrfCheck();
+
+$id = $_POST['id'];
+
+try {
+    // Buscar movimento para saber o tipo e quantidade
+    $stmt = $pdo->prepare("SELECT * FROM movimentos WHERE id = ?");
+    $stmt->execute([$id]);
+    $movimento = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$movimento) {
+        header('Location: index.php?erro=movimento_nao_encontrado');
+        exit;
+    }
+
+    // Reverter o estoque
+    if ($movimento['tipo'] == 'E') {
+        // Se era entrada, subtrai do estoque (reverte)
+        $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd - ? WHERE id = ?");
+    } else {
+        // Se era saída, adiciona ao estoque (reverte)  
+        $stmt = $pdo->prepare("UPDATE produtos SET qtd = qtd + ? WHERE id = ?");
+    }
+    $stmt->execute([$movimento['qtd'], $movimento['produto_id']]);
+    
+    // Excluir movimento
+    $stmt = $pdo->prepare("DELETE FROM movimentos WHERE id = ?");
+    
+    if ($stmt->execute([$id])) {
+        header('Location: index.php?sucesso=movimentacao_excluida');
+    } else {
+        header('Location: index.php?erro=erro_exclusao');
+    }
+    
+} catch(PDOException $e) {
+    header('Location: index.php?erro=erro_banco_dados');
+}
+?>
+</file>
+
+<file path="produtos/index.php">
+<?php
+// produtos/index.php
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include $root . '/config/conexao.php';
+include $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+// Buscar produtos
+$stmt = $pdo->query("SELECT * FROM produtos ORDER BY id DESC");
+$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Buscar estatísticas para os cards
+$stmt_total = $pdo->query("SELECT COUNT(*) as total FROM produtos");
+$total_produtos = $stmt_total->fetch()['total'];
+
+$stmt_estoque_baixo = $pdo->prepare("SELECT COUNT(*) as total FROM produtos WHERE qtd < ?");
+$stmt_estoque_baixo->execute([ESTOQUE_BAIXO_LIMITE]);
+$total_estoque_baixo = $stmt_estoque_baixo->fetch()['total'];
+
+$stmt_sem_estoque = $pdo->query("SELECT COUNT(*) as total FROM produtos WHERE qtd = 0");
+$total_sem_estoque = $stmt_sem_estoque->fetch()['total'];
+
+$stmt_valor_estoque = $pdo->query("SELECT SUM(preco_custo * qtd) as total FROM produtos");
+$valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
+?>
+
+<?php include '../includes/header.php'; ?>
+
+<?php if (isset($_GET['sucesso']) && $_GET['sucesso'] === 'importacao_concluida'): ?>
+    <div class="alert alert-success">Importação concluída. Produtos importados: <?php echo (int) ($_GET['total'] ?? 0); ?></div>
+<?php endif; ?>
+
+<div class="container-fluid">
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 card-hover-primary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Produtos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_produtos; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 card-hover-warning">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Estoque Baixo
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_estoque_baixo; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2 card-hover-danger">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Sem Estoque
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $total_sem_estoque; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 card-hover-success">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Valor do Estoque
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ <?php echo number_format($valor_total_estoque, 2, ',', '.'); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center bg-primary">
+            <h4 class="m-0 font-weight-bold text-white">
+                <i class="fas fa-boxes"></i> Gerenciar Produtos
+            </h4>
+            <div class="ms-auto me-3"> <!-- Adicionado ms-auto e me-3 para mover para direita -->
+                <a href="adicionar.php" class="btn btn-light btn-sm">
+                    <i class="fas fa-plus text-primary"></i> Adicionar Produto
+                </a>
+                <a href="importar.php" class="btn btn-light btn-sm ms-2">
+                    <i class="fas fa-file-csv text-success"></i> Importar CSV
+                </a>
+                <a href="alertas.php" class="btn btn-warning btn-sm">
+                    <i class="fas fa-exclamation-triangle"></i> Ver Alertas
+                    <?php if ($total_estoque_baixo > 0): ?>
+                        <span class="badge bg-danger"><?php echo $total_estoque_baixo; ?></span>
+                    <?php endif; ?>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <?php if (isset($_GET['sucesso'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> Produto <?php echo $_GET['sucesso']; ?> com sucesso!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['erro'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> Erro ao processar a solicitação.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="25%">Nome</th>
+                            <th width="15%">Preço de Custo</th>
+                            <th width="15%">Preço de Venda</th>
+                            <th width="10%">Quantidade</th>
+                            <th width="10%">Status</th>
+                            <th width="20%" class="text-center">Ações</th> <!-- Adicionado text-center -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($produtos as $produto): 
+                            $status_estoque = '';
+                            $badge_class = '';
+                            
+                            if ($produto['qtd'] == 0) {
+                                $status_estoque = 'Sem Estoque';
+                                $badge_class = 'bg-danger';
+                            } elseif ($produto['qtd'] < ESTOQUE_BAIXO_LIMITE) {
+                                $status_estoque = 'Estoque Baixo';
+                                $badge_class = 'bg-warning';
+                            } else {
+                                $status_estoque = 'Normal';
+                                $badge_class = 'bg-success';
+                            }
+                        ?>
+                            <tr>
+                                <td class="fw-bold">#<?php echo $produto['id']; ?></td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted">R$ </span>
+                                    <strong><?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="text-success">R$ </span>
+                                    <strong class="text-success"><?php echo number_format($produto['preco_venda'], 2, ',', '.'); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $badge_class; ?>">
+                                        <?php echo $produto['qtd']; ?> un
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="badge <?php echo $badge_class; ?>">
+                                        <?php echo $status_estoque; ?>
+                                    </small>
+                                </td>
+                                <td class="text-center"> <!-- Adicionado text-center -->
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="editar.php?id=<?php echo $produto['id']; ?>" 
+                                           class="btn btn-outline-primary" 
+                                           title="Editar Produto">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="../movimentos/cadastrar.php?produto_id=<?php echo $produto['id']; ?>" 
+                                           class="btn btn-outline-success" 
+                                           title="Adicionar Estoque">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        <form method="POST" action="excluir.php" class="d-inline ms-1"
+                                              onsubmit="return confirm('Tem certeza que deseja excluir este produto?')">
+                                            <input type="hidden" name="id" value="<?php echo $produto['id']; ?>">
+                                            <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Produto">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                        <?php if (empty($produtos)): ?>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhum produto cadastrado.</p>
+                                    <a href="adicionar.php" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Adicionar Primeiro Produto
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Hover para card azul */
+.card-hover-primary:hover {
+    border-left-color: #2e59d9 !important;
+    border-color: #4e73df;
+}
+
+/* Hover para card amarelo */
+.card-hover-warning:hover {
+    border-left-color: #e4b22b !important;
+    border-color: #f6c23e;
+}
+
+/* Hover para card vermelho */
+.card-hover-danger:hover {
+    border-left-color: #d52a1e !important;
+    border-color: #e74a3b;
+}
+
+/* Hover para card verde */
+.card-hover-success:hover {
+    border-left-color: #17a673 !important;
+    border-color: #1cc88a;
+}
+
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-danger {
+    border-left: 4px solid #e74a3b !important;
+}
+
+.table-actions .btn-group {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.table-actions:hover .btn-group {
+    opacity: 1;
+}
+</style>
+
+<?php include '../includes/footer.php'; ?>
+</file>
+
+<file path="index.php">
+<?php 
+// index.php principal
+$root = $_SERVER['DOCUMENT_ROOT'] . '/Estoque';
+include $root . '/config/conexao.php';
+include $root . '/config/config.php';
+include_once $root . '/config/auth.php';
+requireLogin();
+
+?>
+
+
+<?php include 'includes/header.php'; ?>
+
+<div class="row">
+    <div class="col-md-12">
+        <h1>Monitore aqui o estoque da loja</h1>
+        <p class="lead">Sistema de monitoramento de estoque</p>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Produtos Cadastrados</h5>
+                        <?php
+                        $stmt = $pdo->query("SELECT COUNT(*) as total FROM produtos");
+                        $total = $stmt->fetch()['total'];
+                        ?>
+                        <h2 class="card-text"><?php echo $total; ?></h2>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Total em Estoque</h5>
+                        <?php
+                        $stmt = $pdo->query("SELECT SUM(qtd) as total_estoque FROM produtos");
+                        $total_estoque = $stmt->fetch()['total_estoque'] ?? 0;
+                        ?>
+                        <h2 class="card-text"><?php echo $total_estoque; ?> unidades</h2>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Movimentos Hoje</h5>
+                        <?php
+                        $stmt = $pdo->query("SELECT COUNT(*) as movimentos_hoje FROM movimentos WHERE DATE(data) = CURDATE()");
+                        $movimentos_hoje = $stmt->fetch()['movimentos_hoje'];
+                        ?>
+                        <h2 class="card-text"><?php echo $movimentos_hoje; ?></h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Valor Total Estoque</h5>
+                        <?php
+                        $stmt = $pdo->query("SELECT SUM(qtd * preco_custo) as valor_total FROM produtos");
+                        $valor_total = $stmt->fetch()['valor_total'] ?? 0;
+                        ?>
+                        <h2 class="card-text">R$ <?php echo number_format($valor_total, 2, ',', '.'); ?></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botões de Navegação Principal -->
+        <div class="mt-4">
+            <div class="d-grid gap-2 d-md-block">
+                <a href="produtos/index.php" class="btn btn-primary me-2">
+                    <i class="fas fa-boxes"></i> Gerenciar Produtos
+                </a>
+                <a href="movimentos/index.php" class="btn btn-secondary me-2">
+                    <i class="fas fa-exchange-alt"></i> Ver Movimentos
+                </a>
+                <a href="comparativos/index.php" class="btn btn-warning me-2">
+                    <i class="fas fa-chart-line"></i> Comparativos
+                </a>
+                <a href="movimentos/relatorio.php" class="btn btn-success me-2">
+                    <i class="fas fa-file-alt"></i> Relatórios
+                </a>
+            </div>
+        </div>
+
+        <!-- Seção de Acesso Rápido -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-rocket"></i> Acesso Rápido</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-boxes fa-2x text-primary mb-2"></i>
+                                        <h6 class="card-subtitle mb-2 text-muted">Produtos</h6>
+                                        <p class="card-text">Gerenciar produtos do estoque</p>
+                                        <a href="produtos/index.php" class="btn btn-outline-primary btn-sm">Acessar</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-exchange-alt fa-2x text-secondary mb-2"></i>
+                                        <h6 class="card-subtitle mb-2 text-muted">Movimentos</h6>
+                                        <p class="card-text">Entradas e saídas do estoque</p>
+                                        <a href="movimentos/index.php" class="btn btn-outline-secondary btn-sm">Acessar</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                                        <h6 class="card-subtitle mb-2 text-muted">Comparativos</h6>
+                                        <p class="card-text">Análise de desempenho</p>
+                                        <a href="comparativos/index.php" class="btn btn-outline-warning btn-sm">Acessar</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                                        <h6 class="card-subtitle mb-2 text-muted">Relatórios</h6>
+                                        <p class="card-text">Relatórios completos</p>
+                                        <a href="movimentos/relatorio.php" class="btn btn-outline-success btn-sm">Acessar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Estatísticas Rápidas -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie"></i> Estatísticas Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        // Buscar estatísticas adicionais
+                        $stmt = $pdo->query("SELECT COUNT(*) as total FROM movimentos WHERE DATE(data) = CURDATE()");
+                        $movimentos_hoje = $stmt->fetch()['total'];
+                        
+                        $stmt = $pdo->query("SELECT SUM(qtd) as total FROM movimentos WHERE tipo = 'E' AND DATE(data) = CURDATE()");
+                        $entradas_hoje = $stmt->fetch()['total'] ?? 0;
+                        
+                        $stmt = $pdo->query("SELECT SUM(qtd) as total FROM movimentos WHERE tipo = 'S' AND DATE(data) = CURDATE()");
+                        $saidas_hoje = $stmt->fetch()['total'] ?? 0;
+                        
+                        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM produtos WHERE qtd < ?");
+                        $stmt->execute([ESTOQUE_BAIXO_LIMITE]);
+                        $produtos_estoque_baixo = $stmt->fetch()['total'];
+                        ?>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Movimentos hoje
+                                <span class="badge bg-primary rounded-pill"><?php echo $movimentos_hoje; ?></span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Entradas hoje
+                                <span class="badge bg-success rounded-pill"><?php echo $entradas_hoje; ?> un</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Saídas hoje
+                                <span class="badge bg-danger rounded-pill"><?php echo $saidas_hoje; ?> un</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Produtos com estoque baixo
+                                <span class="badge bg-warning rounded-pill"><?php echo $produtos_estoque_baixo; ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt"></i> Ações Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="produtos/adicionar.php" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-plus"></i> Adicionar Produto
+                            </a>
+                            <a href="movimentos/cadastrar.php" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-plus"></i> Nova Movimentação
+                            </a>
+                            <a href="produtos/alertas.php" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-exclamation-triangle"></i> Ver Alertas
+                            </a>
+                            <a href="comparativos/index.php" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-chart-bar"></i> Análise Comparativa
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas de Estoque -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Alertas de Estoque
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php
+                // Buscar alertas
+                $stmt = $pdo->prepare("SELECT COUNT(*) as total_baixo FROM produtos WHERE qtd < ?");
+                $stmt->execute([ESTOQUE_BAIXO_LIMITE]);
+                $total_baixo = $stmt->fetch()['total_baixo'];
+                
+                $stmt = $pdo->query("SELECT COUNT(*) as total_zero FROM produtos WHERE qtd = 0");
+                $total_zero = $stmt->fetch()['total_zero'];
+                ?>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <?php if ($total_baixo > 0): ?>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <strong><?php echo $total_baixo; ?> produto(s)</strong> com estoque abaixo do limite mínimo.
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                Nenhum produto com estoque baixo.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?php if ($total_zero > 0): ?>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                <strong><?php echo $total_zero; ?> produto(s)</strong> sem estoque.
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                Nenhum produto sem estoque.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <?php if ($total_baixo > 0 || $total_zero > 0): ?>
+                <div class="text-center">
+                    <a href="produtos/alertas.php" class="btn btn-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Ver Detalhes dos Alertas
+                    </a>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>
+</file>
+
+</files>

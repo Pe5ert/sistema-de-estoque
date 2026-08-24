@@ -29,4 +29,4 @@ CREATE TABLE movimentos (
 -- Inserir alguns dados de exemplo (opcional)
 INSERT INTO produtos (nome, preco_custo, preco_venda, qtd) VALUES
 ('Produto Exemplo 1', 10.50, 15.00, 100),
-('Produto Exemplo 2', 20.00, 30.00, 50);
+('Produto Exemplo 2', 20.00, 30.00, 50);    

@@ -185,12 +185,14 @@ $total_ultimo_mes = $stmt_ultimo_mes->fetch()['total'];
                                     </small>
                                 </td>
                                 <td class="text-center">
-                                    <a href="excluir.php?id=<?php echo $movimento['id']; ?>" 
-                                       class="btn btn-outline-danger btn-sm" 
-                                       title="Excluir Movimentação"
-                                       onclick="return confirm('Tem certeza que deseja excluir esta movimentação?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    <form method="POST" action="excluir.php" class="d-inline"
+                                          onsubmit="return confirm('Tem certeza que deseja excluir esta movimentação?')">
+                                        <input type="hidden" name="id" value="<?php echo $movimento['id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Movimentação">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
