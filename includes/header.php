@@ -24,6 +24,8 @@ $usuario_logado = currentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estoque da loja</title>
+    <link rel="icon" href="/Estoque/favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#004d61">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/Estoque/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -32,24 +34,29 @@ $usuario_logado = currentUser();
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/Estoque/index.php">Estoque da loja</a>
-            <div class="navbar-nav me-auto">
-                <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
-                <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
-                <?php if ($usuario_logado['perfil'] === 'admin'): ?>
-                    <a class="nav-link" href="/Estoque/usuarios/index.php">Usuários</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Alternar navegação">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMenu">
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
+                    <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+                    <?php if ($usuario_logado['perfil'] === 'admin'): ?>
+                        <a class="nav-link" href="/Estoque/usuarios/index.php">Usuários</a>
+                    <?php endif; ?>
+                </div>
+                <?php if ($usuario_logado): ?>
+                <div class="navbar-nav">
+                    <span class="nav-link text-white-50">
+                        <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($usuario_logado['nome']); ?>
+                        <small>(<?php echo htmlspecialchars($usuario_logado['perfil']); ?>)</small>
+                    </span>
+                    <a class="nav-link" href="/Estoque/logout.php">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </a>
+                </div>
                 <?php endif; ?>
             </div>
-            <?php if ($usuario_logado): ?>
-            <div class="navbar-nav">
-                <span class="nav-link text-white-50">
-                    <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($usuario_logado['nome']); ?>
-                    <small>(<?php echo htmlspecialchars($usuario_logado['perfil']); ?>)</small>
-                </span>
-                <a class="nav-link" href="/Estoque/logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
-            </div>
-            <?php endif; ?>
         </div>
     </nav>
 

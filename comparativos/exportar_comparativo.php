@@ -45,6 +45,8 @@ $html = '
 <head>
     <meta charset="UTF-8">
     <title>Relatório de Comparativos</title>
+    <link rel="icon" href="/Estoque/favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#004d61">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }

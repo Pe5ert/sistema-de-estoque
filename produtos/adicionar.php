@@ -38,21 +38,21 @@ if ($_POST) {
     </div>
     
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <div class="mb-3">
                 <label for="preco_custo" class="form-label">Preço de Custo</label>
                 <input type="text" class="form-control" id="preco_custo" name="preco_custo" required>
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <div class="mb-3">
                 <label for="preco_venda" class="form-label">Preço de Venda</label>
                 <input type="text" class="form-control" id="preco_venda" name="preco_venda" required>
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <div class="mb-3">
                 <label for="qtd" class="form-label">Quantidade Inicial</label>
                 <input type="number" class="form-control" id="qtd" name="qtd" value="0" required>

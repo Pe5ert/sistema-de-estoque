@@ -18,7 +18,7 @@ requireLogin();
         <p class="lead">Sistema de monitoramento de estoque</p>
         
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
                         <h5 class="card-title">Produtos Cadastrados</h5>
@@ -31,7 +31,7 @@ requireLogin();
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <h5 class="card-title">Total em Estoque</h5>
@@ -44,7 +44,7 @@ requireLogin();
                 </div>
             </div>
             
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-info">
                     <div class="card-body">
                         <h5 class="card-title">Movimentos Hoje</h5>
@@ -57,7 +57,7 @@ requireLogin();
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-warning">
                     <div class="card-body">
                         <h5 class="card-title">Valor Total Estoque</h5>

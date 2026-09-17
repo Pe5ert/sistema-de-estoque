@@ -27,6 +27,8 @@ $produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alertas de Estoque</title>
+    <link rel="icon" href="/Estoque/favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#004d61">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/Estoque/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -58,9 +60,14 @@ $produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/Estoque/index.php">Estoque da loja</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
-                <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Alternar navegação">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMenu">
+                <div class="navbar-nav">
+                    <a class="nav-link" href="/Estoque/produtos/index.php">Produtos</a>
+                    <a class="nav-link" href="/Estoque/movimentos/index.php">Movimentos</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -71,7 +78,7 @@ $produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- Cards de Resumo Melhorados -->
         <div class="row mb-4">
             <!-- Produtos com Estoque Baixo -->
-            <div class="col-xl-4 col-md-6 mb-4">
+            <div class="col-12 col-xl-4 col-md-6 mb-4">
                 <div class="card border-left-warning shadow h-100 py-2 card-alerta">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
@@ -107,7 +114,7 @@ $produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <!-- Produtos Sem Estoque -->
-            <div class="col-xl-4 col-md-6 mb-4">
+            <div class="col-12 col-xl-4 col-md-6 mb-4">
                 <div class="card border-left-danger shadow h-100 py-2 card-alerta">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
@@ -129,7 +136,7 @@ $produtos_reposicao = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <!-- Produtos para Reposição -->
-            <div class="col-xl-4 col-md-6 mb-4">
+            <div class="col-12 col-xl-4 col-md-6 mb-4">
                 <div class="card border-left-info shadow h-100 py-2 card-alerta">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">

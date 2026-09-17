@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Estoque">
+  <rect width="64" height="64" rx="12" fill="#004d61"/>
+  <path d="M12 20 32 10l20 10v24L32 54 12 44z" fill="#5cd1d8"/>
+  <path d="m12 20 20 10 20-10M32 30v24" fill="none" stroke="#004d61" stroke-width="4"/>
+  <path d="M22 25h20" stroke="#ff5031" stroke-width="4"/>
+</svg>

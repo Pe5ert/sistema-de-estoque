@@ -100,6 +100,27 @@ body::before {
   60% { transform: translateY(-3px); }
 }
 
+@media (max-width: 575.98px) {
+  .btn-group-sm > .btn,
+  .btn-group-sm > form > .btn,
+  .table .btn-sm {
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .card-header > div {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
 /* Navbar Lúdica Refinada */
 .navbar {
   background: var(--gradient-hero) !important;

@@ -6,10 +6,6 @@ include $root . '/config/config.php';
 include_once $root . '/config/auth.php';
 requireLogin();
 
-// Buscar produtos
-$stmt = $pdo->query("SELECT * FROM produtos ORDER BY id DESC");
-$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Buscar estatísticas para os cards
 $stmt_total = $pdo->query("SELECT COUNT(*) as total FROM produtos");
 $total_produtos = $stmt_total->fetch()['total'];
@@ -34,7 +30,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
 <div class="container-fluid">
     <!-- Cards de Estatísticas -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-12 col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2 card-hover-primary">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -54,7 +50,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-12 col-xl-3 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2 card-hover-warning">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -74,7 +70,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-12 col-xl-3 col-md-6 mb-4">
             <div class="card border-left-danger shadow h-100 py-2 card-hover-danger">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -94,7 +90,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-12 col-xl-3 col-md-6 mb-4">
             <div class="card border-left-success shadow h-100 py-2 card-hover-success">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -151,7 +147,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
             <?php endif; ?>
 
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-bordered table-hover" id="dataTable" data-server-side="true" data-table-type="produtos" data-table-endpoint="dados.php" width="100%" cellspacing="0">
                     <thead class="table-light">
                         <tr>
                             <th width="5%">ID</th>
@@ -163,82 +159,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
                             <th width="20%" class="text-center">Ações</th> <!-- Adicionado text-center -->
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($produtos as $produto): 
-                            $status_estoque = '';
-                            $badge_class = '';
-                            
-                            if ($produto['qtd'] == 0) {
-                                $status_estoque = 'Sem Estoque';
-                                $badge_class = 'bg-danger';
-                            } elseif ($produto['qtd'] < ESTOQUE_BAIXO_LIMITE) {
-                                $status_estoque = 'Estoque Baixo';
-                                $badge_class = 'bg-warning';
-                            } else {
-                                $status_estoque = 'Normal';
-                                $badge_class = 'bg-success';
-                            }
-                        ?>
-                            <tr>
-                                <td class="fw-bold">#<?php echo $produto['id']; ?></td>
-                                <td>
-                                    <strong><?php echo htmlspecialchars($produto['nome']); ?></strong>
-                                </td>
-                                <td>
-                                    <span class="text-muted">R$ </span>
-                                    <strong><?php echo number_format($produto['preco_custo'], 2, ',', '.'); ?></strong>
-                                </td>
-                                <td>
-                                    <span class="text-success">R$ </span>
-                                    <strong class="text-success"><?php echo number_format($produto['preco_venda'], 2, ',', '.'); ?></strong>
-                                </td>
-                                <td>
-                                    <span class="badge <?php echo $badge_class; ?>">
-                                        <?php echo $produto['qtd']; ?> un
-                                    </span>
-                                </td>
-                                <td>
-                                    <small class="badge <?php echo $badge_class; ?>">
-                                        <?php echo $status_estoque; ?>
-                                    </small>
-                                </td>
-                                <td class="text-center"> <!-- Adicionado text-center -->
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="editar.php?id=<?php echo $produto['id']; ?>" 
-                                           class="btn btn-outline-primary" 
-                                           title="Editar Produto">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="../movimentos/cadastrar.php?produto_id=<?php echo $produto['id']; ?>" 
-                                           class="btn btn-outline-success" 
-                                           title="Adicionar Estoque">
-                                            <i class="fas fa-plus"></i>
-                                        </a>
-                                        <form method="POST" action="excluir.php" class="d-inline ms-1"
-                                              onsubmit="return confirm('Tem certeza que deseja excluir este produto?')">
-                                            <input type="hidden" name="id" value="<?php echo $produto['id']; ?>">
-                                            <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Produto">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        
-                        <?php if (empty($produtos)): ?>
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Nenhum produto cadastrado.</p>
-                                    <a href="adicionar.php" class="btn btn-primary">
-                                        <i class="fas fa-plus"></i> Adicionar Primeiro Produto
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
