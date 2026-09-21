@@ -44,6 +44,7 @@ $html = '
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Comparativos</title>
     <link rel="icon" href="/Estoque/favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#004d61">

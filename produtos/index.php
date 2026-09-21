@@ -24,7 +24,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
 <?php include '../includes/header.php'; ?>
 
 <?php if (isset($_GET['sucesso']) && $_GET['sucesso'] === 'importacao_concluida'): ?>
-    <div class="alert alert-success">Importação concluída. Produtos importados: <?php echo (int) ($_GET['total'] ?? 0); ?></div>
+                    <div class="alert alert-success">Importação concluída. Produtos importados: <?php echo (int) ($_GET['total'] ?? 0); ?></div>
 <?php endif; ?>
 
 <div class="container-fluid">
@@ -134,7 +134,7 @@ $valor_total_estoque = $stmt_valor_estoque->fetch()['total'] ?? 0;
         <div class="card-body">
             <?php if (isset($_GET['sucesso'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i> Produto <?php echo $_GET['sucesso']; ?> com sucesso!
+                    <i class="fas fa-check-circle"></i> Produto <?php echo htmlspecialchars($_GET['sucesso'], ENT_QUOTES, 'UTF-8'); ?> com sucesso!
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
