@@ -1,0 +1,30 @@
+{
+  "name": "sistema-de-estoque-v2",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,yellow \"pnpm dev:api\" \"pnpm dev:web\"",
+    "dev:web": "pnpm --filter @stock/web dev",
+    "dev:api": "pnpm --filter @stock/api dev",
+    "build": "pnpm -r build",
+    "lint": "eslint apps packages",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test",
+    "db:migrate": "pnpm --filter @stock/api db:migrate",
+    "db:seed": "pnpm --filter @stock/api db:seed",
+    "db:generate": "pnpm --filter @stock/api db:generate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.5",
+    "globals": "^16.0.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0"
+  }
+}
