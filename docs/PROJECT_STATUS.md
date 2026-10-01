@@ -7,18 +7,20 @@ Resumo para continuar o trabalho em outra máquina. Esta branch contém a base t
 - Monorepo pnpm com React/Vite/Tailwind em `apps/web`, NestJS/Prisma em `apps/api` e tipos independentes em `packages/shared`.
 - Schema inicial de usuários, categorias, produtos e movimentos; migration e seed de desenvolvimento.
 - API com `/api/health` e documentação Swagger em `/api/docs`.
-- Quatro rotas visuais: visão geral, produtos, movimentações e histórico. Os valores vêm exclusivamente de `apps/web/src/demo-data.ts` e são identificados como fictícios.
+- Rotas visuais: visão geral, produtos, novo produto, editar produto, movimentações e histórico. A sessão começa com os exemplos de `apps/web/src/demo-data.ts`; cadastro/edição usam somente memória local e são identificados como demonstração.
 - Direção visual em `docs/frontend/DESIGN.md` e diagnóstico do legado em `docs/legacy-diagnosis.md`.
+- Refinamento frontend: catálogo com busca/filtros locais, thumbnails opcionais e detalhe de leitura; consulta por SKU com prévia de entrada/saída sem gravação; histórico com motivo, autor e saldos antes/depois. Os exemplos existentes foram preservados, sem preços inventados.
+- Formulários: Novo Produto dedicado, edição compartilhada, SKU/barcode separados, custo/venda opcionais, mínimo, imagem principal com seleção/drop/preview/substituir/remover, descrição secundária e Save-and-new. Consulta de movimentos encontra também barcode cadastrado na sessão; aceita quantidades decimais e prepara a próxima consulta pelo teclado. Relatório em `docs/frontend/FORMS_REVIEW.md`.
 
 ## Pendente
 
 - A migration e o seed ainda precisam ser executados e validados com PostgreSQL real. A máquina de desenvolvimento usada até aqui não tinha Docker nem PostgreSQL; não foi feita instalação no sistema.
-- Não há autenticação, cadastro ou edição de produtos, upload de imagens, detalhe clicável, leitura real de código de barras, endpoints de movimentos ou atualização entre usuários.
+- Não há persistência de cadastro/edição, upload real de imagens, integração de barcode com API, endpoints de movimentos ou atualização entre usuários. A entrada inicial é preparada na UI, mas não cria movimento nem altera saldo. Recarregar a página restaura o catálogo de exemplos. Autenticação fica com o outro desenvolvedor.
 - O saldo de `Product` não deve ser editado diretamente. Cada alteração precisa criar um `StockMovement` em transação, com proteção contra concorrência e saldos anterior e resultante.
 
 ## Próximas decisões discutidas
 
-Foram levantadas como possibilidades futuras, sem implementação: foto principal do produto, fluxo de adicionar/editar, painel de detalhe ao selecionar uma linha, atualização da interface após salvar e atualização entre usuários. Definir escopo e prioridade antes de começar essas funcionalidades.
+Continuam pendentes: integrar cadastro/edição à API, armazenamento de imagem principal, gravação de movimentos/entrada inicial e atualização entre usuários. Os fluxos de adicionar/editar e imagem principal estão disponíveis na camada de apresentação, sem persistência. Outro desenvolvedor está trabalhando no login, que ficou fora do escopo desta rodada.
 
 ## Como abrir a prévia
 

@@ -1,0 +1,32 @@
+{
+  "checks": [
+    "desktop / sem overflow",
+    "desktop /products sem overflow",
+    "desktop /movements sem overflow",
+    "desktop /history sem overflow",
+    "sete produtos iniciais",
+    "busca por SKU",
+    "detalhe abre",
+    "Escape fecha detalhe",
+    "estado vazio",
+    "filtro categoria",
+    "filtro atenção",
+    "placeholder de imagem quebrada",
+    "fluxo aguarda identificação",
+    "SKU desconhecido",
+    "busca por teclado",
+    "motivo obrigatório",
+    "saldo 18 para 14",
+    "saída acima do saldo",
+    "troca de código limpa produto e feedback",
+    "filtro histórico",
+    "mobile / sem overflow",
+    "mobile /products sem overflow",
+    "mobile /movements sem overflow",
+    "mobile /history sem overflow",
+    "menu móvel abre",
+    "Escape fecha menu móvel",
+    "sem exceções no navegador"
+  ],
+  "errors": []
+}

@@ -1,0 +1,75 @@
+import { z } from 'zod';
+import type { ProductPresentation } from './demo-data';
+
+export const productUnits = [
+  ['un', 'UN · Unidade'], ['cx', 'CX · Caixa'], ['pct', 'PCT · Pacote'], ['kg', 'KG · Quilograma'],
+  ['g', 'G · Grama'], ['l', 'L · Litro'], ['ml', 'ML · Mililitro'], ['m', 'M · Metro'],
+] as const;
+
+// Keep typing free. Accept decimal comma/dot and pt-BR grouped monetary values.
+export function parseDecimal(value: string, precision: number): number | null {
+  let text = value.trim().replace(/^R\$\s*/, '').replace(/\s/g, '');
+  if (!text || !/^[\d.,]+$/.test(text)) return null;
+  if (text.includes(',')) {
+    if ((text.match(/,/g) ?? []).length !== 1) return null;
+    const [whole, fraction] = text.split(',');
+    if (!/^\d+$/.test(whole) && !/^\d{1,3}(\.\d{3})+$/.test(whole)) return null;
+    text = whole.replace(/\./g, '') + '.' + fraction;
+  } else if ((text.match(/\./g) ?? []).length > 1 || (precision === 2 && /^\d{1,3}(\.\d{3})+$/.test(text))) {
+    if (!/^\d{1,3}(\.\d{3})+$/.test(text)) return null;
+    text = text.replace(/\./g, '');
+  }
+  if (!new RegExp(`^\\d+(?:\\.\\d{1,${precision}})?$`).test(text)) return null;
+  const [whole, fraction = ''] = text.split('.');
+  if (!Number.isSafeInteger(Number(whole + fraction.padEnd(precision, '0')))) return null;
+  const result = Number(text);
+  return Number.isFinite(result) ? result : null;
+}
+
+export const formatQuantity = (value: number) => value.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+export const editableNumber = (value?: number | null) => value == null ? '' : String(value).replace('.', ',');
+const editableMoney = (value?: number | null) => value == null ? '' : value.toLocaleString('pt-BR', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+export interface ProductFormValues {
+  sku: string;
+  barcode: string;
+  name: string;
+  category: string;
+  unit: string;
+  cost: string;
+  sale: string;
+  minimum: string;
+  initialMode: 'none' | 'entry';
+  initialQuantity: string;
+  description: string;
+}
+
+export function productFormDefaults(product?: ProductPresentation): ProductFormValues {
+  return {
+    sku: product?.sku ?? '', barcode: product?.barcode ?? '', name: product?.name ?? '',
+    category: product?.category ?? '', unit: product?.unit ?? 'un', cost: editableMoney(product?.costPrice),
+    sale: editableMoney(product?.price), minimum: editableNumber(product?.minimum ?? 0),
+    initialMode: 'none', initialQuantity: '', description: product?.description ?? '',
+  };
+}
+
+export function validateProductForm(values: ProductFormValues, products: readonly ProductPresentation[], editingId?: string) {
+  return z.object({
+    sku: z.string().trim().min(1, 'SKU obrigatório.').max(80, 'Use até 80 caracteres.'),
+    barcode: z.string().trim().max(80, 'Use até 80 caracteres.'),
+    name: z.string().trim().min(1, 'Nome obrigatório.').max(200, 'Use até 200 caracteres.'),
+    category: z.string().min(1, 'Selecione a categoria.'),
+    unit: z.string().refine((value) => productUnits.some(([unit]) => unit === value), 'Selecione uma unidade.'),
+    cost: z.string().refine((value) => !value.trim() || parseDecimal(value, 2) !== null, 'Informe um custo válido, como 19,90.'),
+    sale: z.string().refine((value) => !value.trim() || parseDecimal(value, 2) !== null, 'Informe um preço válido, como 29,90.'),
+    minimum: z.string().refine((value) => parseDecimal(value, 3) !== null, 'Informe um mínimo válido, como 0 ou 2,5.'),
+    initialMode: z.enum(['none', 'entry']), initialQuantity: z.string(), description: z.string().trim(),
+  }).superRefine((data, context) => {
+    if (products.some((product) => product.id !== editingId && product.sku.toLocaleLowerCase() === data.sku.toLocaleLowerCase())) context.addIssue({ code: 'custom', path: ['sku'], message: 'Este SKU já existe nesta demonstração.' });
+    if (data.barcode && products.some((product) => product.id !== editingId && product.barcode === data.barcode)) context.addIssue({ code: 'custom', path: ['barcode'], message: 'Este código de barras já existe nesta demonstração.' });
+    if (!editingId && data.initialMode === 'entry') {
+      const quantity = parseDecimal(data.initialQuantity, 3);
+      if (quantity === null || quantity <= 0) context.addIssue({ code: 'custom', path: ['initialQuantity'], message: 'A entrada inicial precisa ser maior que zero.' });
+    }
+  }).safeParse(values);
+}

@@ -1,0 +1,18 @@
+ M apps/web/src/App.tsx
+ M apps/web/src/demo-data.ts
+ M apps/web/src/styles.css
+ M docs/PROJECT_STATUS.md
+ M docs/frontend/DESIGN.md
+?? apps/web/public/
+?? apps/web/src/MovementWorkbench.tsx
+?? apps/web/src/ProductForm.tsx
+?? apps/web/src/ProductImageField.tsx
+?? apps/web/src/Products.tsx
+?? apps/web/src/catalog.tsx
+?? apps/web/src/form-controls.tsx
+?? apps/web/src/inventory-ui.tsx
+?? apps/web/src/product-form-model.ts
+?? artifacts/
+?? docs/frontend/FORMS_REVIEW.md
+?? docs/frontend/PRODUCT_FORM_POLISH.md
+?? docs/frontend/REFINEMENT_REVIEW.md

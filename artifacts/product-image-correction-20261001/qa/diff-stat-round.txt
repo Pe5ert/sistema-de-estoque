@@ -1,0 +1,4 @@
+apps/web/src/ProductForm.tsx | +1 -1
+apps/web/src/ProductImageField.tsx | +7 -6
+apps/web/src/styles.css | +12 -13
+3 files changed, 20 insertions(+), 20 deletions(-)

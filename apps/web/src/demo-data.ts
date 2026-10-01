@@ -1,11 +1,27 @@
 // Dados locais usados somente para a prévia visual da interface.
-export const products = [
-  { sku: 'CAB-001', name: 'Cabo USB-C 2 m', category: 'Acessórios', unit: 'un', stock: 124, minimum: 30 },
-  { sku: 'MOU-002', name: 'Mouse sem fio', category: 'Periféricos', unit: 'un', stock: 18, minimum: 20 },
-  { sku: 'TEC-003', name: 'Teclado mecânico', category: 'Periféricos', unit: 'un', stock: 0, minimum: 8 },
+export interface ProductPresentation {
+  id?: string;
+  sku: string;
+  barcode?: string | null;
+  name: string;
+  category: string;
+  unit: string;
+  stock: number;
+  minimum: number;
+  imageUrl?: string | null;
+  price?: number | null;
+  costPrice?: number | null;
+  description?: string | null;
+  initialEntry?: { quantity: number; reason: string } | null;
+}
+
+export const products: readonly ProductPresentation[] = [
+  { sku: 'CAB-001', name: 'Cabo USB-C 2 m', category: 'Acessórios', unit: 'un', stock: 124, minimum: 30, imageUrl: '/products/cable.svg' },
+  { sku: 'MOU-002', name: 'Mouse sem fio', category: 'Periféricos', unit: 'un', stock: 18, minimum: 20, imageUrl: '/products/mouse.svg' },
+  { sku: 'TEC-003', name: 'Teclado mecânico', category: 'Periféricos', unit: 'un', stock: 0, minimum: 8, imageUrl: '/products/keyboard.svg' },
   { sku: 'SUP-004', name: 'Suporte para notebook', category: 'Acessórios', unit: 'un', stock: 72, minimum: 15 },
   { sku: 'FON-005', name: 'Fonte USB-C 65 W', category: 'Energia', unit: 'un', stock: 9, minimum: 12 },
-  { sku: 'HUB-006', name: 'Hub USB 4 portas', category: 'Acessórios', unit: 'un', stock: 45, minimum: 10 },
+  { sku: 'HUB-006', name: 'Hub USB 4 portas', category: 'Acessórios', unit: 'un', stock: 45, minimum: 10, imageUrl: '/products/hub.svg' },
   { sku: 'ORG-007', name: 'Organizador de cabos', category: 'Acessórios', unit: 'un', stock: 210, minimum: 40 },
 ] as const;
 

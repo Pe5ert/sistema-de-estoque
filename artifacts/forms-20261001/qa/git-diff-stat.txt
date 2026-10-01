@@ -1,0 +1,6 @@
+ apps/web/src/App.tsx      | 176 +++++++---------
+ apps/web/src/demo-data.ts |  26 ++-
+ apps/web/src/styles.css   | 525 ++++++++++++++++++++++++++++++++++------------
+ docs/PROJECT_STATUS.md    |   8 +-
+ docs/frontend/DESIGN.md   |  26 ++-
+ 5 files changed, 505 insertions(+), 256 deletions(-)

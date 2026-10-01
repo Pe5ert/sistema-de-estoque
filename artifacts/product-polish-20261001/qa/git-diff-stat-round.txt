@@ -1,0 +1,4 @@
+ .../web/src/ProductForm.tsx                        | 77 ++++++++++++++--------
+ 1 file changed, 48 insertions(+), 29 deletions(-)
+ .../web/src/styles.css                             | 63 +++++++++++++---------
+ 1 file changed, 37 insertions(+), 26 deletions(-)
