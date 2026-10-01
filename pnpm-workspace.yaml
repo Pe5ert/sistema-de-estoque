@@ -4,6 +4,7 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': false
+  argon2: true
   esbuild: true
   prisma: true
 minimumReleaseAgeExclude:
@@ -11,3 +12,4 @@ minimumReleaseAgeExclude:
   - '@nestjs/core@11.2.7'
   - '@nestjs/platform-express@11.2.7'
   - lucide-react@1.49.0
+  - '@nestjs/testing@11.2.7'

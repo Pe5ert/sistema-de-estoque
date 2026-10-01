@@ -1,23 +1,25 @@
 import dotenv from 'dotenv';
 import { resolve } from 'node:path';
-import { hash } from 'bcryptjs';
+import { argon2id, hash } from 'argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 dotenv.config({ path: resolve(process.cwd(), '../../.env') });
 
 const connectionString = process.env.DATABASE_URL;
-const adminEmail = process.env.SEED_ADMIN_EMAIL;
+const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
 const adminPassword = process.env.SEED_ADMIN_PASSWORD;
 
 if (
   !connectionString ||
   !adminEmail ||
   !adminPassword ||
-  adminPassword.length < 8
+  adminPassword.length < 8 ||
+  adminPassword.length > 128 ||
+  process.env.NODE_ENV === 'production'
 ) {
   throw new Error(
-    'Configure DATABASE_URL, SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD (mínimo 8 caracteres) no .env.',
+    'Configure DATABASE_URL, SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD (8 a 128 caracteres; apenas desenvolvimento) no .env.',
   );
 }
 
@@ -59,13 +61,14 @@ const samples = [
 ] as const;
 
 async function main() {
+  const passwordHash = await hash(adminPassword!, { type: argon2id });
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { passwordHash },
     create: {
       name: 'Administrador de desenvolvimento',
       email: adminEmail,
-      passwordHash: await hash(adminPassword, 12),
+      passwordHash,
       role: 'ADMIN',
     },
   });
@@ -123,8 +126,8 @@ async function main() {
 }
 
 main()
-  .catch((error: unknown) => {
-    console.error('Falha no seed:', error);
+  .catch(() => {
+    console.error('Falha no seed. Verifique a configuração e a conexão PostgreSQL.');
     process.exitCode = 1;
   })
   .finally(async () => {

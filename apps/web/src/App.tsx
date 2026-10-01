@@ -4,6 +4,9 @@ import {
   Boxes, ChevronRight, History, LayoutDashboard, Menu, Package, X,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { LoginPage } from './auth/LoginPage';
+import { ProtectedRoute } from './auth/ProtectedRoute';
+import { UserSession } from './auth/UserSession';
 import { movements, stockStatus } from './demo-data';
 import { DemoCatalogProvider, useDemoCatalog } from './catalog';
 import { ProductFormPage } from './ProductForm';
@@ -79,6 +82,7 @@ function Shell() {
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
           <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1).map(navItem)}</div>
         </nav>
+        <UserSession />
         <div className="sidebar-footer">
           <Boxes size={20} strokeWidth={1.6} aria-hidden="true" />
           <span>CONTROLE DE ESTOQUE<small>Ambiente de demonstração</small></span>
@@ -227,13 +231,15 @@ function HistoryPage() {
 
 export function App() {
   return (
-    <DemoCatalogProvider><Routes><Route element={<Shell />}>
+    <Routes>
+      <Route path="login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}><Route element={<DemoCatalogProvider><Shell /></DemoCatalogProvider>}>
       <Route index element={<Overview />} />
       <Route path="products" element={<Products />} />
       <Route path="products/new" element={<ProductFormPage />} />
       <Route path="products/:id/edit" element={<ProductFormPage />} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
-    </Route></Routes></DemoCatalogProvider>
+    </Route></Route></Routes>
   );
 }

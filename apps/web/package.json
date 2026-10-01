@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@stock/shared": "workspace:*",
     "@tanstack/react-query": "^5.104.0",
     "lucide-react": "^1.49.0",
