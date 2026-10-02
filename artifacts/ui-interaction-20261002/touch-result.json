@@ -1,0 +1,9 @@
+{
+  "scope": "HTTP fixtures, touch-enabled Chromium 390x844",
+  "checks": [
+    "Tap opens/closes drawer with inert restored",
+    "Tap chart shows tooltip",
+    "Tap mobile menu navigates and restores workspace"
+  ],
+  "browserErrors": []
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowUpRight, Plus, Search } from 'lucide-react';
+import { ChevronRight, Pencil, Plus, Search } from 'lucide-react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { stockStatus, dateLabel, reasonLabels, typeLabels } from './inventory-model';
 import { useCategories, useProducts, useProduct, useMovements } from './inventory-api';
@@ -23,7 +23,7 @@ export function Products() {
   const page = Math.max(1, Number(params.get('page')) || 1);
   const query = useProducts({ page, limit: 20, search, category, stockStatus: ({ success: 'NORMAL', danger: 'OUT', warning: 'LOW', attention: 'ATTENTION' } as Record<string, string>)[statusFilter], active: params.get('active') ?? 'true' });
   const filtered = query.data?.items ?? [];
-  const hasFilters = Boolean(search || category || statusFilter);
+  const hasFilters = Boolean(search || category || statusFilter || (params.get('active') && params.get('active') !== 'true'));
   const updateFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (key !== 'page') next.delete('page');
@@ -52,13 +52,13 @@ export function Products() {
             <thead><tr><th scope="col">PRODUTO / SKU</th><th scope="col">DISPONÍVEL</th><th scope="col">MÍNIMO</th><th scope="col">PREÇO</th><th scope="col">SITUAÇÃO</th><th scope="col"><span className="sr-only">Detalhes</span></th></tr></thead>
             <tbody>{filtered.map((product) => {
               const status = stockStatus(product.stock, product.minimum);
-              return <tr key={product.id} tabIndex={0} aria-label={'Detalhes de ' + product.name} className={'product-row clickable-row row-' + status.tone} onClick={event => openFromRow(event, () => setSelectedId(product.id))} onKeyDown={event => { if (event.target === event.currentTarget && event.key === 'Enter') { event.preventDefault(); setSelectedId(product.id); } }}>
+              return <tr key={product.id} tabIndex={0} aria-selected={selectedId === product.id} aria-label={'Detalhes de ' + product.name} className={'product-row clickable-row row-' + status.tone + (selectedId === product.id ? ' row-selected' : '')} onClick={event => openFromRow(event, () => setSelectedId(product.id))} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelectedId(product.id); } }}>
                 <td data-label="Produto"><ProductIdentity product={product} /></td>
                 <td data-label="Disponível"><div className="stock-number">{product.stock}<span>{product.unit}</span></div><StockMeter stock={product.stock} minimum={product.minimum} name={product.name} /></td>
                 <td data-label="Mínimo"><strong className="reference-value">{product.minimum} <span>{product.unit}</span></strong></td>
                 <td data-label="Preço" className={'price-cell' + (product.price == null ? ' price-missing' : '')}>{product.price == null ? <span aria-label="Preço não informado">—</span> : currency.format(product.price)}</td>
                 <td data-label="Situação"><Status label={status.label} tone={status.tone} /></td>
-                <td className="row-action-cell"><button type="button" className="row-action" aria-label={'Ver detalhes de ' + product.name} onClick={() => setSelectedId(product.id)}><ArrowUpRight size={18} aria-hidden="true" /><span className="mobile-action-label">Ver detalhes</span></button></td>
+                <td className="row-action-cell"><button type="button" className="row-action row-detail-action" aria-label={'Ver detalhes de ' + product.name} onClick={() => setSelectedId(product.id)}><ChevronRight size={18} aria-hidden="true" /><span className="mobile-action-label">Ver detalhes</span></button></td>
               </tr>;
             })}</tbody>
           </table>
@@ -80,7 +80,7 @@ function ProductDrawer({ id, close }: { id: string; close: () => void }) {
   return <DetailDrawer title="Identificação do produto" close={close}><DataState pending={query.isPending} error={query.error} retry={query.refetch}>{product && <>
     <ProductThumbnail imageUrl={product.imageUrl} name={product.name} large /><h2>{product.name}</h2><p className="detail-meta">{product.sku} · {product.category}</p><Status {...stockStatus(product.stock, product.minimum)} />
     <dl className="detail-facts"><div><dt>Saldo atual</dt><dd>{product.record.stock} {product.unit}</dd></div><div><dt>Estoque mínimo</dt><dd>{product.record.minimumStock} {product.unit}</dd></div><div><dt>Custo</dt><dd>{product.costPrice == null ? 'Não informado' : currency.format(product.costPrice)}</dd></div><div><dt>Venda</dt><dd>{product.price == null ? 'Não informado' : currency.format(product.price)}</dd></div><div><dt>Código de barras</dt><dd>{product.barcode ?? 'Não informado'}</dd></div><div><dt>Cadastro</dt><dd>{product.active ? 'Ativo' : 'Inativo'}</dd></div></dl>
-    {product.description && <p className="detail-meta">{product.description}</p>}<Link className="primary-button" to={'/products/' + id + '/edit'}>Editar produto</Link><h3>Movimentações recentes</h3>
+    {product.description && <p className="detail-meta">{product.description}</p>}<div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div><h3>Movimentações recentes</h3>
     <DataState pending={movements.isPending} error={movements.error} retry={movements.refetch}>{movements.data?.items.map(item => <p className="detail-meta" key={item.id}>{typeLabels[item.type]} · {item.quantity} {product.unit}<br />{dateLabel(item.createdAt)} · {reasonLabels[item.reason]}</p>)}{movements.data?.total === 0 && <p className="detail-meta">Nenhuma movimentação registrada.</p>}</DataState>
   </>}</DataState></DetailDrawer>;
 }

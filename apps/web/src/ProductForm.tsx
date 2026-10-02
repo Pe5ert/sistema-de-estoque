@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Barcode, ArrowRight, Check, Save } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { useCategories, useProduct, useInventoryMutation } from './inventory-api';
 import { apiUnit, type ProductPresentation } from './inventory-model';
 import { apiClient, ApiError } from './lib/api';
@@ -39,12 +39,19 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const [savingAction, setSavingAction] = useState<'save' | 'another' | null>(null);
   const [focusNextProduct, setFocusNextProduct] = useState(false);
   const saving = useRef(false);
+  const allowNavigation = useRef(false);
+  const cancelPanel = useRef<HTMLDivElement>(null);
   const pointerFocusing = useRef(false);
   const { register, control, watch, handleSubmit, setError, clearErrors, reset, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<ProductFormValues>({ defaultValues: productFormDefaults(product) });
   const unit = watch('unit');
   const initialMode = watch('initialMode');
   const dirty = isDirty || imageUrl !== (product?.imageUrl ?? '');
   const busy = isSubmitting || savingAction !== null;
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => !allowNavigation.current && (dirty || saving.current) && currentLocation.pathname !== nextLocation.pathname);
+  const confirmingLeave = cancelRequested || blocker.state === 'blocked';
+  useEffect(() => {
+    if (confirmingLeave) cancelPanel.current?.focus();
+  }, [confirmingLeave]);
 
   useEffect(() => { setFocus(editing ? 'name' : 'barcode'); window.scrollTo({ top: 0, left: 0 }); }, [editing, setFocus]);
   useEffect(() => {
@@ -86,7 +93,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
         setDetailsOpen(false);
         setNotice('Produto cadastrado. Próxima leitura pronta.');
         setFocusNextProduct(true);
-      } else navigate('/products', { state: { notice: message } });
+      } else { allowNavigation.current = true; navigate('/products', { state: { notice: message } }); }
     } catch (error) {
       const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : null) : null;
       setError(field ?? 'root', { message: error instanceof Error ? error.message : 'Não foi possível salvar. Seus dados continuam no formulário.' });
@@ -95,7 +102,9 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   });
 
   const cancel = () => { if (dirty) setCancelRequested(true); else navigate('/products'); };
-  return <form className="product-form" noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
+  const stay = () => { setCancelRequested(false); if (blocker.state === 'blocked') blocker.reset(); setFocus(editing ? 'name' : 'barcode'); };
+  const discard = () => { allowNavigation.current = true; if (blocker.state === 'blocked') blocker.proceed(); else navigate('/products'); };
+  return <form className="product-form" aria-busy={busy} noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
     pointerFocusing.current = false;
     const form = event.currentTarget;
     requestAnimationFrame(() => keepControlVisible(form, document.activeElement));
@@ -153,7 +162,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
     </fieldset>
     {errors.root && <p className="form-submit-error" role="alert">{errors.root.message}</p>}
     <div className="form-actions">
-      {cancelRequested ? <div className="cancel-confirmation" role="alert"><strong>Descartar o preenchimento?</strong><button type="button" className="text-button" onClick={() => setCancelRequested(false)}>Continuar preenchendo</button><button type="button" className="secondary-button" onClick={() => navigate('/products')}>Descartar e sair</button></div> : <>
+      {confirmingLeave ? <div ref={cancelPanel} tabIndex={-1} className="cancel-confirmation" role="alert"><strong>{busy ? 'Aguarde o produto ser salvo.' : 'Descartar o preenchimento?'}</strong><button type="button" className="secondary-button" onClick={stay}>Continuar preenchendo</button><button type="button" disabled={busy} className="destructive-button" onClick={discard}>Descartar e sair</button></div> : <>
         <button type="button" className="text-button cancel-button" onClick={cancel} disabled={busy}>Cancelar</button>
         <span className="session-note">Alterações gravadas ao salvar</span>
         <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>

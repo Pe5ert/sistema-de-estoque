@@ -32,3 +32,7 @@ API iniciada; health real retornou **503 / database down**, `/auth/me` anônimo 
 ## Decisões futuras
 
 Matriz de permissões por role; upload/storage de arquivos; atualização entre usuários. Não implementar vendas, clientes, fornecedores, financeiro, NF, pedidos, múltiplos depósitos ou realtime nesta rodada. O seed DEV permanece opcional e explícito; não é fallback da aplicação.
+
+## Polimento operacional — 02/10/2026
+
+Concluída a rodada de interação: estados compartilhados de controles, selects nativos estilizados, linhas com seleção/teclado, drawers modais em todas as larguras, proteção de rascunho em rotas internas e validação de datas antes da API. Painel destaca produtos ativos e usa contagens de movimentos no gráfico, evitando soma de unidades incompatíveis. Movimento mostra saldo previsto diretamente e confirma com um botão. Gates lint/typecheck/test/build/diff passaram; 35 testes locais, 10 grupos de QA mais 3 verificações touch. Consulta real do painel e cinco prints do Neon registrados. Sem escrita de produto/estoque no Neon nesta rodada; concorrência real permanece pendente. Veja frontend/UI_INTERACTION_REVIEW.md e artifacts/ui-interaction-20261002.

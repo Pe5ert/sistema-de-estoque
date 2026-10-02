@@ -19,7 +19,7 @@ export function useProduct(id?: string | null) {
   return useQuery({ queryKey: ['product', id], enabled: Boolean(id), queryFn: async ({ signal }) => presentProduct(await apiClient<ProductRecord>('/products/' + id, { signal })) });
 }
 export function useCategories() { return useQuery({ queryKey: ['categories'], queryFn: ({ signal }) => apiClient<CategoryRecord[]>('/categories', { signal }) }); }
-export function useMovements(filters: Filters) { return useQuery({ queryKey: ['movements', filters], queryFn: ({ signal }) => apiClient<Page<MovementRecord>>('/stock-movements?' + queryString(filters), { signal }) }); }
+export function useMovements(filters: Filters, enabled = true) { return useQuery({ queryKey: ['movements', filters], enabled, queryFn: ({ signal }) => apiClient<Page<MovementRecord>>('/stock-movements?' + queryString(filters), { signal }) }); }
 export function useMovement(id?: string | null) { return useQuery({ queryKey: ['movement', id], enabled: Boolean(id), queryFn: ({ signal }) => apiClient<MovementRecord>('/stock-movements/' + id, { signal }) }); }
 export function useDashboard() { return useQuery({ queryKey: ['dashboard'], queryFn: ({ signal }) => apiClient<DashboardSummary>('/dashboard/summary', { signal }) }); }
 export function useInventoryMutation<T, V>(perform: (input: V) => Promise<T>) {

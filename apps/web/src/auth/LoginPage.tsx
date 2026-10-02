@@ -67,13 +67,13 @@ export function LoginPage() {
                   <div className="auth-password">
                     <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" maxLength={128}
                       aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} {...register('password')} />
-                    <button type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword}
+                    <button className="icon-button" type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword}
                       onClick={() => setShowPassword((show) => !show)}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                   </div>
                   {errors.password && <p className="auth-field-error" id="password-error">{errors.password.message}</p>}
                 </div>
                 {error && <p className="auth-form-error" role="alert">{error}</p>}
-                <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Entrando…' : 'Entrar'}<ArrowRight size={19} aria-hidden="true" /></button>
+                <button className="auth-submit" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>{isSubmitting ? 'Entrando…' : 'Entrar'}<ArrowRight size={19} aria-hidden="true" /></button>
               </form>
               <p className="login-session-note"><LockKeyhole size={14} aria-hidden="true" /><span>Sessão de até 8 horas.<br />Use Sair ao encerrar sua operação.</span></p>
             </div>

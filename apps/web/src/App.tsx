@@ -37,7 +37,7 @@ function Shell() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMenuOpen(false);
       if (event.key === 'Tab') {
-        const links = sidebar.current?.querySelectorAll<HTMLAnchorElement>('a');
+        const links = sidebar.current?.querySelectorAll<HTMLElement>('a,button:not(:disabled)');
         if (!links?.length) return;
         const first = links[0];
         const last = links[links.length - 1];
@@ -53,6 +53,7 @@ function Shell() {
     const Icon = item.icon;
     return (
       <NavLink key={item.path} to={item.path} end={item.path === '/'}
+        onClick={() => setMenuOpen(false)}
         className={({ isActive }) => 'nav-link' + (isActive ? ' nav-link-active' : '')}>
         <Icon size={18} strokeWidth={1.9} aria-hidden="true" />
         <span>{item.label}</span>
@@ -95,7 +96,7 @@ function Shell() {
         </header>
         <main className="main-content" id="main-content" tabIndex={-1}>
           <div className="page-heading">
-            <div><div className="eyebrow">{current.path === '/' ? 'POSIÇÃO DO ESTOQUE' : 'OPERAÇÃO / ESTOQUE'}</div><h1>{current.label}</h1><p className="page-description">{current.description}</p></div>
+            <div><h1>{current.label}</h1><p className="page-description">{current.description}</p></div>
           </div>
           <Outlet />
         </main>

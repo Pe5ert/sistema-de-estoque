@@ -1,0 +1,34 @@
+{
+  "scope": "HTTP fixture UI checks; no real database writes",
+  "checks": [
+    "Whole-row hover, primary navigation hover and blue keyboard focus",
+    "Desktop modal drawer, selected row, Shift+Tab/Tab wrap, Escape, focus restoration",
+    "Native select keyboard, integrated chevron, clear inactive filter",
+    "Dirty sidebar/internal links, browser Back and Cancel all reuse confirmation; stay preserves values and discard follows intended route",
+    "Inverted date range makes no API request, fields retained; corrected range queries; UUID only in drawer with copy feedback",
+    "Failed save preserves draft, successful save and edit navigate without discard prompt",
+    "Compact scanner after lookup; editable quantity, native radio arrows, live balance 100 → 80, insufficient stock, single confirmed POST, duplicate prevention",
+    "Mixed UNIT/KG dashboard counts products; chart tooltips use record counts, hover/focus/Escape; zero-alert card positive",
+    "1440/1024/390 widths, fullscreen mobile drawer, mobile dirty sidebar, no horizontal overflow",
+    "Login uses shared primary/secondary/icon focus and password visibility"
+  ],
+  "screenshots": [
+    "after-products.png",
+    "after-product-drawer.png",
+    "after-dirty-form.png",
+    "after-history-invalid-period.png",
+    "after-history-drawer.png",
+    "after-edit-form.png",
+    "after-movement-ready.png",
+    "after-dashboard-attention.png",
+    "after-dashboard-clear.png",
+    "after-products-tablet.png",
+    "after-drawer-mobile.png",
+    "after-form-mobile.png",
+    "after-history-mobile.png",
+    "after-movement-mobile.png",
+    "after-login-mobile.png",
+    "after-login-desktop.png"
+  ],
+  "browserErrors": []
+}

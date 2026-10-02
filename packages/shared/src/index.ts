@@ -52,5 +52,5 @@ export interface DashboardSummary {
   units: string; products: number; normal: number; low: number; out: number;
   costValue: string; productsWithoutCost: number; priorities: ProductRecord[];
   recent: MovementRecord[]; today: { entries: number; exits: number; adjustments: number };
-  days: { date: string; entries: string; exits: string }[]; timezone: string;
+  days: { date: string; entries: string; exits: string; entryRecords: number; exitRecords: number }[]; timezone: string;
 }
