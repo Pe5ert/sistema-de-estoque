@@ -101,7 +101,7 @@ h1 { margin-bottom: 0; font-size: clamp(30px, 2.6vw, 38px); font-weight: 700; li
 .page-description { margin: 8px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
 .block-label { font-size: 11px; font-weight: 700; letter-spacing: .11em; }
 
-.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .94fr) minmax(0, 1.04fr); grid-template-rows: 246px 283px; gap: 14px; }
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .94fr) minmax(0, 1.04fr); grid-template-rows: 246px minmax(283px, auto); gap: 14px; }
 .hero-stock, .risk-panel, .activity-panel, .attention-panel { min-width: 0; overflow: hidden; }
 .hero-stock { display: flex; flex-direction: column; justify-content: space-between; padding: 22px 24px 17px; background: var(--accent); color: var(--accent-contrast); }
 .hero-topline, .risk-topline, .dark-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -150,7 +150,7 @@ h1 { margin-bottom: 0; font-size: clamp(30px, 2.6vw, 38px); font-weight: 700; li
 .adjust-text { color: var(--info) !important; }
 .activity-link { display: flex; align-items: center; justify-content: space-between; min-height: 50px; color: var(--info); font-size: 12px; font-weight: 600; }
 .activity-link:hover { color: var(--text-primary); }
-.attention-panel { grid-column: 1 / span 2; grid-row: 2; padding: 21px 23px 0; background: var(--surface); border: 1px solid var(--border); }
+.attention-panel { grid-column: 1 / span 2; grid-row: 2; padding: 21px 23px 16px; background: var(--surface); border: 1px solid var(--border); }
 .attention-panel h2 { margin: 10px 0 5px; }
 .attention-row { display: grid; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); grid-template-columns: minmax(170px, 1.4fr) minmax(95px, .75fr) auto; min-height: 66px; }
 .attention-row:last-child { border-bottom: 0; }
@@ -363,7 +363,7 @@ h1 { margin-bottom: 0; font-size: clamp(30px, 2.6vw, 38px); font-weight: 700; li
 @media (max-width: 900px) {
   .app-layout { display: block; }
   .sidebar { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 218px; visibility: hidden; transform: translateX(-100%); transition: transform .18s, visibility .18s; top: 0; height: 100dvh; min-height: 0; }
-  .sidebar-open { visibility: visible; transform: translateX(0); }
+  .sidebar-open { visibility: visible; transform: translateX(0); transition: transform .18s; }
   .sidebar-backdrop { position: fixed; z-index: 20; inset: 0; display: block; border: 0; background: var(--overlay); }
   .menu-toggle { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary); }
   .topbar { padding: 0 22px; }

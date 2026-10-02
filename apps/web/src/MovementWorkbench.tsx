@@ -35,8 +35,10 @@ export function MovementWorkbench() {
   const quantity = parseDecimal(quantityText, 3);
   const preview = liveProduct && quantity !== null && quantity > 0 && !result ? { before: liveProduct.stock, after: Math.round((liveProduct.stock + (type === 'Saída' ? -quantity : quantity)) * 1000) / 1000, quantity, type } : null;
   useEffect(() => {
-    if (lookupFocus && selected) { setFocus('quantity'); setLookupFocus(false); }
-  }, [lookupFocus, selected, setFocus]);
+    if (lookupFocus && selected && !productQuery.isPending && !productQuery.isError) {
+      setFocus('quantity'); setLookupFocus(false);
+    }
+  }, [lookupFocus, selected, productQuery.isPending, productQuery.isError, setFocus]);
   const resetPreview = () => { setResult(null); clearErrors(); mutation.reset(); };
   const chooseProduct = (product: ProductPresentation) => {
     setSelected(product); setMatches([]); setLookupState('found');

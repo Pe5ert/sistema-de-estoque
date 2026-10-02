@@ -1,0 +1,33 @@
+{
+  "checks": [
+    {
+      "name": "1440 px: todos os produtos da fila visíveis sem corte",
+      "status": "PASS"
+    },
+    {
+      "name": "Busca por Enter foca quantidade após carregar produto",
+      "status": "PASS"
+    },
+    {
+      "name": "Menu mobile aberto por clique foca primeiro link",
+      "status": "PASS"
+    },
+    {
+      "name": "Menu contém foco com Shift+Tab",
+      "status": "PASS"
+    },
+    {
+      "name": "Escape restaura foco no botão",
+      "status": "PASS"
+    },
+    {
+      "name": "Menu por Enter foca primeiro link",
+      "status": "PASS"
+    },
+    {
+      "name": "Navegação fecha menu",
+      "status": "PASS"
+    }
+  ],
+  "environment": "API isolada de teste, sem PostgreSQL"
+}

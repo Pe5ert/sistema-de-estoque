@@ -1,0 +1,171 @@
+{
+  "date": "2026-10-02",
+  "commit": "918feb4",
+  "environment": "HTTP fixtures on loopback port 3100; all data fictitious; real PostgreSQL/Nest auth/persistence/concurrency NOT validated",
+  "status": "completed_with_findings",
+  "checks": [
+    {
+      "name": "Resumo inicial: 6 produtos, 3 normais, 2 baixos, 1 zerado",
+      "status": "PASS"
+    },
+    {
+      "name": "Valor a custo: R$ 1.220,00 com produto sem custo excluído",
+      "status": "PASS"
+    },
+    {
+      "name": "Gráfico apresenta sete dias",
+      "status": "PASS"
+    },
+    {
+      "name": "Gráfico acessível por teclado: tooltip com contagens",
+      "status": "PASS"
+    },
+    {
+      "name": "Escape fecha tooltip do gráfico",
+      "status": "PASS"
+    },
+    {
+      "name": "Atalho de atenção abre catálogo filtrado com três produtos",
+      "status": "PASS"
+    },
+    {
+      "name": "Detalhes do produto abrem pelo Enter",
+      "status": "PASS"
+    },
+    {
+      "name": "Drawer bloqueia conteúdo de fundo",
+      "status": "PASS"
+    },
+    {
+      "name": "Escape fecha drawer e devolve foco à linha",
+      "status": "PASS"
+    },
+    {
+      "name": "Atalho Novo produto abre formulário dedicado",
+      "status": "PASS"
+    },
+    {
+      "name": "Atalho Movimentar estoque abre posto de operação",
+      "status": "PASS"
+    },
+    {
+      "name": "Consulta vazia apresenta orientação",
+      "status": "PASS"
+    },
+    {
+      "name": "Saída acima do saldo bloqueia confirmação",
+      "status": "PASS"
+    },
+    {
+      "name": "Prévia mostra saldo previsto 80 → 60",
+      "status": "PASS"
+    },
+    {
+      "name": "Confirmação apresenta resultado da saída simulada",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard atualiza custo para R$ 975,00 após saída, sem recarregar",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard e gráfico mostram a nova saída",
+      "status": "PASS"
+    },
+    {
+      "name": "Atalho Todas as movimentações abre histórico",
+      "status": "PASS"
+    },
+    {
+      "name": "Histórico inclui nova saída simulada 80 → 60",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard sem overflow horizontal em 1024 px",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard sem overflow horizontal em 390 px",
+      "status": "PASS"
+    },
+    {
+      "name": "Menu mobile bloqueia conteúdo de fundo",
+      "status": "PASS"
+    },
+    {
+      "name": "Shift+Tab fica contido no menu mobile quando foco está no primeiro link",
+      "status": "PASS"
+    },
+    {
+      "name": "Escape fecha menu mobile e restaura foco no botão",
+      "status": "PASS"
+    },
+    {
+      "name": "Navegação pelo menu mobile muda rota e fecha menu",
+      "status": "PASS"
+    },
+    {
+      "name": "Gráfico mobile abre tooltip por clique",
+      "status": "PASS"
+    },
+    {
+      "name": "Falha 503 da API mostra mensagem e ação de retry",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry recupera dashboard quando a API volta",
+      "status": "PASS"
+    },
+    {
+      "name": "Cenário sem alertas exibe mensagem positiva e fila vazia",
+      "status": "PASS"
+    },
+    {
+      "name": "Sem alertas: Consultar catálogo abre produtos sem filtro de atenção",
+      "status": "PASS"
+    },
+    {
+      "name": "Catálogo vazio apresenta contadores zero",
+      "status": "PASS"
+    },
+    {
+      "name": "Histórico vazio tem estado explícito na dashboard",
+      "status": "PASS"
+    },
+    {
+      "name": "Catálogo vazio mantém sete dias zerados no gráfico",
+      "status": "PASS"
+    },
+    {
+      "name": "Sair remove sessão fictícia e retorna ao login",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard sem overflow horizontal em 1440 px",
+      "status": "PASS"
+    },
+    {
+      "name": "Frontend sem overlay de erro",
+      "status": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "P2",
+      "name": "Fila de reposição corta o terceiro produto em 1440 px",
+      "evidence": "Painel com overflow:hidden, clientHeight 281 e scrollHeight 310; terceiro item parcialmente oculto."
+    },
+    {
+      "severity": "P2",
+      "name": "Após localizar por Enter, foco permanece no campo do código",
+      "evidence": "Produto identificado com saldo 80, mas document.activeElement continua #scan-code, em vez de #movement-quantity."
+    },
+    {
+      "severity": "P2",
+      "name": "Menu mobile abre sem transferir foco para a navegação",
+      "evidence": "Ao abrir menu em 390 px, fundo fica inert, mas foco termina no body. Foco esperado no primeiro link não acontece."
+    }
+  ],
+  "applicationCodeChanged": false,
+  "temporaryEnvIgnoredByGit": true
+}
