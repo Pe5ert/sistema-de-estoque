@@ -33,6 +33,7 @@ enum MovementType {
 }
 
 enum MovementReason {
+  INITIAL_STOCK
   PURCHASE
   SALE
   INTERNAL_USE
@@ -73,8 +74,9 @@ model Product {
   categoryId     String          @db.Uuid
   category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   unit           ProductUnit     @default(UNIT)
-  costPrice      Decimal         @db.Decimal(18, 2)
-  salePrice      Decimal         @db.Decimal(18, 2)
+  imageUrl       String?         @db.VarChar(2048)
+  costPrice      Decimal?        @db.Decimal(18, 2)
+  salePrice      Decimal?        @db.Decimal(18, 2)
   stock          Decimal         @default(0) @db.Decimal(18, 3)
   minimumStock   Decimal         @default(0) @db.Decimal(18, 3)
   active         Boolean         @default(true)
