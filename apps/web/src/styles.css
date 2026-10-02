@@ -471,6 +471,7 @@ h1 { margin-bottom: 0; font-size: clamp(30px, 2.6vw, 38px); font-weight: 700; li
 
 /* Product forms share the catalog surfaces, focus and action hierarchy. */
 .catalog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.overview-page > .catalog-actions { margin-top: -12px; margin-bottom: 12px; }
 .catalog-actions > span { font-size: 12px; color: var(--text-muted); }
 .product-form { min-width: 0; }
 .product-form :is(input, select, textarea, button, summary):focus-visible { outline-color: var(--info); }
