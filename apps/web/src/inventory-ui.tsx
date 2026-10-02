@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ImageOff } from 'lucide-react';
-import { stockStatus, type ProductPresentation } from './demo-data';
+import { stockStatus, type ProductPresentation } from './inventory-model';
 
 export function ProductThumbnail({ imageUrl, name, large = false }: {
   imageUrl?: string | null; name: string; large?: boolean;

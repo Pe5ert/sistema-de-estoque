@@ -1,32 +1,32 @@
 # Sistema de Estoque V2
 
-Esta branch é uma reimplementação progressiva do sistema de estoque. A aplicação PHP/MySQL original permanece na branch `master` como referência funcional enquanto a V2 amadurece. Esta primeira fase entrega a base técnica, o domínio inicial e o shell visual. A autenticação está integrada. Cadastro/edição estão disponíveis como demonstração em memória; persistência e movimentações completas ficam para fases posteriores.
+Esta branch é uma reimplementação progressiva do sistema de estoque. A aplicação PHP/MySQL original permanece na branch `master` como referência funcional enquanto a V2 amadurece. Auth, categorias, produtos, inventário, histórico e painel estão integrados à API PostgreSQL. O frontend não possui fallback de dados fictícios. A validação com banco real ainda está pendente nesta máquina; leia `docs/OPERATIONAL_INTEGRATION.md` para retomar com segurança.
 
 ## Arquitetura
 
 - Monorepo pnpm, sem Turborepo.
-- `apps/web`: React, TypeScript, Vite, Tailwind CSS 4, React Router. TanStack Query, React Hook Form e Zod já estão disponíveis para as próximas telas.
+- `apps/web`: React, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, React Hook Form e Zod.
 - `apps/api`: monólito NestJS REST, Prisma ORM 7, PostgreSQL, validação de configuração e Swagger.
 - `packages/shared`: somente enums e tipos independentes compartilháveis; sem Nest ou Prisma Client.
 - `docker-compose.yml`: apenas PostgreSQL local.
 
-O saldo do produto é estado materializado. Qualquer mudança futura deve ocorrer pelo domínio de inventário, com transação, proteção contra concorrência e registro de `StockMovement`. Não haverá endpoint que aceite `stock` em uma atualização comum de produto.
+O saldo do produto é estado materializado. Mudanças ocorrem pelo domínio de inventário, com transação, lock da linha e registro de `StockMovement`. PATCH de produto rejeita `stock`.
 
 ## Pré-requisitos
 
-- Node.js 22.13+ LTS e pnpm 11 (`corepack enable` pode disponibilizar o pnpm).
-- Docker com Compose para PostgreSQL local.
+- Node.js >=22.13 e <23, pnpm 11 (`corepack enable` pode disponibilizar o pnpm).
+- PostgreSQL acessível. Docker Compose é opcional para uma base nova de desenvolvimento; não instalar/recriar infraestrutura se já houver uma conexão autorizada.
 
 ## Início rápido
 
-Na raiz da branch V2:
+Na raiz da branch V2, preserve o `.env` existente:
 
 ```powershell
-pnpm install
-Copy-Item .env.example .env
-docker compose up -d
-pnpm db:migrate
-pnpm db:seed
+pnpm install --frozen-lockfile
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+# Preencher ambiente e verificar banco/migrations antes de continuar.
+# Revisar apps/api/prisma/preflight.sql e as migrations versionadas.
+pnpm --filter @stock/api db:deploy
 pnpm dev
 ```
 
@@ -38,7 +38,9 @@ Revise `.env` antes de iniciar e preencha `JWT_SECRET` com um segredo aleatório
 
 O health retorna `200` com `database: up` quando consegue consultar o PostgreSQL e `503` quando a conexão falha.
 
-O comando `pnpm db:migrate` aplica a migration e gera o Prisma Client. O seed é pequeno e idempotente: cria um ADMIN, três categorias, três produtos e suas movimentações de saldo inicial. Rodar o seed novamente não altera saldos existentes; atualiza apenas o hash da senha do administrador identificado por `SEED_ADMIN_EMAIL`, usando Argon2id. O seed recusa execução em produção. Não há importação automática do banco legado.
+`db:deploy` aplica migrations versionadas e gera o Prisma Client. Em banco existente, não usar reset, DROP ou `db push`; primeiro conferir o status das migrations e o preflight somente leitura. `pnpm db:migrate` continua disponível exclusivamente para autoria de novas migrations em desenvolvimento, não para resolver divergência com reset.
+
+O seed é opcional e somente DEV: cria um ADMIN, três categorias, três produtos e seus movimentos iniciais. Rodar novamente atualiza o hash da senha do administrador de `SEED_ADMIN_EMAIL`; não fazê-lo automaticamente em base compartilhada. Recusa execução em produção. Não há importação automática do legado.
 
 ## Comandos
 
@@ -47,6 +49,7 @@ O comando `pnpm db:migrate` aplica a migration e gera o Prisma Client. O seed é
 | `pnpm dev`                      | API e frontend com recarga local             |
 | `pnpm dev:web` / `pnpm dev:api` | Apenas uma aplicação                         |
 | `pnpm db:migrate`               | Migration de desenvolvimento + Prisma Client |
+| `pnpm --filter @stock/api db:deploy` | Aplicar migrations versionadas sem reset |
 | `pnpm db:generate`              | Geração manual do Prisma Client              |
 | `pnpm db:seed`                  | Dados mínimos de desenvolvimento             |
 | `pnpm lint`                     | ESLint do workspace                          |
@@ -62,7 +65,7 @@ apps/
     prisma/          Schema, migration e seed
     src/             Configuração, Prisma, health e base Nest
   web/
-    src/             Shell, rotas, dados locais de demonstração e tokens visuais
+    src/             Shell, rotas, queries/mutações REST e tokens visuais
 packages/
   shared/            Contratos independentes
 docs/
@@ -70,7 +73,7 @@ docs/
   frontend/DESIGN.md
 ```
 
-Leia `AGENTS.md` antes de expandir a arquitetura ou o frontend. O diagnóstico do PHP está em `docs/legacy-diagnosis.md` e o estado da implementação em `docs/PROJECT_STATUS.md`. As telas operacionais usam exemplos de `apps/web/src/demo-data.ts` e cadastro/edição em memória para prévia visual. Ainda não existem consultas reais de produtos, cadastro persistente ou mutações de estoque. As telas privadas agora exigem uma sessão real; inicie a API e o PostgreSQL para acessá-las. A rota `/login` mantém os tokens e a identidade visual da aplicação.
+Leia `AGENTS.md` antes de expandir a arquitetura ou o frontend. O diagnóstico do PHP está em `docs/legacy-diagnosis.md`, o estado em `docs/PROJECT_STATUS.md` e contratos/validação pendente em `docs/OPERATIONAL_INTEGRATION.md`. Telas privadas exigem sessão, API e PostgreSQL. A rota `/login` e a identidade visual foram preservadas.
 
 ## Autenticação
 
@@ -84,9 +87,9 @@ O JWT HS256 fica exclusivamente no cookie `stock_session`: HttpOnly, SameSite=La
 
 O login limita 8 tentativas por minuto/IP usando o armazenamento em memória do Nest Throttler, sem bloqueio de conta. O limite é por processo e reinicia com ele. O servidor não confia automaticamente em `X-Forwarded-For`; ao publicar atrás de proxy, configure explicitamente os proxies confiáveis no ambiente de implantação para preservar a identificação de IP. Helmet aplica os headers de segurança.
 
-Para proteger um futuro controller, importe `AuthModule` no módulo da feature e use `@UseGuards(JwtAuthGuard)`; para RBAC, use `@UseGuards(JwtAuthGuard, RolesGuard)` e `@Roles(UserRole.ADMIN, UserRole.MANAGER)`, importando `UserRole` do Prisma gerado no backend. `@CurrentUser()` entrega apenas o usuário público. Nenhuma autorização de produto/estoque foi implementada nesta etapa.
+Para proteger um controller, importe `AuthModule` e use `@UseGuards(JwtAuthGuard)`; para RBAC, use `@UseGuards(JwtAuthGuard, RolesGuard)` e `@Roles(UserRole.ADMIN, UserRole.MANAGER)`, importando `UserRole` do Prisma gerado no backend. `@CurrentUser()` entrega apenas o usuário público. Novos endpoints exigem autenticação; a matriz de permissões por role para produtos/estoque ainda não foi definida.
 
-O seed anterior usava bcrypt; como a V2 ainda não tinha autenticação funcional, o seed agora regrava a senha DEV em Argon2id. Execute `pnpm db:seed` ao atualizar uma base de desenvolvimento anterior. A conta DEV permanece `admin@example.local`; a senha vem de `SEED_ADMIN_PASSWORD` (o exemplo público é apenas local). Nunca utilize essa senha em produção ou ambiente compartilhado.
+O seed anterior usava bcrypt; o seed atual grava Argon2id. Use somente em base DEV autorizada, quando realmente precisar preparar a conta. A conta DEV padrão é `admin@example.local`; a senha vem de `SEED_ADMIN_PASSWORD`. Não regravar contas existentes automaticamente ao retomar uma checkout.
 
 Variáveis de autenticação:
 
@@ -96,4 +99,4 @@ Variáveis de autenticação:
 - `NODE_ENV`: já existente; usar `production` em produção.
 - `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`: já existentes; somente DEV, senha de 8 a 128 caracteres.
 
-`pnpm test` verifica DTOs, Argon2id, login/cookie, sessão inválida/expirada, inativação, RBAC, logout, CORS, Origin, Swagger e rate limit por HTTP, com repositório de usuários isolado e sem exigir PostgreSQL. Não havia infraestrutura de testes frontend; não foi adicionada uma nova stack. Valide a UI com API/banco reais: acesso sem sessão, campos inválidos, senha errada, login, F5, `/login` autenticado, logout, rota privada bloqueada e usuário desativado. Verifique desktop/mobile e feedback de servidor indisponível.
+`pnpm test` verifica auth existente, Decimal e limites HTTP do inventário sem exigir PostgreSQL. O teste de persistência/rollback/concorrência é opt-in com `TEST_DATABASE_URL` separado e migrations já aplicadas; sem essa variável aparece como SKIP. QA de navegador usa fixtures apenas no script de teste em `artifacts/operational-20261002/`. Consulte o relatório para distinguir testes locais de validação real do banco.

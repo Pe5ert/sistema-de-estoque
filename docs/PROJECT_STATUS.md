@@ -1,30 +1,34 @@
-# Estado da V2
+# Estado da V2 — 02/10/2026
 
-Resumo para continuar o trabalho em outra máquina. Esta branch contém a base técnica e uma prévia visual; ainda não é um sistema de estoque completo.
+Guia curto para continuar em outro notebook. Contratos, migrations e procedimento completo: [OPERATIONAL_INTEGRATION.md](OPERATIONAL_INTEGRATION.md). Regras visuais: [frontend/DESIGN.md](frontend/DESIGN.md).
 
-## Entregue
+## Implementado
 
-- Monorepo pnpm com React/Vite/Tailwind em `apps/web`, NestJS/Prisma em `apps/api` e tipos independentes em `packages/shared`.
-- Schema inicial de usuários, categorias, produtos e movimentos; migration e seed de desenvolvimento.
-- API com `/api/health` e documentação Swagger em `/api/docs`.
-- Autenticação integrada: login Argon2id, JWT em cookie HttpOnly de 8 horas, usuário atual, logout, proteção de rotas e infraestrutura RBAC. Tela de login inspirada na organização operacional da referência Dribbble aprovada (Alex Tsibulski / Dopamine), usando os tokens escuros da V2.
-- Rotas visuais: visão geral, produtos, novo produto, editar produto, movimentações e histórico. A sessão começa com os exemplos de `apps/web/src/demo-data.ts`; cadastro/edição usam somente memória local e são identificados como demonstração.
-- Direção visual em `docs/frontend/DESIGN.md` e diagnóstico do legado em `docs/legacy-diagnosis.md`.
-- Refinamento frontend: catálogo com busca/filtros locais, thumbnails opcionais e detalhe de leitura; consulta por SKU com prévia de entrada/saída sem gravação; histórico com motivo, autor e saldos antes/depois. Os exemplos existentes foram preservados, sem preços inventados.
-- Formulários: Novo Produto dedicado, edição compartilhada, SKU/barcode separados, custo/venda opcionais, mínimo, imagem principal com seleção/drop/preview/substituir/remover, descrição secundária e Save-and-new. Consulta de movimentos encontra também barcode cadastrado na sessão; aceita quantidades decimais e prepara a próxima consulta pelo teclado. Relatório em `docs/frontend/FORMS_REVIEW.md`.
+- Monorepo pnpm: React/Vite/Tailwind, NestJS/Prisma/PostgreSQL, shared enums/contratos.
+- Auth remoto preservado: Argon2id, cookie JWT HttpOnly de 8h, login/me/logout, guards e RBAC disponível. Não refazer login.
+- Categorias reais: listagem, cadastro, edição/inativação; sem DELETE.
+- Produtos reais: paginação/busca/filtros no backend, detalhe, cadastro/edição, preços opcionais, URL/null de imagem, estado ativo/inativo, duplicidades 409. PATCH rejeita saldo.
+- Entrada inicial cria produto com saldo zero e StockMovement na mesma transação.
+- Movimentos atômicos com Decimal, lock por produto, autor da sessão, rejeição de saldo negativo, saldos antes/depois e auditoria.
+- Histórico paginado e filtrado; detalhes por clique neutro/Enter. Drawer desktop permite trocar seleção; mobile fullscreen com foco contido e fundo inert.
+- Painel agregado: saldo, produtos ativos, normais/baixos/zerados, valor a custo, reposição, atividade, movimentos de hoje e entradas/saídas de 7 dias.
+- TanStack Query em todas as telas operacionais; invalidação após mutações sem reload. Arquivos demo-data/catalog e DemoCatalogProvider removidos.
+- Identidade visual, sidebar, login e composição do formulário preservados. Imagem agora é URL persistida; não há falso upload de arquivo.
 
-## Pendente
+## Validação e limite real
 
-- A migration e o seed ainda precisam ser executados e validados com PostgreSQL real. A máquina de desenvolvimento usada até aqui não tinha Docker nem PostgreSQL; não foi feita instalação no sistema.
-- Não há persistência de cadastro/edição, upload real de imagens, integração de barcode com API, endpoints de movimentos ou atualização entre usuários. A entrada inicial é preparada na UI, mas não cria movimento nem altera saldo. Recarregar a página restaura o catálogo de exemplos.
-- O saldo de `Product` não deve ser editado diretamente. Cada alteração precisa criar um `StockMovement` em transação, com proteção contra concorrência e saldos anterior e resultante.
+PostgreSQL local não respondeu e usuário não lembra a conexão de casa. Foram preenchidos somente JWT_SECRET (aleatório) e VITE_API_URL locais ausentes; DATABASE_URL e demais valores foram preservados. Sem instalação de Docker/PostgreSQL, migration, seed ou reset. O `.env` não foi versionado.
 
-## Próximas decisões discutidas
+API iniciada; health real retornou **503 / database down**, `/auth/me` anônimo retornou **401**. Os 35 testes locais de auth/contratos/Decimal/formulário e QA de interação com fixtures passaram. A suíte PostgreSQL de persistência/rollback/concorrência está preparada, mas **não executada** sem `TEST_DATABASE_URL`. Prints/resultados: `artifacts/operational-20261002/`.
 
-Continuam pendentes: integrar cadastro/edição à API, armazenamento de imagem principal, gravação de movimentos/entrada inicial e atualização entre usuários. Os fluxos de adicionar/editar e imagem principal estão disponíveis na camada de apresentação, sem persistência. A autenticação já está integrada; permissões de produtos/estoque serão definidas com os endpoints reais.
+## Próxima etapa necessária
 
-## Como abrir a prévia
+1. Recuperar uma conexão PostgreSQL autorizada; configurar `.env` localmente sem versionar segredos.
+2. Verificar migrations e `apps/api/prisma/preflight.sql`; revisar/aplicar migration nova via `pnpm --filter @stock/api db:deploy`, sem reset.
+3. Subir API/web; `/api/health` deve confirmar banco.
+4. Validar login → categoria → produto/entrada 100 → reload → edição → saída 20 → histórico 100→80 → painel → logout/login com persistência.
+5. Executar suíte real em uma base de teste separada para comprovar duas saídas simultâneas de 8 com saldo 10.
 
-Use Node.js 22.13+ e pnpm 11. Na raiz do repositório, execute `pnpm install` e `pnpm dev:web`. Abra `http://localhost:5173/`. As rotas privadas exigem sessão real: configure `.env`, inicie PostgreSQL/API e execute migration/seed conforme o README. O catálogo continua sendo uma demonstração em memória após o login.
+## Decisões futuras
 
-Para validar todo o workspace, use `pnpm lint`, `pnpm typecheck` e `pnpm build`. O guia completo de ambiente está no `README.md`.
+Matriz de permissões por role; upload/storage de arquivos; atualização entre usuários. Não implementar vendas, clientes, fornecedores, financeiro, NF, pedidos, múltiplos depósitos ou realtime nesta rodada. O seed DEV permanece opcional e explícito; não é fallback da aplicação.

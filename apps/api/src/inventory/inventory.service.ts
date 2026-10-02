@@ -17,7 +17,10 @@ export function resultingStock(stock: Prisma.Decimal, quantity: string, type: Mo
 export function databaseError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === 'P2002') {
-      const target = JSON.stringify(error.meta?.target ?? '').toLowerCase();
+      // Prisma 7's PostgreSQL adapter reports constraint.index in its cause;
+      // older engines report meta.target. Handle both without exposing DB text.
+      const adapter = error.meta?.driverAdapterError as { cause?: { constraint?: unknown } } | undefined;
+      const target = JSON.stringify(error.meta?.target ?? adapter?.cause?.constraint ?? '').toLowerCase();
       throw new ConflictException(target.includes('barcode') ? 'Este código de barras já está em uso.' : target.includes('sku') ? 'Este SKU já está em uso.' : 'Este nome já está em uso.');
     }
     if (error.code === 'P2025') throw new NotFoundException('Registro não encontrado.');

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { ProductPresentation } from './demo-data';
+import type { ProductPresentation } from './inventory-model';
 
 export const productUnits = [
   ['un', 'UN · Unidade'], ['cx', 'CX · Caixa'], ['pct', 'PCT · Pacote'], ['kg', 'KG · Quilograma'],
@@ -7,7 +7,7 @@ export const productUnits = [
 ] as const;
 
 // Keep typing free. Accept decimal comma/dot and pt-BR grouped monetary values.
-export function parseDecimal(value: string, precision: number): number | null {
+export function normalizeDecimal(value: string, precision: number): string | null {
   let text = value.trim().replace(/^R\$\s*/, '').replace(/\s/g, '');
   if (!text || !/^[\d.,]+$/.test(text)) return null;
   if (text.includes(',')) {
@@ -21,6 +21,16 @@ export function parseDecimal(value: string, precision: number): number | null {
   }
   if (!new RegExp(`^\\d+(?:\\.\\d{1,${precision}})?$`).test(text)) return null;
   const [whole, fraction = ''] = text.split('.');
+  const integer = whole.replace(/^0+(?=\d)/, '');
+  if (integer.length > (precision === 2 ? 16 : 15)) return null;
+  return integer + (fraction ? '.' + fraction : '');
+}
+
+// Numbers are only used for bounded presentation/step buttons, never API money.
+export function parseDecimal(value: string, precision: number): number | null {
+  const text = normalizeDecimal(value, precision);
+  if (text === null) return null;
+  const [whole, fraction = ''] = text.split('.');
   if (!Number.isSafeInteger(Number(whole + fraction.padEnd(precision, '0')))) return null;
   const result = Number(text);
   return Number.isFinite(result) ? result : null;
@@ -28,7 +38,6 @@ export function parseDecimal(value: string, precision: number): number | null {
 
 export const formatQuantity = (value: number) => value.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
 export const editableNumber = (value?: number | null) => value == null ? '' : String(value).replace('.', ',');
-const editableMoney = (value?: number | null) => value == null ? '' : value.toLocaleString('pt-BR', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export interface ProductFormValues {
   sku: string;
@@ -42,34 +51,33 @@ export interface ProductFormValues {
   initialMode: 'none' | 'entry';
   initialQuantity: string;
   description: string;
+  active: boolean;
 }
 
 export function productFormDefaults(product?: ProductPresentation): ProductFormValues {
   return {
     sku: product?.sku ?? '', barcode: product?.barcode ?? '', name: product?.name ?? '',
-    category: product?.category ?? '', unit: product?.unit ?? 'un', cost: editableMoney(product?.costPrice),
-    sale: editableMoney(product?.price), minimum: editableNumber(product?.minimum ?? 0),
-    initialMode: 'none', initialQuantity: '', description: product?.description ?? '',
+    category: product?.categoryId ?? '', unit: product?.unit ?? 'un', cost: product?.record.costPrice?.replace('.', ',') ?? '',
+    sale: product?.record.salePrice?.replace('.', ',') ?? '', minimum: product?.record.minimumStock.replace('.', ',') ?? '0',
+    initialMode: 'none', initialQuantity: '', description: product?.description ?? '', active: product?.active ?? true,
   };
 }
 
-export function validateProductForm(values: ProductFormValues, products: readonly ProductPresentation[], editingId?: string) {
+export function validateProductForm(values: ProductFormValues, editing = false) {
   return z.object({
     sku: z.string().trim().min(1, 'SKU obrigatório.').max(80, 'Use até 80 caracteres.'),
     barcode: z.string().trim().max(80, 'Use até 80 caracteres.'),
     name: z.string().trim().min(1, 'Nome obrigatório.').max(200, 'Use até 200 caracteres.'),
     category: z.string().min(1, 'Selecione a categoria.'),
     unit: z.string().refine((value) => productUnits.some(([unit]) => unit === value), 'Selecione uma unidade.'),
-    cost: z.string().refine((value) => !value.trim() || parseDecimal(value, 2) !== null, 'Informe um custo válido, como 19,90.'),
-    sale: z.string().refine((value) => !value.trim() || parseDecimal(value, 2) !== null, 'Informe um preço válido, como 29,90.'),
-    minimum: z.string().refine((value) => parseDecimal(value, 3) !== null, 'Informe um mínimo válido, como 0 ou 2,5.'),
-    initialMode: z.enum(['none', 'entry']), initialQuantity: z.string(), description: z.string().trim(),
+    cost: z.string().refine((value) => !value.trim() || normalizeDecimal(value, 2) !== null, 'Informe um custo válido, como 19,90.'),
+    sale: z.string().refine((value) => !value.trim() || normalizeDecimal(value, 2) !== null, 'Informe um preço válido, como 29,90.'),
+    minimum: z.string().refine((value) => normalizeDecimal(value, 3) !== null, 'Informe um mínimo válido, como 0 ou 2,5.'),
+    initialMode: z.enum(['none', 'entry']), initialQuantity: z.string(), description: z.string().trim().max(10000, 'Use até 10000 caracteres.'), active: z.boolean(),
   }).superRefine((data, context) => {
-    if (products.some((product) => product.id !== editingId && product.sku.toLocaleLowerCase() === data.sku.toLocaleLowerCase())) context.addIssue({ code: 'custom', path: ['sku'], message: 'Este SKU já existe nesta demonstração.' });
-    if (data.barcode && products.some((product) => product.id !== editingId && product.barcode === data.barcode)) context.addIssue({ code: 'custom', path: ['barcode'], message: 'Este código de barras já existe nesta demonstração.' });
-    if (!editingId && data.initialMode === 'entry') {
-      const quantity = parseDecimal(data.initialQuantity, 3);
-      if (quantity === null || quantity <= 0) context.addIssue({ code: 'custom', path: ['initialQuantity'], message: 'A entrada inicial precisa ser maior que zero.' });
+    if (!editing && data.initialMode === 'entry') {
+      const quantity = normalizeDecimal(data.initialQuantity, 3);
+      if (quantity === null || BigInt(quantity.replace('.', '')) === 0n) context.addIssue({ code: 'custom', path: ['initialQuantity'], message: 'A entrada inicial precisa ser maior que zero.' });
     }
   }).safeParse(values);
 }

@@ -26,8 +26,10 @@ describe('Decimal inventory arithmetic', () => {
   });
   test('database uniqueness conflicts identify SKU and barcode, other failures propagate', () => {
     for (const [target, label] of [['Product_sku_lower_key', 'SKU'], ['barcode', 'barras'], ['name', 'nome']]) {
-      const error = new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'test', meta: { target: [target] } });
-      assert.throws(() => databaseError(error), new RegExp(label));
+      for (const meta of [{ target: [target] }, { driverAdapterError: { cause: { constraint: { index: target } } } }]) {
+        const error = new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'test', meta });
+        assert.throws(() => databaseError(error), new RegExp(label));
+      }
     }
     const error = new Error('transaction failed');
     assert.throws(() => databaseError(error), error);

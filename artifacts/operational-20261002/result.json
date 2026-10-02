@@ -1,0 +1,21 @@
+{
+  "scope": "HTTP fixture UI checks; not PostgreSQL validation",
+  "checks": [
+    "Neutral row click, swap selected product, Enter and Escape",
+    "Category form posts and refreshes real query contract",
+    "500 keeps form fields for retry",
+    "POST initial entry, reload reads API, PATCH has no stock field",
+    "Lookup barcode/SKU and confirmed exit displays authoritative 100 → 80",
+    "Mobile full-screen drawer, inert background restored, no page horizontal overflow"
+  ],
+  "screenshots": [
+    "products-drawer-desktop.png",
+    "product-form-desktop.png",
+    "movements-desktop.png",
+    "history-drawer-desktop.png",
+    "dashboard-desktop.png",
+    "product-drawer-mobile.png",
+    "product-form-mobile.png"
+  ],
+  "browserErrors": []
+}
