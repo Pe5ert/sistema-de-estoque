@@ -1,6 +1,6 @@
 # Sistema de Estoque V2
 
-Esta branch é uma reimplementação progressiva do sistema de estoque. A aplicação PHP/MySQL original permanece na branch `master` como referência funcional enquanto a V2 amadurece. Esta primeira fase entrega a base técnica, o domínio inicial e o shell visual. Cadastro, autenticação e movimentações completas ficam para fases posteriores.
+Esta branch é uma reimplementação progressiva do sistema de estoque. A aplicação PHP/MySQL original permanece na branch `master` como referência funcional enquanto a V2 amadurece. Esta primeira fase entrega a base técnica, o domínio inicial e o shell visual. A autenticação está integrada. Cadastro/edição estão disponíveis como demonstração em memória; persistência e movimentações completas ficam para fases posteriores.
 
 ## Arquitetura
 
@@ -70,7 +70,7 @@ docs/
   frontend/DESIGN.md
 ```
 
-Leia `AGENTS.md` antes de expandir a arquitetura ou o frontend. O diagnóstico do PHP está em `docs/legacy-diagnosis.md` e o estado da implementação em `docs/PROJECT_STATUS.md`. Nesta fase, as quatro telas usam dados fictícios locais de `apps/web/src/demo-data.ts` para prévia visual. Ainda não existem consultas reais de produtos, cadastro ou mutações de estoque. As telas privadas agora exigem uma sessão real; inicie a API e o PostgreSQL para acessá-las. A rota `/login` mantém os tokens e a identidade visual da aplicação.
+Leia `AGENTS.md` antes de expandir a arquitetura ou o frontend. O diagnóstico do PHP está em `docs/legacy-diagnosis.md` e o estado da implementação em `docs/PROJECT_STATUS.md`. As telas operacionais usam exemplos de `apps/web/src/demo-data.ts` e cadastro/edição em memória para prévia visual. Ainda não existem consultas reais de produtos, cadastro persistente ou mutações de estoque. As telas privadas agora exigem uma sessão real; inicie a API e o PostgreSQL para acessá-las. A rota `/login` mantém os tokens e a identidade visual da aplicação.
 
 ## Autenticação
 

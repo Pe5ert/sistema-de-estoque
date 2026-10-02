@@ -2,6 +2,12 @@
 
 Atualizado em **01/10/2026**, após a correção pontual da imagem do produto. Este arquivo reúne as regras permanentes, a configuração e o estado verificado da checkout. Deve ser lido antes de continuar em outro notebook ou em uma nova conversa.
 
+## Atualização de autenticação — 01/10/2026
+
+A autenticação foi integrada à branch `sistema-de-estoque-v2` após o refinamento de frontend descrito abaixo. As menções históricas a login ausente, bcrypt e prévia sem API nas seções seguintes foram superadas: `/login`, `/api/auth/login`, `/api/auth/me` e `/api/auth/logout` existem; senhas usam Argon2id e a sessão usa JWT exclusivamente em cookie HttpOnly de 8 horas. Guards de autenticação/RBAC estão disponíveis no backend. Todas as rotas operacionais exigem sessão; o catálogo continua fictício e em memória. Configure `JWT_SECRET`, `WEB_ORIGIN` e `VITE_API_URL` conforme o README; o frontend lê o `.env` da raiz. Testes HTTP de autenticação usam repositório isolado, sem PostgreSQL.
+
+Referência aprovada especificamente para **login**: [Inventory Management — Alex Tsibulski / Dopamine](https://dribbble.com/shots/5489408-Inventory-Management). Aproveitar faixa lateral estreita, divisores, organização de campos e coluna contextual; manter os tokens escuros da V2. Não usar essa aprovação para redesenhar produtos ou estoque. Evidências desta integração em `artifacts/login-20261001/REVIEW.md`. A validação com PostgreSQL real continua pendente.
+
 ## 1. Contexto, repositório e continuidade
 
 - Repositório: `https://github.com/Pe5ert/sistema-de-estoque.git`.
