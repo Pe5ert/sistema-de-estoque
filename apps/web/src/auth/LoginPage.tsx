@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeftRight, ArrowRight, Eye, EyeOff, History, LockKeyhole, Package } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { ApiError } from '../lib/api';
 import { useAuth } from './auth';
 import { SessionGate } from './ProtectedRoute';
@@ -42,10 +42,6 @@ export function LoginPage() {
           <span className="login-restricted"><LockKeyhole size={14} aria-hidden="true" /> Acesso restrito à equipe</span>
         </header>
         <div className="login-body">
-          <div className="login-rail" aria-hidden="true">
-            <span className="login-rail-active"><LockKeyhole size={20} /></span>
-            <span><Package size={20} /></span><span><ArrowLeftRight size={20} /></span><span><History size={20} /></span>
-          </div>
           <section className="login-identity" aria-label="Controle de estoque">
             <div className="login-identity-main"><span className="block-label">ÁREA DE TRABALHO</span><h1>Controle<br /> de estoque<span className="login-period">.</span></h1><p>Disponibilidade e rastreabilidade<br />na sua operação.</p></div>
             <ul className="login-operation-list" aria-label="Áreas do sistema">

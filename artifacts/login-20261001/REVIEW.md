@@ -56,3 +56,11 @@ Os testes HTTP também cobrem sessão ausente/inválida/expirada, RBAC, CORS/Ori
 PostgreSQL real, migration e seed continuam sem validação nesta máquina. Docker existe, mas o usuário do processo não tem acesso ao socket do daemon. Não houve instalação nem alteração de permissões do sistema. Para operação local, configurar `.env` conforme README, iniciar PostgreSQL/API, aplicar migration e seed.
 
 Autenticação exige `JWT_SECRET`, `WEB_ORIGIN` e `VITE_API_URL`; NODE_ENV determina cookie Secure. Nenhum segredo real foi versionado. Produtos e movimentos permanecem demonstração em memória; a aprovação desta referência não autoriza redesenho dessas telas.
+
+## Correção solicitada: login sem barra lateral
+
+A faixa de ícones foi removida por solicitação do usuário. O login agora usa somente duas colunas no desktop: identidade/contexto e formulário. Também foram removidos os imports dos ícones e as regras CSS da faixa. Nenhum arquivo de dashboard, produto, movimentações ou backend foi alterado nesta correção.
+
+Capturas atualizadas em `no-sidebar/desktop.jpg`, `no-sidebar/1024.jpg` e `no-sidebar/mobile.jpg`. Revisão visual em 1440×900, 1024×900 e 390×844: sem faixa lateral e sem overflow horizontal. A prévia desta correção usou somente uma resposta temporária de sessão ausente (401), sem mudanças na aplicação e sem revalidar credenciais reais. A lógica de autenticação permaneceu igual à rodada anterior.
+
+Validação da correção: `pnpm lint`, `pnpm typecheck`, `pnpm build` e `git diff --check` aprovados. Build mantém os avisos já conhecidos de anotação PURE do Zod, sem falhas. Não foram adicionados testes para a remoção puramente visual da faixa.

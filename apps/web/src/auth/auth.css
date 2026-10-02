@@ -1,15 +1,12 @@
 /* Auth reuses the existing product tokens; styles stay scoped to this module. */
 /* Reference: Dribbble / Alex Tsibulski, Inventory Management (5489408).
-   Reuse its narrow rail, grouped fields and contextual column for sign-in. */
+   Reuse its grouped fields and contextual column for sign-in, without a navigation rail. */
 .login-page { display: grid; place-items: center; min-height: 100dvh; padding: 48px 32px; background: var(--sidebar); }
 .login-workspace { width: 100%; max-width: 1184px; border: 1px solid var(--border); background: var(--background); }
 .login-topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 76px; padding: 20px 32px; border-bottom: 1px solid var(--border); background: var(--surface-strong); }
 .login-topbar .brand { padding: 0; }
 .login-restricted { display: inline-flex; align-items: center; gap: 8px; color: var(--warning); font-size: 12px; }
-.login-body { display: grid; grid-template-columns: 64px minmax(280px, .9fr) minmax(420px, 1.2fr); }
-.login-rail { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 36px 0; border-right: 1px solid var(--border); background: var(--surface-strong); color: var(--text-muted); }
-.login-rail > span { display: grid; place-items: center; width: 100%; height: 44px; }
-.login-rail .login-rail-active { border-left: 3px solid var(--info); background: var(--accent-surface); color: var(--info); }
+.login-body { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(420px, 1.2fr); }
 .login-identity { display: flex; flex-direction: column; justify-content: center; gap: 40px; padding: 48px 36px; border-right: 1px solid var(--border); background: var(--surface-strong); }
 .login-identity-main .block-label { color: var(--info); }
 .login-identity h1 { font-size: clamp(40px, 4vw, 56px); font-weight: 800; line-height: 1.04; letter-spacing: -.055em; margin: 20px 0 16px; }
@@ -56,7 +53,7 @@
 .user-session + .sidebar-footer { margin-top: 12px; }
 @media (max-width: 1100px) {
   .login-page { padding: 32px 24px; }
-  .login-body { grid-template-columns: 52px minmax(240px, .85fr) minmax(380px, 1.2fr); }
+  .login-body { grid-template-columns: minmax(240px, .85fr) minmax(380px, 1.2fr); }
   .login-identity { padding: 40px 28px; }
   .login-identity h1 { font-size: 44px; }
   .login-access { padding: 40px 28px; }
@@ -68,7 +65,7 @@
   .login-topbar { min-height: 72px; padding: 20px 24px; }
   .login-restricted { font-size: 11px; }
   .login-body { display: flex; flex: 1; flex-direction: column; }
-  .login-rail, .login-operation-list { display: none; }
+  .login-operation-list { display: none; }
   .login-identity { padding: 24px; border-right: 0; border-bottom: 1px solid var(--border); }
   .login-identity h1 { font-size: 32px; margin: 12px 0 0; }
   .login-identity h1 br { display: none; }
