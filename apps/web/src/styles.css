@@ -742,7 +742,7 @@ button[aria-busy='true'] { cursor: wait; }
 .operation-ready .scan-stage { background: var(--surface-strong); }
 .operation-ready .scan-main { padding: 16px 22px; }
 .operation-ready .scan-main h2 { font-size: 18px; margin: 10px 0; }
-.operation-ready .scan-kicker, .operation-ready .scan-hint { display: none; }
+.operation-ready .scan-kicker { display: none; }
 .operation-ready .scan-example { padding: 16px 22px; }
 .operation-ready .scan-example .block-label { display: none; }
 .operation-ready .selected-product { margin-top: 0; }

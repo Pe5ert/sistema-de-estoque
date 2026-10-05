@@ -1,5 +1,7 @@
 # Estado da V2 — 02/10/2026
 
+**Leitura por código — 05/10/2026:** Movimentações mantém foco no código após identificar, protege o produto selecionado e prepara automaticamente a próxima leitura após registrar. Digitação/colagem + Enter permite simular sem aparelho. Fluxo, QA e limites de hardware: [frontend/BARCODE_WORKFLOW.md](frontend/BARCODE_WORKFLOW.md).
+
 Guia curto para continuar em outro notebook. Contratos, migrations e procedimento completo: [OPERATIONAL_INTEGRATION.md](OPERATIONAL_INTEGRATION.md). Regras visuais: [frontend/DESIGN.md](frontend/DESIGN.md).
 
 ## Implementado

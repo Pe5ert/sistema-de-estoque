@@ -21,7 +21,7 @@ export function MovementWorkbench() {
   const [lookupError, setLookupError] = useState('');
   const [result, setResult] = useState<MovementRecord | null>(null);
   const codeInput = useRef<HTMLInputElement>(null);
-  const [lookupFocus, setLookupFocus] = useState(false);
+  const [focusCode, setFocusCode] = useState(true);
   const [code, setCode] = useState('');
   const [selected, setSelected] = useState<ProductPresentation | null>(null);
   const productQuery = useProduct(selected?.id);
@@ -35,16 +35,25 @@ export function MovementWorkbench() {
   const quantity = parseDecimal(quantityText, 3);
   const preview = liveProduct && quantity !== null && quantity > 0 && !result ? { before: liveProduct.stock, after: Math.round((liveProduct.stock + (type === 'Saída' ? -quantity : quantity)) * 1000) / 1000, quantity, type } : null;
   useEffect(() => {
-    if (lookupFocus && selected && !productQuery.isPending && !productQuery.isError) {
-      setFocus('quantity'); setLookupFocus(false);
+    if (focusCode && !mutation.isPending) {
+      codeInput.current?.focus();
+      codeInput.current?.select();
+      setFocusCode(false);
     }
-  }, [lookupFocus, selected, productQuery.isPending, productQuery.isError, setFocus]);
+  }, [focusCode, mutation.isPending]);
   const resetPreview = () => { setResult(null); clearErrors(); mutation.reset(); };
+  const prepareNext = () => {
+    lookupVersion.current++;
+    setLookupBusy(false); setLookupError(''); setMatches([]);
+    setCode(''); setSelected(null); setLookupState('waiting');
+    reset({ quantity: '1', type, reason: '' }); setFocusCode(true);
+  };
   const chooseProduct = (product: ProductPresentation) => {
     setSelected(product); setMatches([]); setLookupState('found');
-    reset({ quantity: '1', type, reason: '' }); resetPreview(); setLookupFocus(true);
+    reset({ quantity: '1', type, reason: '' }); resetPreview(); setFocusCode(true);
   };
   const lookup = async () => {
+    if (selected || saving.current || lookupBusy) return;
     if (!code.trim()) { setLookupError('Informe o SKU ou código de barras.'); return; }
     const version = ++lookupVersion.current;
     setLookupBusy(true); setLookupError('');
@@ -60,7 +69,7 @@ export function MovementWorkbench() {
     finally { if (version === lookupVersion.current) setLookupBusy(false); }
   };
   const confirm = async (values: PreviewFields) => {
-    if (!liveProduct || productQuery.isError || productQuery.isPending) return;
+    if (saving.current || result || !liveProduct || productQuery.isError || productQuery.isPending) return;
     const validated = previewSchema.safeParse(values);
     if (!validated.success) {
       for (const issue of validated.error.issues) {
@@ -78,7 +87,7 @@ export function MovementWorkbench() {
     saving.current = true;
     try {
       const movement = await mutation.mutateAsync({ productId: liveProduct.id, type: data.type === 'Entrada' ? 'ENTRY' : 'EXIT', quantity: normalizeDecimal(data.quantity, 3), reason: data.reason });
-      setResult(movement); setSelected(presentProduct(movement.product));
+      setResult(movement); prepareNext();
     } catch { /* mutation exposes the actionable API error below */ }
     finally { saving.current = false; }
   };
@@ -90,13 +99,13 @@ export function MovementWorkbench() {
         <h2 id="scan-title">{selected ? 'Produto identificado' : 'Localizar produto'}</h2>
         <form className="scan-lookup" onSubmit={(event) => { event.preventDefault(); void lookup(); }}>
           <label htmlFor="scan-code">SKU OU CÓDIGO DE BARRAS</label>
-          <div className="scan-input-wrap"><Barcode size={21} aria-hidden="true" /><input ref={codeInput} id="scan-code" value={code} disabled={mutation.isPending} onChange={(event) => { lookupVersion.current++; setLookupBusy(false); setCode(event.target.value); setSelected(null); setMatches([]); setLookupState('waiting'); setLookupError(''); resetPreview(); }} placeholder="Bipar código ou digitar SKU" aria-invalid={lookupState === 'missing'} aria-describedby="scan-feedback scan-hint" autoComplete="off" /><button disabled={lookupBusy || mutation.isPending} type="submit" className="scan-submit">{lookupBusy ? 'Consultando…' : 'Localizar'} <ArrowRight size={17} aria-hidden="true" /></button></div>
+          <div className="scan-input-wrap"><Barcode size={21} aria-hidden="true" /><input ref={codeInput} id="scan-code" value={code} readOnly={Boolean(selected)} disabled={mutation.isPending} onChange={(event) => { lookupVersion.current++; setLookupBusy(false); setCode(event.target.value); setMatches([]); setLookupState('waiting'); setLookupError(''); resetPreview(); }} placeholder="Bipar código ou digitar SKU" aria-invalid={lookupState === 'missing' || Boolean(lookupError)} aria-describedby="scan-feedback scan-hint" autoComplete="off" spellCheck={false} /><button disabled={Boolean(selected) || lookupBusy || mutation.isPending} type="submit" className="scan-submit">{lookupBusy ? 'Consultando…' : 'Localizar'} <ArrowRight size={17} aria-hidden="true" /></button></div>
         </form>
-        <p className={'scan-feedback' + (lookupState === 'missing' ? ' scan-feedback-error' : '')} id="scan-feedback" role="status">
-          {lookupError || (lookupState === 'found' ? 'Produto encontrado.' : lookupState === 'missing' ? 'Código não encontrado. Confira a leitura ou consulte Produtos.' : lookupState === 'ambiguous' ? 'Este código identifica mais de um produto. Selecione o item abaixo.' : 'Aguardando leitura do SKU ou código de barras.')}
+        <p className={'scan-feedback' + (lookupState === 'missing' || lookupError ? ' scan-feedback-error' : '')} id="scan-feedback" role="status">
+          {lookupError || (lookupBusy ? 'Consultando o código…' : lookupState === 'found' ? 'Produto encontrado. Confira a quantidade e o motivo.' : lookupState === 'missing' ? 'Código não encontrado. Confira a leitura ou consulte Produtos.' : lookupState === 'ambiguous' ? 'Este código identifica mais de um produto. Selecione o item abaixo.' : 'Aguardando leitura do SKU ou código de barras.')}
         </p>
         {matches.length > 1 && <div className="lookup-matches">{matches.map((product) => <button type="button" className="secondary-button" key={product.id} onClick={() => chooseProduct(product)}>{product.name} · {product.sku}</button>)}</div>}
-        <p className="scan-hint" id="scan-hint">Leitor como teclado + Enter.</p>
+        <p className="scan-hint" id="scan-hint">{selected ? 'Use Tab ou clique em Quantidade. Para trocar o item antes de confirmar, use Próximo produto.' : 'Digite ou cole o código e pressione Enter. Leitor compatível: teclado + Enter.'}</p>
       </div>
       <div className="scan-example" aria-live="polite">
         {selected ? <>
@@ -122,9 +131,9 @@ export function MovementWorkbench() {
       </div>}
       {mutation.error && <p className="field-error" role="alert">{mutation.error.message}</p>}
       {productQuery.error && <p className="field-error" role="alert">{productQuery.error.message} <button type="button" className="text-button" onClick={() => void productQuery.refetch()}>Tentar novamente</button></p>}
-      {result && <div className="operation-feedback" role="status"><strong>Movimentação registrada · {result.product.name} · {result.quantity} {selected?.unit}</strong><span className="preview-balance">{result.previousStock}<ArrowRight size={18} /><strong>{result.resultingStock}</strong></span></div>}
-      {(selected || result) && <button type="button" className="text-button" disabled={mutation.isPending} onClick={() => { reset({ quantity: '1', type, reason: '' }); resetPreview(); setCode(''); setSelected(null); setLookupState('waiting'); codeInput.current?.focus(); }}>Próximo produto</button>}
-      <p className="operation-note">{selected ? result ? 'Movimento registrado. Leia o próximo produto para continuar.' : 'Confira o saldo previsto antes de confirmar.' : 'Localize um produto para movimentar o estoque.'}</p>
+      {result && <div className="operation-feedback" role="status"><strong>Movimentação registrada · {result.product.name} · {result.quantity} {presentProduct(result.product).unit}</strong><span className="preview-balance">{result.previousStock}<ArrowRight size={18} aria-hidden="true" /><strong>{result.resultingStock}</strong></span></div>}
+      {(selected || result) && <button type="button" className="text-button" disabled={mutation.isPending} onClick={() => { resetPreview(); prepareNext(); }}>Próximo produto</button>}
+      <p className="operation-note">{result ? 'Movimento registrado. Campo pronto para o próximo código.' : selected ? 'Confira o saldo previsto antes de confirmar.' : 'Localize um produto para movimentar o estoque.'}</p>
     </form>
   </section>;
 }
