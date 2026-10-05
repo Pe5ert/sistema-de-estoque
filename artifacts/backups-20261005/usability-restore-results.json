@@ -1,0 +1,34 @@
+[
+  {
+    "case": "Download tem assinatura PostgreSQL PGDMP",
+    "pass": true
+  },
+  {
+    "case": "Tamanho e SHA-256 do download iguais ao manifesto",
+    "pass": true
+  },
+  {
+    "case": "User restaurado sem diferenças",
+    "pass": true,
+    "rows": 1
+  },
+  {
+    "case": "Category restaurado sem diferenças",
+    "pass": true,
+    "rows": 1
+  },
+  {
+    "case": "Product restaurado sem diferenças",
+    "pass": true,
+    "rows": 1
+  },
+  {
+    "case": "StockMovement restaurado sem diferenças",
+    "pass": true,
+    "rows": 1
+  },
+  {
+    "case": "Constraints restauradas",
+    "pass": true
+  }
+]

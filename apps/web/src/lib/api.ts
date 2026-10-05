@@ -1,4 +1,5 @@
 const baseUrl = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+export const apiUrl = (path: string) => `${baseUrl}${path}`;
 export const UNAUTHORIZED_EVENT = 'stock:unauthorized';
 
 export class ApiError extends Error {
@@ -33,7 +34,7 @@ export async function apiClient<T>(path: string, options: RequestInit = {}): Pro
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     }
     const body = await response.json().catch(() => null);
-    const known = ['Este SKU já está em uso.', 'Este código de barras já está em uso.', 'Este nome já está em uso.', 'Quantidade indisponível em estoque.', 'Selecione uma categoria ativa.', 'Produto inativo não pode ser movimentado.'];
+    const known = ['Este SKU já está em uso.', 'Este código de barras já está em uso.', 'Este nome já está em uso.', 'Quantidade indisponível em estoque.', 'Selecione uma categoria ativa.', 'Produto inativo não pode ser movimentado.', 'Já existe um backup em andamento.'];
     throw new ApiError(response.status, known.includes(body?.message) ? body.message : undefined);
   }
   if (response.status === 204) return undefined as T;

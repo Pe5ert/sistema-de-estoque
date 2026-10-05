@@ -1,6 +1,10 @@
 # Retomar no outro notebook
 
-Atualizado em 02/10/2026. Branch: `sistema-de-estoque-v2`.
+Atualizado em 05/10/2026. Branch: `sistema-de-estoque-v2`.
+
+## Backups — nova funcionalidade
+
+Área Administração → Backups exclusiva do ADMIN. Cópia completa manual + download e escolha semanal/mensal com horário, persistida em pasta privada. Padrão mensal no primeiro dia às 02:00; retenção 365 dias. Instalar/configurar ferramentas PostgreSQL compatíveis (Neon atual: 18), preservar o volume de BACKUP_DIRECTORY e ler [BACKUPS.md](BACKUPS.md). Caminhos de ferramentas e .env são locais, não viajam pelo Git. Um backup real inicial foi gerado nesta máquina sem modificar os dados do Neon.
 
 ## Estado entregue
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
-  Boxes, ChevronRight, History, LayoutDashboard, Menu, Package, X,
+  Boxes, ChevronRight, HardDrive, History, LayoutDashboard, Menu, Package, X,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { LoginPage } from './auth/LoginPage';
@@ -11,15 +11,19 @@ import { Overview } from './Overview';
 import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
 import { Products } from './Products';
+import { BackupsPage } from './Backups';
+import { useAuth } from './auth/auth';
 
 const navigation = [
   { path: '/', label: 'Visão geral', icon: LayoutDashboard, description: 'Pulso do estoque e prioridades do dia.' },
   { path: '/products', label: 'Produtos', icon: Package, description: 'Catálogo, disponibilidade e pontos de atenção.' },
   { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight, description: 'Entradas, saídas e ajustes em uma só leitura.' },
   { path: '/history', label: 'Histórico', icon: History, description: 'Rastro de cada alteração de saldo.' },
+  { path: '/backups', label: 'Backups', icon: HardDrive, description: 'Cópias completas e agendamento do estoque.' },
 ] as const;
 
 function Shell() {
+  const { currentUser } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -73,7 +77,8 @@ function Shell() {
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
-          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1).map(navItem)}</div>
+          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 4).map(navItem)}</div>
+          {currentUser?.role === 'ADMIN' && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
         </nav>
         <UserSession />
         <div className="sidebar-footer">
@@ -116,6 +121,7 @@ export function App() {
       <Route path="products/:id/edit" element={<ProductFormPage />} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
+      <Route path="backups" element={<BackupsPage />} />
     </Route></Route></Routes>
   );
 }

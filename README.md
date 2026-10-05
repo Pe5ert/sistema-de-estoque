@@ -100,3 +100,7 @@ Variáveis de autenticação:
 - `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`: já existentes; somente DEV, senha de 8 a 128 caracteres.
 
 `pnpm test` verifica auth existente, Decimal e limites HTTP do inventário sem exigir PostgreSQL. O teste de persistência/rollback/concorrência é opt-in com `TEST_DATABASE_URL` separado e migrations já aplicadas; sem essa variável aparece como SKIP. QA de navegador usa fixtures apenas no script de teste em `artifacts/operational-20261002/`. Consulte o relatório para distinguir testes locais de validação real do banco.
+
+## Backups
+
+ADMIN possui **Administração → Backups**: cópia completa manual, download e agendamento semanal ou mensal. Padrão mensal no primeiro dia às 02:00 (America/Fortaleza), retenção de 365 dias. Exige pg_dump/pg_restore compatíveis com a versão do PostgreSQL e uma pasta privada persistente. Configuração, recuperação e testes isolados: [docs/BACKUPS.md](docs/BACKUPS.md).

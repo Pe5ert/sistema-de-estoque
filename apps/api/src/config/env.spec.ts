@@ -40,3 +40,15 @@ test('rejects wildcard and non-origin WEB_ORIGIN values', () => {
     }));
   }
 });
+
+test('backup settings have safe monthly defaults and reject invalid schedules', () => {
+  const input = { JWT_SECRET: randomBytes(32).toString('hex'), DATABASE_URL: 'postgresql://local:local@localhost/test', WEB_ORIGIN: 'http://localhost:5173' };
+  const defaults = validateEnv(input);
+  assert.equal(defaults.BACKUP_AUTO_ENABLED, true);
+  assert.equal(defaults.BACKUP_HOUR, '02:00');
+  assert.equal(defaults.BACKUP_RETENTION_DAYS, 365);
+  assert.equal(validateEnv({ ...input, BACKUP_AUTO_ENABLED: 'false' }).BACKUP_AUTO_ENABLED, false);
+  for (const settings of [{ BACKUP_AUTO_ENABLED: 'yes' }, { BACKUP_HOUR: '25:00' }, { BACKUP_RETENTION_DAYS: '0' }, { BACKUP_TIME_ZONE: 'invalid-zone' }]) {
+    assert.throws(() => validateEnv({ ...input, ...settings }));
+  }
+});

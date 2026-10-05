@@ -798,3 +798,50 @@ button[aria-busy='true'] { cursor: wait; }
 .type-option input, .type-option input:disabled { opacity: 0; inset: 0; margin: 0; }
 .menu-toggle:hover { background: var(--interactive-hover); border-color: var(--info); }
 .menu-toggle:active { background: var(--interactive-active); }
+
+/* Backups follow the operational table and form rhythm. */
+.backup-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.backup-intro h2 { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 20px; }
+.backup-intro p { max-width: 650px; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.backup-intro > div > span, .backup-schedule-note { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.backup-intro > button { flex-shrink: 0; }
+.backup-restore-guide { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.backup-restore-guide summary { padding: 12px 24px; color: var(--text-primary); font-weight: 600; cursor: pointer; }
+.backup-restore-guide summary:hover { background: var(--interactive-hover); }
+.backup-restore-guide summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.backup-restore-guide > div { max-width: 850px; padding: 4px 24px 20px; }
+.backup-restore-guide ol { margin: 12px 0; padding-left: 20px; }
+.backup-restore-guide li + li { margin-top: 8px; }
+.backup-restore-guide strong { color: var(--text-primary); }
+.backup-restore-note { padding-top: 12px; border-top: 1px solid var(--border); }
+.backup-schedule form { padding: 20px 24px; }
+.backup-schedule-fields { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.backup-schedule-fields .form-field { min-width: 130px; margin: 0; }
+.backup-toggle { display: flex; align-items: center; gap: 8px; align-self: center; margin-right: 8px; color: var(--text-secondary); font-size: 13px; }
+.backup-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.backup-day { display: grid; align-content: space-between; min-height: 62px; min-width: 130px; padding-bottom: 12px; gap: 12px; font-size: 13px; }
+.backup-day span { color: var(--text-secondary); }
+.backup-schedule-note { margin: 16px 0 0; }
+.backup-meta { display: block; margin-top: 5px; color: var(--text-muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.backup-status { font-weight: 600; }
+.backup-status-ready { color: var(--success); }
+.backup-status-running { color: var(--info); }
+.backup-status-failed, .backup-error { color: var(--danger); }
+.backup-table td { vertical-align: top; }
+.backup-table td:nth-child(3) { max-width: 330px; }
+@media (max-width: 700px) {
+  .backup-intro { flex-direction: column; align-items: stretch; padding: 20px 18px; }
+  .backup-intro h2 { font-size: 18px; }
+  .backup-restore-guide summary { padding: 12px 18px; }
+  .backup-restore-guide > div { padding: 4px 18px 18px; }
+  .backup-schedule form { padding: 18px; }
+  .backup-toggle { flex-basis: 100%; }
+  .backup-schedule-fields .form-field, .backup-day { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .backup-schedule-fields > button { width: 100%; }
+  .backup-table, .backup-table tbody { display: block; }
+  .backup-table thead { display: none; }
+  .backup-table tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 12px; padding: 18px; border-bottom: 1px solid var(--border); }
+  .backup-table td { display: block; padding: 0; border: 0; font-size: 12px; }
+  .backup-table td::before { content: attr(data-label); display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 11px; }
+  .backup-table td:nth-child(3), .backup-table td:last-child { grid-column: 1 / -1; max-width: none; }
+}

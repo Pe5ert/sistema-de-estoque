@@ -1,4 +1,6 @@
-# Estado da V2 — 02/10/2026
+# Estado da V2 — 05/10/2026
+
+**Backups — 05/10/2026:** área exclusiva do ADMIN com cópia completa manual, download e agendamento semanal/mensal persistido. Padrão mensal no primeiro dia, 02:00 America/Fortaleza; retenção 365 dias. Restauração real conferida em PostgreSQL isolado. Neon PostgreSQL 18 exportado nesta máquina com ferramentas 18.6; arquivo privado em var/backups, ignorado pelo Git. Configuração/limites: [BACKUPS.md](BACKUPS.md).
 
 **Leitura por código — 05/10/2026:** Movimentações mantém foco no código após identificar, protege o produto selecionado e prepara automaticamente a próxima leitura após registrar. Digitação/colagem + Enter permite simular sem aparelho. Fluxo, QA e limites de hardware: [frontend/BARCODE_WORKFLOW.md](frontend/BARCODE_WORKFLOW.md).
 

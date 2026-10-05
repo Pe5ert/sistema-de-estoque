@@ -300,3 +300,7 @@ Não há autorização automática neste checklist para alterar infraestrutura, 
 ## Validação Neon — 02/10/2026
 
 A conexão temporária com Neon foi validada: `/api/health` retornou HTTP 200, `status: ok`, `database: up`. As duas migrations estão aplicadas. O banco possui um usuário existente; nenhum seed/reset foi executado. A migration operacional repetia CHECKs já presentes na migration inicial; essas declarações redundantes foram removidas. O schema parcial foi conferido antes de marcar a migration como aplicada. O `.env` permanece com sua conexão anterior: Neon foi definido somente no ambiente do processo da API. Reiniciar pelo comando habitual não mantém essa conexão temporária. Login com as credenciais do usuário, persistência ponta a ponta e concorrência real continuam pendentes de validação.
+
+## Backups — 05/10/2026
+
+Ler `docs/BACKUPS.md` para continuar esta área. Rotas `/backups` e `/api/backups` são exclusivas do ADMIN: cópia completa manual, download e agenda semanal/mensal. Padrão mensal no primeiro dia às 02:00 America/Fortaleza, retenção 365 dias. Backups/agenda ficam em pasta privada persistente, ignorada pelo Git; nunca versionar dumps ou dados reais. Neon nesta máquina usa PostgreSQL 18: ferramentas de backup precisam ser compatíveis. Restauração de QA usa somente duas bases loopback isoladas, nunca resetar/restaurar sobre Neon por conveniência.

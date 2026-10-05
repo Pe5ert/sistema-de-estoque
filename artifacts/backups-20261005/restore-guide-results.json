@@ -1,0 +1,45 @@
+{
+  "checks": [
+    {
+      "case": "Guia inicia recolhido",
+      "pass": true
+    },
+    {
+      "case": "Enter abre o guia e preserva foco",
+      "pass": true
+    },
+    {
+      "case": "Guia contém quatro passos",
+      "pass": true
+    },
+    {
+      "case": "Desktop 1440px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "Espaço recolhe o guia",
+      "pass": true
+    },
+    {
+      "case": "1024px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "Mobile 390px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "Guia aberto no mobile mantém todos os passos visíveis",
+      "pass": true
+    },
+    {
+      "case": "Toque recolhe o guia no mobile",
+      "pass": true
+    },
+    {
+      "case": "Reload limpo sem erro de console",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}

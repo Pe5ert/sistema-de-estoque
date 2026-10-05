@@ -1,0 +1,54 @@
+{
+  "startedAt": "2026-10-05T21:09:00.245Z",
+  "checks": [
+    {
+      "case": "Clique duplo: somente um registro novo",
+      "pass": true
+    },
+    {
+      "case": "Rascunho semanal/sexta preservado durante a atualização",
+      "pass": true
+    },
+    {
+      "case": "Agendamento semanal persiste após recarregar",
+      "pass": true
+    },
+    {
+      "case": "Manual continua disponível com automático desativado",
+      "pass": true
+    },
+    {
+      "case": "Geração continua após sair da tela e voltar",
+      "pass": true
+    },
+    {
+      "case": "Falha preservada no histórico sem botão Baixar",
+      "pass": true
+    },
+    {
+      "case": "Agenda mensal ativa persiste após recarregar",
+      "pass": true
+    },
+    {
+      "case": "Mobile 390px sem rolagem horizontal",
+      "pass": true
+    },
+    {
+      "case": "Operador recebe acesso negado na rota direta",
+      "pass": true
+    },
+    {
+      "case": "Operador não vê Backups no menu",
+      "pass": true
+    },
+    {
+      "case": "Download concluído pelo navegador",
+      "pass": true
+    },
+    {
+      "case": "Sem erros de console na rodada",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}
