@@ -33,21 +33,21 @@ function BackupsContent() {
     <section className="backup-intro" aria-labelledby="backup-create-title">
       <div><h2 id="backup-create-title"><HardDrive size={20} aria-hidden="true" />Cópia completa do estoque</h2>
         <p>Inclui produtos, categorias, saldos, usuários e todo o histórico registrado até o momento da cópia.</p>
-        <span>Baixe as cópias para guardá-las também em outro local.</span></div>
+        <span>O administrador da sua empresa cria, baixa e guarda as cópias do banco de dados da empresa.</span></div>
       <button className="primary-button" type="button" disabled={query.isPending || Boolean(query.error) || create.isPending || running} onClick={() => create.mutate()}>
         <Plus size={16} aria-hidden="true" />{create.isPending || running ? 'Gerando backup…' : 'Criar backup'}</button>
     </section>
     <details className="backup-restore-guide">
       <summary>Como restaurar um backup</summary>
       <div>
-        <p>A restauração é feita pelo responsável técnico pela instalação do sistema. Para solicitar:</p>
+        <p>A própria empresa é responsável pelas cópias e pela recuperação do seu banco de dados. Siga estes passos:</p>
         <ol>
           <li><strong>Escolha a cópia.</strong> Em Cópias salvas, confira a data e escolha um backup com situação Disponível.</li>
           <li><strong>Baixe o arquivo.</strong> Clique em Baixar e guarde o arquivo <code>.dump</code>, sem alterar o nome.</li>
-          <li><strong>Solicite a restauração.</strong> Entregue o arquivo ao responsável técnico e informe a data para a qual deseja voltar.</li>
+          <li><strong>Solicite a restauração.</strong> Encaminhe o arquivo ao administrador do banco de dados da sua empresa e informe a data que deseja recuperar.</li>
           <li><strong>Confira os dados.</strong> Após a restauração, verifique produtos, saldos e histórico antes de retomar os lançamentos.</li>
         </ol>
-        <p className="backup-restore-note">Uma cópia antiga não inclui os lançamentos feitos depois da data dela. O responsável deve guardar uma cópia atual antes de substituir os dados.</p>
+        <p className="backup-restore-note">Uma cópia antiga não inclui os lançamentos feitos depois da data dela. O administrador da empresa deve guardar uma cópia atual antes de substituir os dados e conservar as cópias também em outro local.</p>
       </div>
     </details>
     {create.error && <p className="field-error" role="alert">{create.error.message}</p>}

@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "case": "Texto atribui cópias e recuperação à própria empresa",
+      "pass": true
+    },
+    {
+      "case": "Desktop 1440px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "1024px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "Mobile 390px sem overflow",
+      "pass": true
+    },
+    {
+      "case": "Reload limpo sem erro de console",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}

@@ -2,6 +2,8 @@
 
 Em **Administração → Backups**, somente ADMIN pode criar e baixar cópias, ou salvar o agendamento. Operador e gerente recebem 403 mesmo chamando a API diretamente. Os endpoints usam a sessão HttpOnly existente; POST/PATCH também exigem a origem autorizada.
 
+Cada empresa administra as cópias do banco de dados configurado em sua instalação licenciada. O administrador da empresa cria, baixa e guarda os backups; a recuperação é feita pelo administrador do banco de dados da própria empresa.
+
 ## Uso
 
 - **Criar backup:** inicia uma cópia completa do banco naquele instante; o sistema continua disponível. O botão não modifica produtos, saldos ou movimentos. O arquivo inclui todas as datas, não apenas o último mês.
@@ -39,7 +41,7 @@ Esta versão usa um servidor de API com armazenamento persistente local. Não us
 
 ## Restaurar
 
-Na tela, **Como restaurar um backup** explica ao usuário como escolher a data, baixar o arquivo, solicitar a restauração ao responsável técnico e conferir os dados depois. O guia também esclarece que lançamentos posteriores à cópia não estarão nela e orienta guardar uma cópia atual antes de substituir os dados.
+Na tela, **Como restaurar um backup** explica ao usuário como escolher a data, baixar o arquivo, solicitar a restauração ao administrador do banco de dados da própria empresa e conferir os dados depois. O guia também esclarece que lançamentos posteriores à cópia não estarão nela e orienta guardar uma cópia atual antes de substituir os dados, conservando os backups também em outro local.
 
 A restauração é uma operação administrativa fora da interface. Primeiro restaurar em **um banco novo e isolado**, conferir dados e só então planejar a troca da aplicação. Não há botão que sobrescreve silenciosamente o banco de operação.
 

@@ -57,3 +57,11 @@ Incluída a ajuda recolhível **Como restaurar um backup** na tela, com quatro p
 QA do guia: **10/10 PASS**, estado inicial recolhido, Enter/Espaço e foco, quatro passos, clique/toque, larguras 1440/1024/390 sem overflow e reload limpo sem erros de console. Resultados em restore-guide-results.json; capturas restore-guide-desktop.png, restore-guide-1024.png e restore-guide-mobile.png. Uma ação de captura após remover o viewport temporário precisou ser retomada por timeout do navegador; nova captura com viewport explícito concluída. Nenhum dado real do Neon foi alterado.
 
 O usuário autorizou o commit da funcionalidade de backups, guia e evidências. artifacts/stress-20261002 pertence à rodada anterior e fica fora deste commit, assim como .env, ferramentas e arquivos reais de backup.
+
+## Responsabilidade da empresa — 05/10/2026
+
+Texto ajustado conforme o modelo informado: a própria empresa administra as cópias do banco de sua instalação licenciada. O guia encaminha a restauração ao administrador do banco de dados da empresa e orienta conservar cópias em outro local. Mudança restrita aos textos da tela e documentação, sem alterar geração/agendamento, conexão de banco ou autorização.
+
+Conferência visual: **5/5 PASS**, texto correto, 1440/1024/390 sem overflow e reload limpo sem erro de console. Lint, typecheck, build e diff --check PASS na revisão textual. Evidências: company-backup-results.json e company-backup-desktop.png.
+
+Pesquisa solicitada de relatórios: conferidos rotas/componentes da V2, controllers, menções a relatórios/reports e exportação PDF/CSV/Excel. Existem dashboard e histórico filtrável; não existe módulo de relatórios nem exportação desses dados na V2. A menção a relatórios em docs/legacy-diagnosis.md descreve o legado. Nenhuma funcionalidade de relatório foi implementada.
