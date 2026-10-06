@@ -1,5 +1,19 @@
 import { spawn } from 'node:child_process';
+import { rename } from 'node:fs/promises';
+import { setTimeout as delay } from 'node:timers/promises';
 import { z } from 'zod';
+
+// Windows scanners/readers can briefly deny replacement of an existing file.
+// Keep the old metadata intact and retry only these transient rename failures.
+export async function replaceBackupMetadata(source: string, destination: string, replace = rename, platform = process.platform) {
+  for (let attempt = 0; ; attempt++) {
+    try { await replace(source, destination); return; }
+    catch (error) {
+      if (platform !== 'win32' || attempt >= 5 || !['EPERM', 'EACCES', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+      await delay(50 * (attempt + 1));
+    }
+  }
+}
 
 export const scheduleSchema = z.object({
   enabled: z.boolean(), frequency: z.enum(['WEEKLY', 'MONTHLY']),

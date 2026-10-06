@@ -5,7 +5,7 @@ import { chmod, mkdir, open, readdir, readFile, rename, rm } from 'node:fs/promi
 import { createHash, randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { resolve, join } from 'node:path';
-import { backupIdPattern, databaseEnvironment, recordSchema, runTool, scheduleSchema, scheduleWindow, type BackupRecord, type BackupSchedule } from './backup-model';
+import { backupIdPattern, databaseEnvironment, recordSchema, replaceBackupMetadata, runTool, scheduleSchema, scheduleWindow, type BackupRecord, type BackupSchedule } from './backup-model';
 
 @Injectable()
 export class BackupsService implements OnModuleInit, OnModuleDestroy {
@@ -69,7 +69,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       const file = await open(temporary, 'wx', 0o600);
       try { await file.writeFile(JSON.stringify(value)); await file.sync(); }
       finally { await file.close(); }
-      await rename(temporary, path);
+      await replaceBackupMetadata(temporary, path);
     } finally { await rm(temporary, { force: true }); }
   }
 

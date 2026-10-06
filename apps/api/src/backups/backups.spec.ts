@@ -2,11 +2,11 @@ import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { hostname, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BackupsService } from './backups.service';
-import { databaseEnvironment, runTool, scheduleWindow } from './backup-model';
+import { databaseEnvironment, replaceBackupMetadata, runTool, scheduleWindow } from './backup-model';
 
 async function fixture(extra: Record<string, unknown> = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'stock-backup-test-'));
@@ -29,6 +29,25 @@ test('credentials remain out of arguments, process secrets and errors', async ()
   assert.equal(env.PGSSLMODE, 'require'); assert.equal(env.PGCHANNELBINDING, 'require');
   assert.equal(env.JWT_SECRET, undefined); assert.equal(env.DATABASE_URL, undefined);
   await assert.rejects(runTool('/missing/pg_dump', [], env, 1000), /TOOL_UNAVAILABLE/);
+});
+
+test('transient Windows rename denial preserves old metadata until atomic replacement', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stock-backup-rename-test-'));
+  const source = join(directory, 'new.json'), destination = join(directory, 'status.json');
+  try {
+    await writeFile(source, 'FAILED'); await writeFile(destination, 'RUNNING');
+    let attempts = 0;
+    await replaceBackupMetadata(source, destination, async (from, to) => {
+      if (++attempts <= 2) {
+        assert.equal(await readFile(destination, 'utf8'), 'RUNNING');
+        throw Object.assign(new Error('Transient sharing lock'), { code: 'EPERM' });
+      }
+      await rename(from, to);
+    }, 'win32');
+    assert.equal(await readFile(destination, 'utf8'), 'FAILED');
+    const missing = Object.assign(new Error('Missing file'), { code: 'ENOENT' });
+    await assert.rejects(replaceBackupMetadata(source, destination, async () => { throw missing; }, 'win32'), error => error === missing);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test('monthly/weekly scheduling respects Fortaleza time, rollover and missed runs', () => {
