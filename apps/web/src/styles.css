@@ -845,3 +845,36 @@ button[aria-busy='true'] { cursor: wait; }
   .backup-table td::before { content: attr(data-label); display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 11px; }
   .backup-table td:nth-child(3), .backup-table td:last-child { grid-column: 1 / -1; max-width: none; }
 }
+.import-section { padding: 22px; }
+.import-section h2 { font-size: 20px; margin: 0 0 12px; }
+.import-section h3 { margin: 24px 0 12px; font-size: 16px; }
+.import-section p { line-height: 1.6; }
+.import-section fieldset { border: 0; padding: 0; margin: 16px 0; min-width: 0; }
+.import-section form fieldset { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; }
+.import-section input[type=file] { max-width: 100%; padding: 8px; }
+.import-steps { display: flex; gap: 32px; flex-wrap: wrap; padding-left: 24px; color: var(--text-secondary); font-size: 12px; }
+.import-map-grid, .import-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.import-categories > div { display: grid; gap: 12px; }
+.import-authorization { display: flex; gap: 10px; align-items: start; font-size: 13px; line-height: 1.6; margin: 16px 0; }
+.import-authorization input { margin-top: 4px; width: auto; }
+.import-errors { color: var(--danger); overflow-wrap: anywhere; }
+.import-errors li { margin-bottom: 8px; line-height: 1.5; }
+.import-table td { overflow-wrap: anywhere; }
+.import-confirm { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 12px; }
+.import-section .form-notice { display: block; }
+.import-section .form-notice h3 { margin-top: 0; }
+.import-section .form-notice .primary-button { margin: 12px 0; }
+.import-recent { list-style: none; padding: 0; }
+.import-recent li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.import-recent span { font-size: 12px; color: var(--text-secondary); }
+@media (max-width: 700px) {
+  .import-section { padding: 16px; }
+  .import-map-grid, .import-categories { grid-template-columns: 1fr; }
+  .import-table thead { display: none; }
+  .import-table, .import-table tbody, .import-table tr, .import-table td { display: block; width: 100%; }
+  .import-table tr { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .import-table td { display: flex; justify-content: space-between; gap: 12px; padding: 8px; }
+  .import-table td::before { content: attr(data-label); color: var(--text-muted); min-width: 95px; }
+  .import-confirm .primary-button { width: 100%; }
+  .import-recent li { flex-direction: column; gap: 4px; }
+}

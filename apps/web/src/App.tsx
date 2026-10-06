@@ -12,6 +12,7 @@ import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
 import { Products } from './Products';
 import { BackupsPage } from './Backups';
+import { ProductImportPage } from './ProductImport';
 import { useAuth } from './auth/auth';
 
 const navigation = [
@@ -28,7 +29,9 @@ function Shell() {
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const location = useLocation();
-  const current = location.pathname === '/products/new'
+  const current = location.pathname === '/products/import'
+    ? { path: '/products', label: 'Importar produtos', description: 'Traga o catálogo da planilha e confira antes de gravar.' }
+    : location.pathname === '/products/new'
     ? { path: '/products', label: 'Novo produto', description: 'Identifique, configure e siga para o próximo item.' }
     : /^\/products\/.+\/edit$/.test(location.pathname)
       ? { path: '/products', label: 'Editar produto', description: 'Atualize os dados do catálogo. O saldo permanece preservado.' }
@@ -118,6 +121,7 @@ export function App() {
       <Route index element={<Overview />} />
       <Route path="products" element={<Products />} />
       <Route path="products/new" element={<ProductFormPage />} />
+      <Route path="products/import" element={<ProductImportPage />} />
       <Route path="products/:id/edit" element={<ProductFormPage />} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />

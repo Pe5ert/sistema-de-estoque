@@ -7,10 +7,13 @@ import { DataState, Pagination } from './data-controls';
 import { DetailDrawer, openFromRow } from './DetailDrawer';
 import { CategoryManager } from './CategoryManager';
 import { ProductIdentity, ProductThumbnail, Status, StockMeter } from './inventory-ui';
+import { canImportProducts } from '@stock/shared';
+import { useAuth } from './auth/auth';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function Products() {
+  const { currentUser } = useAuth();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
   const location = useLocation();
@@ -35,7 +38,7 @@ export function Products() {
   return (
     <div className="page-stack">
       {notice && <div className="form-notice" role="status">{notice}</div>}
-      <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions"><CategoryManager onOpen={() => setSelectedId(null)} /><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
+      <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions">{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}<CategoryManager onOpen={() => setSelectedId(null)} /><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
       <section className="list-section" aria-labelledby="catalog-title">
         <div className="list-heading catalog-heading"><h2 id="catalog-title">Catálogo de produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
         <div className="filter-bar">

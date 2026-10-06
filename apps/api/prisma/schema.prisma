@@ -53,6 +53,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   stockMovements StockMovement[]
+  importJobs     ImportJob[]
 }
 
 model Category {
@@ -105,4 +106,35 @@ model StockMovement {
 
   @@index([productId, createdAt])
   @@index([userId, createdAt])
+}
+
+enum ImportStatus {
+  PREVIEW
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ImportJob {
+  id               String       @id @default(uuid()) @db.Uuid
+  status           ImportStatus @default(PREVIEW)
+  createdBy        String       @db.Uuid
+  creator          User         @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  fileName         String       @db.VarChar(255)
+  format           String       @db.VarChar(4)
+  delimiter        String?      @db.VarChar(1)
+  headers          Json
+  rows             Json
+  mapping          Json
+  categoryMappings Json
+  revision         Int          @default(1)
+  totalRows        Int
+  ignoredRows      Int          @default(0)
+  importedRows     Int          @default(0)
+  result           Json?
+  error            String?      @db.VarChar(500)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([createdBy, createdAt])
 }

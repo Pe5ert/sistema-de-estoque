@@ -1,4 +1,6 @@
-# Estado da V2 — 05/10/2026
+# Estado da V2 — 06/10/2026
+
+**Importação V1 — 06/10/2026 (branch feat/importacao-v1):** CSV/XLSX com mapeamento, categorias explícitas, preview, erros, confirmação atômica/idempotente e entradas INITIAL_STOCK. QA em PostgreSQL isolado e navegador; migration ainda não aplicada ao Neon compartilhado. Contratos, limites, integração e retomada: [IMPORTACAO_V1.md](IMPORTACAO_V1.md).
 
 **Backups — 05/10/2026:** área exclusiva do ADMIN com cópia completa manual, download e agendamento semanal/mensal persistido. Padrão mensal no primeiro dia, 02:00 America/Fortaleza; retenção 365 dias. Restauração real conferida em PostgreSQL isolado. Neon PostgreSQL 18 exportado nesta máquina com ferramentas 18.6; arquivo privado em var/backups, ignorado pelo Git. Configuração/limites: [BACKUPS.md](BACKUPS.md).
 

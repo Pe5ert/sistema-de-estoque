@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CategoryInput, CategoryPatch, MovementInput, MovementQuery, ProductCreate, ProductPatch, ProductQuery } from './inventory.dto';
@@ -82,6 +83,22 @@ export class InventoryService {
         return product;
       });
     } catch (error) { databaseError(error); }
+  }
+  // Import-only creation of fresh IDs in the caller's transaction. Initial stock
+  // uses the same Decimal domain calculation and creates audit before updating balances.
+  async createImportProducts(tx: Prisma.TransactionClient, inputs: ProductCreate[], userId: string, importId: string) {
+    const prepared = inputs.map(({ initialEntry, ...data }) => ({ id: randomUUID(), data, initialEntry }));
+    const categoryIds = [...new Set(inputs.map(input => input.categoryId))].sort();
+    await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "Category" WHERE "id" IN (${Prisma.join(categoryIds.map(id => Prisma.sql`${id}::uuid`))}) ORDER BY "id" FOR SHARE`);
+    const active = await tx.category.count({ where: { id: { in: categoryIds }, active: true } });
+    if (active !== categoryIds.length) throw new BadRequestException('Selecione uma categoria ativa.');
+    await tx.product.createMany({ data: prepared.map(item => ({ ...item.data, id: item.id, barcode: item.data.barcode || null, stock: 0 })) });
+    const balances = prepared.flatMap(item => item.initialEntry ? [{ id: item.id, ...resultingStock(new Prisma.Decimal(0), item.initialEntry.quantity, 'ENTRY') }] : []);
+    if (balances.length) {
+      await tx.stockMovement.createMany({ data: balances.map(item => ({ productId: item.id, userId, type: 'ENTRY', reason: 'INITIAL_STOCK', quantity: item.amount, previousStock: 0, resultingStock: item.next, reference: importId, notes: 'Estoque inicial — importação' })) });
+      await tx.$executeRaw(Prisma.sql`UPDATE "Product" AS p SET "stock" = b.stock, "updatedAt" = CURRENT_TIMESTAMP FROM (VALUES ${Prisma.join(balances.map(item => Prisma.sql`(${item.id}::uuid, ${item.next.toFixed(3)}::numeric)`))}) AS b(id,stock) WHERE p."id" = b.id`);
+    }
+    return { products: prepared.length, movements: balances.length };
   }
   async patchProduct(id: string, data: ProductPatch) {
     for (const key of ['sku', 'name', 'categoryId', 'unit', 'minimumStock', 'active'] as const) {

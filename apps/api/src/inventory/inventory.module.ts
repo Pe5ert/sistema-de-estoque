@@ -5,5 +5,5 @@ import { CategoriesController, DashboardController, MovementsController, Product
 import { InventoryService } from './inventory.service';
 import { DashboardService } from './dashboard.service';
 
-@Module({ imports: [AuthModule, PrismaModule], controllers: [CategoriesController, ProductsController, MovementsController, DashboardController], providers: [InventoryService, DashboardService] })
+@Module({ imports: [AuthModule, PrismaModule], controllers: [CategoriesController, ProductsController, MovementsController, DashboardController], providers: [InventoryService, DashboardService], exports: [InventoryService] })
 export class InventoryModule {}
