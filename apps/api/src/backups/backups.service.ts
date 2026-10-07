@@ -5,7 +5,7 @@ import { chmod, mkdir, open, readdir, readFile, rename, rm } from 'node:fs/promi
 import { createHash, randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { resolve, join } from 'node:path';
-import { backupIdPattern, databaseEnvironment, recordSchema, replaceBackupMetadata, runTool, scheduleSchema, scheduleWindow, type BackupRecord, type BackupSchedule } from './backup-model';
+import { backupIdPattern, databaseEnvironment, recordSchema, replaceBackupMetadata, runTool, syncBackupArchive, scheduleSchema, scheduleWindow, type BackupRecord, type BackupSchedule } from './backup-model';
 
 @Injectable()
 export class BackupsService implements OnModuleInit, OnModuleDestroy {
@@ -159,8 +159,7 @@ export class BackupsService implements OnModuleInit, OnModuleDestroy {
       await runTool(this.dumpTool, ['--format=custom', '--no-password', '--lock-wait-timeout=15000', '--file', partial], databaseEnvironment(this.connection), this.timeout);
       await runTool(this.restoreTool, ['--list', partial], { PATH: process.env.PATH }, this.timeout);
       const integrity = await this.checksum(record.id, 'partial');
-      const file = await open(partial, constants.O_RDONLY | constants.O_NOFOLLOW);
-      try { await file.sync(); } finally { await file.close(); }
+      await syncBackupArchive(partial);
       await rename(partial, this.path(record.id, 'dump'));
       await this.save({ ...record, ...integrity, status: 'READY', finishedAt: new Date().toISOString() });
       // Retention runs only after publishing a successful archive, preserving the last good copy.

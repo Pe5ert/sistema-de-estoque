@@ -1,7 +1,15 @@
 import { spawn } from 'node:child_process';
-import { rename } from 'node:fs/promises';
+import { open, rename } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { z } from 'zod';
+
+export async function syncBackupArchive(path: string) {
+  // Windows FlushFileBuffers requires a writable handle. Do not truncate it.
+  const mode = process.platform === 'win32' ? constants.O_RDWR : constants.O_RDONLY;
+  const file = await open(path, mode | constants.O_NOFOLLOW);
+  try { await file.sync(); } finally { await file.close(); }
+}
 
 // Windows scanners/readers can briefly deny replacement of an existing file.
 // Keep the old metadata intact and retry only these transient rename failures.

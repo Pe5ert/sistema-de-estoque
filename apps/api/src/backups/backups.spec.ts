@@ -6,7 +6,18 @@ import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:f
 import { hostname, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BackupsService } from './backups.service';
-import { databaseEnvironment, replaceBackupMetadata, runTool, scheduleWindow } from './backup-model';
+import { databaseEnvironment, replaceBackupMetadata, runTool, syncBackupArchive, scheduleWindow } from './backup-model';
+
+test('archive sync uses a Windows-compatible handle without truncating the dump', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stock-backup-sync-'));
+  const archive = join(directory, 'archive.partial');
+  const content = Buffer.from([80, 71, 68, 77, 80, 0, 255, 42]);
+  try {
+    await writeFile(archive, content, { mode: 0o600 });
+    await syncBackupArchive(archive);
+    assert.deepEqual(await readFile(archive), content);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 async function fixture(extra: Record<string, unknown> = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'stock-backup-test-'));
