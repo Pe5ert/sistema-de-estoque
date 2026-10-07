@@ -7,6 +7,7 @@ import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { ApiError } from '../lib/api';
 import { useAuth } from './auth';
 import { SessionGate } from './ProtectedRoute';
+import { Alert, FieldError } from '../feedback';
 
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().min(1, 'Informe seu e-mail.').email('Informe um e-mail válido.').max(180, 'Use até 180 caracteres.'),
@@ -54,13 +55,13 @@ export function LoginPage() {
             <div className="login-access-inner">
               <div className="login-access-heading"><div className="login-kicker"><LockKeyhole size={16} aria-hidden="true" /><span>IDENTIFICAÇÃO</span></div>
               <h2 id="login-title">Entrar no sistema</h2><p className="login-description">Use seu e-mail e senha para acessar a operação.</p></div>
-              {auth.sessionExpired && <p className="login-notice" role="status">Sua sessão expirou ou foi encerrada. Entre novamente.</p>}
+              {auth.sessionExpired && <Alert tone="warning" title="Sua sessão expirou ou foi encerrada.">Entre novamente para continuar.</Alert>}
               <form onSubmit={submit} noValidate aria-busy={isSubmitting}>
                 <div className="auth-field">
                   <label htmlFor="login-email">E-mail <span>Seu acesso à equipe</span></label>
                   <input id="login-email" type="email" autoComplete="username" inputMode="email" maxLength={180}
                     aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} {...register('email')} />
-                  {errors.email && <p className="auth-field-error" id="email-error">{errors.email.message}</p>}
+                  {errors.email && <FieldError id="email-error">{errors.email.message}</FieldError>}
                 </div>
                 <div className="auth-field">
                   <label htmlFor="login-password">Senha <span>Credencial pessoal</span></label>
@@ -70,9 +71,9 @@ export function LoginPage() {
                     <button className="icon-button" type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword}
                       onClick={() => setShowPassword((show) => !show)}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                   </div>
-                  {errors.password && <p className="auth-field-error" id="password-error">{errors.password.message}</p>}
+                  {errors.password && <FieldError id="password-error">{errors.password.message}</FieldError>}
                 </div>
-                {error && <p className="auth-form-error" role="alert">{error}</p>}
+                {error && <Alert tone="error" title={error} />}
                 <button className="auth-submit" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>{isSubmitting ? 'Entrando…' : 'Entrar'}<ArrowRight size={19} aria-hidden="true" /></button>
               </form>
               <p className="login-session-note"><LockKeyhole size={14} aria-hidden="true" /><span>Sessão de até 8 horas.<br />Use Sair ao encerrar sua operação.</span></p>

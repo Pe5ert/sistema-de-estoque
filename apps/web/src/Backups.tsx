@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, useFeedback } from './feedback';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, HardDrive, Plus } from 'lucide-react';
 import { useAuth } from './auth/auth';
+import { useNavigate } from 'react-router-dom';
 import { DataState } from './data-controls';
 import { apiClient, apiUrl } from './lib/api';
 
@@ -18,13 +20,38 @@ export function BackupsPage() {
   return <BackupsContent />;
 }
 
+// Remains mounted in the shell: a running copy can finish after page navigation.
+export function BackupsFeedbackMonitor() {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const { notify } = useFeedback();
+  const observed = useRef(new Map<string, Backup['status']>());
+  const announced = useRef(new Set<string>());
+  const created = useMutationState<Backup>({ filters: { mutationKey: ['backup-create'], status: 'success' }, select: mutation => mutation.state.data as Backup });
+  const query = useQuery({ queryKey: key, queryFn: ({ signal }) => apiClient<BackupList>('/backups', { signal }), enabled: currentUser?.role === 'ADMIN', refetchInterval: query => query.state.data?.inProgress ? 2000 : false, retry: false });
+  useEffect(() => {
+    for (const item of query.data?.items ?? []) {
+      if ((observed.current.get(item.id) === 'RUNNING' || created.some(backup => backup.id === item.id)) && item.status !== 'RUNNING' && !announced.current.has(item.id)) {
+        announced.current.add(item.id);
+        notify({ tone: item.status === 'READY' ? 'success' : 'error', title: item.status === 'READY' ? 'Backup concluído.' : 'Não foi possível gerar o backup.', description: item.status === 'READY' ? 'A cópia está disponível em Backups.' : 'A última cópia válida foi preservada. Confira o detalhe em Backups.', action: { label: 'Ver backups', run: () => navigate('/backups') }, key: 'backup-result' });
+      }
+      observed.current.set(item.id, item.status);
+    }
+  }, [query.data, notify, navigate, created]);
+  return null;
+}
+
 function BackupsContent() {
+  const { notify } = useFeedback();
   const client = useQueryClient();
-  const [notice, setNotice] = useState('');
   const query = useQuery({ queryKey: key, queryFn: ({ signal }) => apiClient<BackupList>('/backups', { signal }),
     refetchInterval: query => query.state.data?.inProgress ? 2000 : 30_000, retry: false });
-  const create = useMutation({ mutationFn: () => apiClient<Backup>('/backups', { method: 'POST' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: key }) });
+  const create = useMutation({ mutationKey: ['backup-create'], mutationFn: () => apiClient<Backup>('/backups', { method: 'POST' }),
+    onSuccess: backup => {
+      client.setQueryData<BackupList>(key, previous => previous ? { ...previous, inProgress: backup.status === 'RUNNING', items: [backup, ...previous.items.filter(item => item.id !== backup.id)], total: previous.total + 1 } : previous);
+      notify({ tone: 'info', title: 'Backup iniciado.', description: 'Você pode continuar usando o sistema.', key: 'backup-start' });
+      return client.invalidateQueries({ queryKey: key });
+    } });
   const running = query.data?.inProgress;
   const date = (value: string) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: query.data?.timeZone }).format(new Date(value));
   const size = (bytes: number) => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -50,12 +77,12 @@ function BackupsContent() {
         <p className="backup-restore-note">Uma cópia antiga não inclui os lançamentos feitos depois da data dela. O administrador da empresa deve guardar uma cópia atual antes de substituir os dados e conservar as cópias também em outro local.</p>
       </div>
     </details>
-    {create.error && <p className="field-error" role="alert">{create.error.message}</p>}
-    {running && <p className="form-notice" role="status">O backup está em andamento. Você pode continuar usando o sistema; a cópia aparecerá abaixo quando estiver pronta.</p>}
+    {create.error && <Alert tone="error" title="Não foi possível iniciar o backup." action={{ label: 'Tentar novamente', run: () => create.mutate() }}>{create.error.message}</Alert>}
+    {running && <Alert title="Backup em andamento.">Você pode continuar usando o sistema; a cópia aparecerá abaixo quando estiver pronta.</Alert>}
+    {query.data?.items[0]?.status === 'FAILED' && <Alert tone="warning" title="O último backup falhou.">Confira o motivo em Cópias salvas e crie uma nova cópia.</Alert>}
     <DataState pending={query.isPending} error={query.error} retry={query.refetch}>
       {query.data && <>
-        <ScheduleForm schedule={query.data.schedule} timeZone={query.data.timeZone} onSaved={() => setNotice('Agendamento salvo.')} onEdit={() => setNotice('')} />
-        {notice && <p className="form-notice" role="status">{notice}</p>}
+        <ScheduleForm schedule={query.data.schedule} timeZone={query.data.timeZone} onSaved={() => notify({ tone: 'success', title: 'Agendamento salvo.' })} />
         <section className="list-section" aria-labelledby="backup-list-title">
           <div className="list-heading"><h2 id="backup-list-title">Cópias salvas</h2><span>{query.data.total} {query.data.total === 1 ? 'registro' : 'registros'}</span></div>
           {query.data.items.length === 0 ? <div className="empty-state"><HardDrive size={24} aria-hidden="true" /><strong>Nenhum backup criado ainda.</strong><p>Crie a primeira cópia ou aguarde o agendamento automático.</p></div> :
@@ -75,7 +102,7 @@ function BackupsContent() {
   </div>;
 }
 
-function ScheduleForm({ schedule, timeZone, onSaved, onEdit }: { schedule: Schedule; timeZone: string; onSaved: () => void; onEdit: () => void }) {
+function ScheduleForm({ schedule, timeZone, onSaved }: { schedule: Schedule; timeZone: string; onSaved: () => void }) {
   const client = useQueryClient();
   const [draft, setDraft] = useState(schedule);
   const { enabled, frequency, weekday, hour } = schedule;
@@ -84,7 +111,7 @@ function ScheduleForm({ schedule, timeZone, onSaved, onEdit }: { schedule: Sched
   const mutation = useMutation({ mutationFn: () => apiClient<Schedule>('/backups/schedule', { method: 'PATCH', body: JSON.stringify(draft) }),
     onSuccess: saved => { client.setQueryData<BackupList>(key, previous => previous ? { ...previous, schedule: saved } : previous); onSaved(); } });
   const changed = JSON.stringify(draft) !== JSON.stringify(schedule);
-  const change = (values: Partial<Schedule>) => { setDraft(previous => ({ ...previous, ...values })); mutation.reset(); onEdit(); };
+  const change = (values: Partial<Schedule>) => { setDraft(previous => ({ ...previous, ...values })); mutation.reset(); };
   return <section className="list-section backup-schedule" aria-labelledby="backup-schedule-title">
     <div className="list-heading"><h2 id="backup-schedule-title">Backup automático</h2><span>{schedule.enabled ? 'Ativo' : 'Desativado'}</span></div>
     <form onSubmit={event => { event.preventDefault(); mutation.mutate(); }}>
@@ -96,8 +123,8 @@ function ScheduleForm({ schedule, timeZone, onSaved, onEdit }: { schedule: Sched
         <button type="submit" className="secondary-button" disabled={!changed || mutation.isPending}>{mutation.isPending ? 'Salvando…' : 'Salvar agendamento'}</button>
       </div>
       <p className="backup-schedule-note">{schedule.enabled ? (schedule.frequency === 'MONTHLY' ? 'Todo primeiro dia do mês' : `Toda semana: ${weekdays[schedule.weekday]}`) + `, às ${schedule.hour} (${timeZone}).` : 'A geração manual continua disponível.'} O servidor precisa estar em execução. Se ficar desligado, a cópia pendente será gerada ao reiniciar.</p>
-      {changed && <p className="backup-schedule-note" role="status">Alterações ainda não salvas.</p>}
-      {mutation.error && <p className="field-error" role="alert">{mutation.error.message}</p>}
+      {changed && <Alert tone="warning" title="Alterações ainda não salvas." />}
+      {mutation.error && <Alert tone="error" title="Não foi possível salvar o agendamento.">{mutation.error.message}</Alert>}
     </form>
   </section>;
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useFeedback } from '../feedback';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import type { UserRole } from '@stock/shared';
@@ -9,20 +10,19 @@ const roleLabels: Record<UserRole, string> = { ADMIN: 'Administrador', MANAGER: 
 
 export function UserSession() {
   const { currentUser, logout } = useAuth();
+  const { notify } = useFeedback();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   if (!currentUser) return null;
 
   async function signOut() {
     if (busy) return;
     setBusy(true);
-    setError(null);
     try {
       await logout();
       navigate('/login', { replace: true });
     } catch (error) {
-      setError(error instanceof ApiError ? error.message : 'Não foi possível sair. Tente novamente.');
+      notify({ tone: 'error', title: 'Não foi possível sair.', description: error instanceof ApiError ? error.message : 'Tente novamente.', key: 'logout' });
     } finally {
       setBusy(false);
     }
@@ -31,6 +31,5 @@ export function UserSession() {
   return <div className="user-session">
     <span className="user-session-name">{currentUser.name}<small>{roleLabels[currentUser.role]}</small></span>
     <button type="button" onClick={signOut} disabled={busy}><LogOut size={16} aria-hidden="true" />{busy ? 'Saindo…' : 'Sair'}</button>
-    {error && <p role="alert">{error}</p>}
   </div>;
 }

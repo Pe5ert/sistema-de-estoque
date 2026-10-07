@@ -31,7 +31,7 @@ Conservar contraste, foco visível, rótulos de status e números tabulares. Cor
 - Nome, categoria e unidade são essenciais; custo/venda próximos e opcionais. Categoria usa select nativo abastecido pela API; cadastro/inativação fica no catálogo. Números são texto/inputMode decimal sem máscara ao digitar. Valores enviados são strings exatas, preços vazios viram null; edição usa o valor persistido.
 - Estoque mínimo é configuração; saldo nunca é editável. Cadastro oferece Sem saldo inicial / Registrar entrada inicial, com quantidade e motivo fixo Estoque inicial. Produto nasce com zero e entrada inicial é criada na mesma transação. Edição mostra saldo consultado da API; não oferece alteração direta.
 - Imagem principal usa URL HTTP(S)/null persistida, preview, trocar/remover e placeholder. Não usar URL temporária de arquivo como dado persistente. Upload de arquivo depende de storage futuro. No cadastro repetido a imagem é limpa.
-- Salvar produto é primário, Salvar e criar outro é secundário e Cancelar é discreto. Barra sticky compacta, sem caixa externa, com ordem visual coerente com Tab. Campos/erros focados ficam acima das ações; ajuste de rolagem por mouse ocorre depois do clique, preservando abertura de detalhes/seleção. Cancelar com preenchimento pede confirmação inline; continuar mantém dados. Navegação interna, sidebar e Voltar usam a mesma confirmação de descarte enquanto há alterações. Recarregar/fechar a página mantém a proteção nativa do navegador.
+- Salvar produto é primário, Salvar e criar outro é secundário e Cancelar é discreto. Barra sticky compacta, sem caixa externa, com ordem visual coerente com Tab. Campos/erros focados ficam acima das ações; ajuste de rolagem por mouse ocorre depois do clique, preservando abertura de detalhes/seleção. Cancelar com preenchimento pede confirmação modal compartilhada; continuar mantém dados. Navegação interna, sidebar e Voltar usam a mesma confirmação de descarte enquanto há alterações. Recarregar/fechar a página mantém a proteção nativa do navegador.
 - Validação inline preserva dados e foca primeiro erro; duplicidade SKU/barcode vem do servidor (409). Submit tem trava, campos desabilitados enquanto grava e estado Salvando. Save-and-new limpa item/imagem/detalhes, mantém categoria/unidade e retorna foco ao código de barras.
 - TanStack Query é fonte de dados; invalidar produto/produtos/categorias/movimentos/painel após sucesso. Não recarregar a página para atualizar saldo. Preservar estados de carregamento/vazio/falha com recuperação. Não prometer WebSocket ou atualização contínua entre usuários.
 
@@ -48,3 +48,11 @@ Conservar contraste, foco visível, rótulos de status e números tabulares. Cor
 - Drawers usam o componente compartilhado com header fixo, conteúdo rolável, fechar com alvo adequado e edição como botão secundário. Desktop e mobile são modais nesta rodada.
 
 Evidências e limites em UI_INTERACTION_REVIEW.md e artifacts/ui-interaction-20261002.
+
+## Feedback operacional — 07/10/2026
+
+Usar FeedbackProvider/useFeedback para resultados de ações, Alert para problemas persistentes da página, FieldError para preenchimento e ConfirmDialog para descarte/inativação. ConfirmDialog reutiliza o comportamento modal de DetailDrawer. Manter cor como pequeno acento, com ícone e texto; usar tokens existentes. Não criar avisos por clique, Undo sem operação de domínio ou sucesso de download sem comprovação.
+
+Success 4 s, info 5 s, warning 7 s; error e mensagens com CTA permanecem até ação/dispensa. Pausar em hover, foco, aba oculta ou superfície modal. No máximo três visíveis, fila para as demais. Desktop inferior direito, acima do footer sticky; mobile no topo com margens e quebra de texto. A fila atravessa navegação e é limpa ao encerrar/rejeitar sessão; não persiste no reload. Detalhes de importação/auditoria permanecem na página. O painel mantém seus alertas próprios de reposição.
+
+Uma falha de atualização com sessão/dados já conhecidos não deve desmontar um formulário e perder rascunho. 401 segue revogando acesso. Relatório, mensagens e evidências em artifacts/feedback-20261007/REVIEW.md.

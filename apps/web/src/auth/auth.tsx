@@ -4,6 +4,7 @@ import { userRoles } from '@stock/shared';
 import { z } from 'zod';
 import { apiClient, ApiError, UNAUTHORIZED_EVENT } from '../lib/api';
 import './auth.css';
+import { useFeedback } from '../feedback';
 
 const userSchema = z.object({
   id: z.string().uuid(), name: z.string(), email: z.string().email(), role: z.enum(userRoles),
@@ -34,6 +35,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { clear, notify } = useFeedback();
   const client = useQueryClient();
   const [sessionExpired, setSessionExpired] = useState(false);
   const session = useQuery({
@@ -49,12 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unauthorized = () => {
       if (client.getQueryData(sessionKey)) setSessionExpired(true);
       client.setQueryData(sessionKey, null);
+      clear();
       // Clear private feature data whenever the server rejects a session.
       client.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
+      client.getMutationCache().clear();
     };
     window.addEventListener(UNAUTHORIZED_EVENT, unauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, unauthorized);
-  }, [client]);
+  }, [client, clear]);
 
   async function login(credentials: { email: string; password: string }) {
     await apiClient('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
@@ -68,8 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiClient('/auth/logout', { method: 'POST' });
     await client.cancelQueries();
     client.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
+    client.getMutationCache().clear();
     client.setQueryData(sessionKey, null);
     setSessionExpired(false);
+    clear();
+    notify({ tone: 'info', title: 'Você saiu do sistema.' });
   }
 
   return <AuthContext.Provider value={{

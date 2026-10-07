@@ -1,17 +1,17 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './auth';
+import { Alert } from '../feedback';
 
 export function SessionGate({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   if (auth.isLoading) return <main className="auth-state" role="status"><span className="block-label">ESTOQUE V2</span><h1>Verificando sessão…</h1></main>;
-  if (auth.error) return (
+  if (auth.error && !auth.currentUser) return (
     <main className="auth-state">
       <span className="block-label">ESTOQUE V2</span><h1>Não foi possível verificar sua sessão.</h1>
-      <p role="alert">Verifique a conexão com o servidor e tente novamente.</p>
-      <button className="auth-submit" onClick={auth.retry} type="button">Tentar novamente</button>
+      <Alert tone="error" title="Servidor indisponível." action={{ label: 'Tentar novamente', run: auth.retry }}>Verifique a conexão com o servidor e tente novamente.</Alert>
     </main>
   );
-  return children;
+  return <>{auth.error && <Alert tone="warning" title="Não foi possível atualizar sua sessão." action={{ label: 'Tentar novamente', run: auth.retry }}>Verifique a conexão. O preenchimento permanece aberto.</Alert>}{children}</>;
 }
 
 export function ProtectedRoute() {

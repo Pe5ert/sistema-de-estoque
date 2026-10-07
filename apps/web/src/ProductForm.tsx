@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Barcode, ArrowRight, Check, Save } from 'lucide-react';
+import { Barcode, ArrowRight, Save } from 'lucide-react';
+import { useFeedback, Alert, ConfirmDialog } from './feedback';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { useCategories, useProduct, useInventoryMutation } from './inventory-api';
 import { apiUnit, type ProductPresentation } from './inventory-model';
@@ -24,23 +25,24 @@ export function ProductFormPage() {
   const { id } = useParams();
   const query = useProduct(id);
   const categories = useCategories();
-  return <DataState pending={categories.isPending || Boolean(id && query.isPending)} error={categories.error || (id ? query.error : null)} retry={() => { void categories.refetch(); void query.refetch(); }}><ProductForm key={id ?? 'new'} product={query.data} /></DataState>;
+  return <DataState retainContentOnError={Boolean(categories.data && (!id || query.data))} pending={categories.isPending || Boolean(id && query.isPending)} error={categories.error || (id ? query.error : null)} retry={() => { void categories.refetch(); void query.refetch(); }}><ProductForm key={id ?? 'new'} product={query.data} /></DataState>;
 }
 
 function ProductForm({ product }: { product?: ProductPresentation }) {
+  const { notify } = useFeedback();
   const navigate = useNavigate();
   const { data: categories = [] } = useCategories();
   const mutation = useInventoryMutation((body: Record<string, unknown>) => apiClient('/products' + (product ? '/' + product.id : ''), { method: product ? 'PATCH' : 'POST', body: JSON.stringify(body) }));
   const editing = Boolean(product);
   const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? '');
-  const [notice, setNotice] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(Boolean(product?.description));
   const [cancelRequested, setCancelRequested] = useState(false);
   const [savingAction, setSavingAction] = useState<'save' | 'another' | null>(null);
+  const [confirmInactive, setConfirmInactive] = useState(false);
+  const inactivationApproved = useRef(false);
   const [focusNextProduct, setFocusNextProduct] = useState(false);
   const saving = useRef(false);
   const allowNavigation = useRef(false);
-  const cancelPanel = useRef<HTMLDivElement>(null);
   const pointerFocusing = useRef(false);
   const { register, control, watch, handleSubmit, setError, clearErrors, reset, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<ProductFormValues>({ defaultValues: productFormDefaults(product) });
   const unit = watch('unit');
@@ -49,9 +51,6 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const busy = isSubmitting || savingAction !== null;
   const blocker = useBlocker(({ currentLocation, nextLocation }) => !allowNavigation.current && (dirty || saving.current) && currentLocation.pathname !== nextLocation.pathname);
   const confirmingLeave = cancelRequested || blocker.state === 'blocked';
-  useEffect(() => {
-    if (confirmingLeave) cancelPanel.current?.focus();
-  }, [confirmingLeave]);
 
   useEffect(() => { setFocus(editing ? 'name' : 'barcode'); window.scrollTo({ top: 0, left: 0 }); }, [editing, setFocus]);
   useEffect(() => {
@@ -69,7 +68,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   };
   const submit = (action: 'save' | 'another') => handleSubmit(async (values) => {
     if (saving.current) return;
-    clearErrors(); setNotice(''); setCancelRequested(false);
+    clearErrors(); setCancelRequested(false);
     const validated = validateProductForm(values, editing);
     if (!validated.success) {
       for (const issue of validated.error.issues) setError(issue.path[0] as keyof ProductFormValues, { message: issue.message });
@@ -77,6 +76,8 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
       if (firstError) setFocus(firstError);
       return;
     }
+    if (product?.active && !validated.data.active && !inactivationApproved.current) { setConfirmInactive(true); return; }
+    inactivationApproved.current = false;
     saving.current = true; setSavingAction(action);
     try {
       const data = validated.data;
@@ -86,18 +87,17 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
         minimumStock: normalizeDecimal(data.minimum, 3), description: data.description || null, imageUrl: imageUrl || null, active: data.active,
         ...(!editing && data.initialMode === 'entry' ? { initialEntry: { quantity: normalizeDecimal(data.initialQuantity, 3) } } : {}),
       });
-      const message = editing ? 'Produto atualizado.' : 'Produto cadastrado.';
+      notify({ tone: 'success', title: editing ? (data.active ? 'Produto atualizado com sucesso.' : 'Produto inativado.') : 'Produto criado com sucesso.', description: action === 'another' ? 'Próxima leitura pronta.' : data.name, key: 'product-save' });
       if (action === 'another') {
         reset({ ...productFormDefaults(), category: data.category, unit: data.unit });
         setImageUrl('');
         setDetailsOpen(false);
-        setNotice('Produto cadastrado. Próxima leitura pronta.');
         setFocusNextProduct(true);
-      } else { allowNavigation.current = true; navigate('/products', { state: { notice: message } }); }
+      } else { allowNavigation.current = true; navigate('/products'); }
     } catch (error) {
       const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : null) : null;
-      setError(field ?? 'root', { message: error instanceof Error ? error.message : 'Não foi possível salvar. Seus dados continuam no formulário.' });
-      if (field) setFocus(field);
+      if (field) { setError(field, { message: (error as Error).message }); setFocus(field); }
+      else notify({ tone: 'error', title: 'Não foi possível salvar o produto.', description: (error instanceof Error ? error.message : 'Tente novamente.') + ' Seus dados continuam no formulário.', key: 'product-save' });
     } finally { saving.current = false; setSavingAction(null); }
   });
 
@@ -112,9 +112,9 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
     if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault();
   }} onFocusCapture={(event) => {
     if (!pointerFocusing.current) keepControlVisible(event.currentTarget, event.target);
-  }} onChange={() => { setNotice(''); setCancelRequested(false); }}>
+  }} onChange={() => { setCancelRequested(false); }}>
+    {confirmInactive && <ConfirmDialog title="Inativar este produto?" description="O produto deixará de aparecer no catálogo ativo e não poderá receber movimentações. O histórico será preservado." cancelLabel="Continuar editando" confirmLabel="Inativar e salvar" cancel={() => setConfirmInactive(false)} confirm={() => { setConfirmInactive(false); inactivationApproved.current = true; void submit('save')(); }} />}
     <div className="form-context"><span>{editing ? `Editando ${product?.sku}` : 'Cadastro de produto'}</span><span><b>*</b> Obrigatório · demais campos opcionais</span></div>
-    {notice && <div className="form-notice" role="status"><Check size={17} aria-hidden="true" />{notice}</div>}
     <fieldset className="product-form-surface" disabled={busy} style={{ margin: 0, padding: 0, minWidth: 0 }}><legend className="sr-only">Dados do produto</legend>
       <div className="product-form-top">
         <section className="identification-section" aria-labelledby="identification-title">
@@ -160,9 +160,9 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
       </div>
       <details className="product-extra-details" open={detailsOpen} onToggle={(event) => setDetailsOpen(event.currentTarget.open)}><summary>Detalhes opcionais <span>Descrição e situação</span></summary><Field id="product-description" label="Descrição" error={errors.description?.message}><textarea id="product-description" rows={2} maxLength={10000} {...register('description')} placeholder="Detalhes úteis para identificar ou manusear o produto" /></Field><label className="product-active-field"><input type="checkbox" {...register('active')} />Produto ativo no catálogo</label></details>
     </fieldset>
-    {errors.root && <p className="form-submit-error" role="alert">{errors.root.message}</p>}
+    {errors.root && <Alert tone="error" title="Não foi possível salvar o produto.">{errors.root.message} Seus dados continuam no formulário.</Alert>}
     <div className="form-actions">
-      {confirmingLeave ? <div ref={cancelPanel} tabIndex={-1} className="cancel-confirmation" role="alert"><strong>{busy ? 'Aguarde o produto ser salvo.' : 'Descartar o preenchimento?'}</strong><button type="button" className="secondary-button" onClick={stay}>Continuar preenchendo</button><button type="button" disabled={busy} className="destructive-button" onClick={discard}>Descartar e sair</button></div> : <>
+      {confirmingLeave ? <ConfirmDialog title="Descartar o preenchimento?" description={busy ? 'Aguarde o produto ser salvo.' : 'As alterações não salvas serão perdidas.'} confirmLabel="Descartar e sair" cancel={stay} confirm={discard} busy={busy} /> : <>
         <button type="button" className="text-button cancel-button" onClick={cancel} disabled={busy}>Cancelar</button>
         <span className="session-note">Alterações gravadas ao salvar</span>
         <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>

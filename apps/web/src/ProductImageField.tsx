@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ImagePlus, Link as LinkIcon, X } from 'lucide-react';
+import { FieldError } from './feedback';
 
 export function ProductImageField({ imageUrl, onChange, disabled }: { imageUrl: string; onChange: (url: string) => void; disabled?: boolean }) {
   const [editing, setEditing] = useState(false);
@@ -21,6 +22,6 @@ export function ProductImageField({ imageUrl, onChange, disabled }: { imageUrl: 
     </div>
     {editing && <div className="image-url-field"><label htmlFor="product-image-url">URL da imagem</label><input id="product-image-url" type="url" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); apply(); } }} aria-invalid={Boolean(error)} aria-describedby={error ? 'image-url-error' : undefined} autoFocus disabled={disabled} /><button className="text-button" type="button" disabled={disabled} onClick={apply}>Aplicar URL</button><button className="text-button" type="button" onClick={() => setEditing(false)}>Cancelar</button></div>}
     <span className="field-hint">Imagem por URL · opcional</span>
-    {error && <p id="image-url-error" className="field-error" role="alert">{error}</p>}
+    {error && <FieldError id="image-url-error">{error}</FieldError>}
   </div>;
 }

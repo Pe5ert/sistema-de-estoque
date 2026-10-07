@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronRight, Pencil, Plus, Search } from 'lucide-react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { stockStatus, dateLabel, reasonLabels, typeLabels } from './inventory-model';
 import { useCategories, useProducts, useProduct, useMovements } from './inventory-api';
 import { DataState, Pagination } from './data-controls';
@@ -9,6 +9,7 @@ import { CategoryManager } from './CategoryManager';
 import { ProductIdentity, ProductThumbnail, Status, StockMeter } from './inventory-ui';
 import { canImportProducts } from '@stock/shared';
 import { useAuth } from './auth/auth';
+import { Alert } from './feedback';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -16,8 +17,6 @@ export function Products() {
   const { currentUser } = useAuth();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
-  const location = useLocation();
-  const notice = (location.state as { notice?: string } | null)?.notice;
   const [params, setParams] = useSearchParams();
   const search = params.get('q') ?? '';
   const category = params.get('category') ?? '';
@@ -37,7 +36,6 @@ export function Products() {
 
   return (
     <div className="page-stack">
-      {notice && <div className="form-notice" role="status">{notice}</div>}
       <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions">{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}<CategoryManager onOpen={() => setSelectedId(null)} /><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
       <section className="list-section" aria-labelledby="catalog-title">
         <div className="list-heading catalog-heading"><h2 id="catalog-title">Catálogo de produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
@@ -48,7 +46,7 @@ export function Products() {
           {hasFilters && <button type="button" className="text-button" onClick={() => setParams({})}>Limpar filtros</button>}
           <label className="select-control"><span>Cadastro</span><select aria-label="Situação do cadastro" value={params.get('active') ?? 'true'} onChange={event => updateFilter('active', event.target.value)}><option value="true">Ativos</option><option value="false">Inativos</option><option value="all">Todos</option></select></label>
         </div>
-        {categoriesQuery.error && <p className="field-error" role="alert">Não foi possível carregar categorias. <button className="text-button" onClick={() => void categoriesQuery.refetch()}>Tentar novamente</button></p>}
+        {categoriesQuery.error && <Alert tone="error" title="Não foi possível carregar categorias." action={{ label: 'Tentar novamente', run: () => { void categoriesQuery.refetch(); } }} />}
         <DataState pending={query.isPending} error={query.error} retry={query.refetch}>
         <div className="table-frame">
           <table className="data-table product-table">

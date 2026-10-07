@@ -11,7 +11,7 @@ import { Overview } from './Overview';
 import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
 import { Products } from './Products';
-import { BackupsPage } from './Backups';
+import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
 import { useAuth } from './auth/auth';
 
@@ -70,6 +70,7 @@ function Shell() {
 
   return (
     <div className="app-layout">
+      <BackupsFeedbackMonitor />
       <a className="skip-link" href="#main-content">Ir para o conteúdo</a>
       {menuOpen && <button className="sidebar-backdrop" type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
       <aside ref={sidebar} className={'sidebar' + (menuOpen ? ' sidebar-open' : '')} id="primary-sidebar" aria-label="Áreas de trabalho">

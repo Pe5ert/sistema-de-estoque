@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { editableNumber, parseDecimal } from './product-form-model';
+import { FieldError } from './feedback';
 
 export function Field({ id, label, hint, error, required, children }: {
   id: string; label: string; hint?: string; error?: string; required?: boolean; children: ReactNode;
@@ -8,7 +9,7 @@ export function Field({ id, label, hint, error, required, children }: {
   return <div className={'form-field' + (error ? ' form-field-invalid' : '')}>
     <label htmlFor={id}>{label}{required && <span aria-hidden="true"> *</span>}</label>{children}
     {hint && <span className="field-hint" id={id + '-hint'}>{hint}</span>}
-    {error && <span className="field-error" id={id + '-error'}>{error}</span>}
+    {error && <FieldError id={id + '-error'}>{error}</FieldError>}
   </div>;
 }
 

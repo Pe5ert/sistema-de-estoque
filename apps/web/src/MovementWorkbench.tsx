@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ArrowRight, Barcode, Minus, Plus } from 'lucide-react';
 import { stockStatus, reasonLabels, presentProduct, type ProductPresentation } from './inventory-model';
 import { useInventoryMutation, useProduct } from './inventory-api';
-import { apiClient } from './lib/api';
+import { apiClient, ApiError } from './lib/api';
 import type { MovementRecord, ProductRecord, MovementReason } from '@stock/shared';
 import { Field, fieldAccessibility, QuantityInput } from './form-controls';
 import { formatQuantity, normalizeDecimal, parseDecimal } from './product-form-model';
 import { ProductThumbnail, Status, StockMeter } from './inventory-ui';
+import { useFeedback, Alert } from './feedback';
 
 const previewSchema = z.object({ quantity: z.string().refine((value) => (parseDecimal(value, 3) ?? 0) > 0, 'Informe uma quantidade maior que zero, como 1 ou 2,5.'), type: z.enum(['Entrada', 'Saída']), reason: z.string().trim().min(1, 'Informe o motivo.') });
 type PreviewFields = { quantity: string; type: 'Entrada' | 'Saída'; reason: string };
 
 export function MovementWorkbench() {
+  const { notify } = useFeedback();
+  const navigate = useNavigate();
   const mutation = useInventoryMutation((body: Record<string, unknown>) => apiClient<MovementRecord>('/stock-movements', { method: 'POST', body: JSON.stringify(body) }));
   const saving = useRef(false);
   const lookupVersion = useRef(0);
@@ -88,7 +92,11 @@ export function MovementWorkbench() {
     try {
       const movement = await mutation.mutateAsync({ productId: liveProduct.id, type: data.type === 'Entrada' ? 'ENTRY' : 'EXIT', quantity: normalizeDecimal(data.quantity, 3), reason: data.reason });
       setResult(movement); prepareNext();
-    } catch { /* mutation exposes the actionable API error below */ }
+      notify({ tone: 'success', title: data.type + ' registrada com sucesso.', description: liveProduct.name + ' · saldo: ' + movement.resultingStock + ' ' + liveProduct.unit, action: { label: 'Ver no Histórico', run: () => navigate('/history') }, key: 'movement' });
+    } catch (error) {
+      if (error instanceof ApiError && error.message === 'Quantidade indisponível em estoque.') { setError('quantity', { message: 'Saldo insuficiente para esta saída.' }); setFocus('quantity'); void productQuery.refetch(); }
+      else notify({ tone: 'error', title: 'Não foi possível registrar a movimentação.', description: 'Confira o Histórico e o saldo antes de tentar novamente. ' + (error instanceof Error ? error.message : ''), key: 'movement' });
+    }
     finally { saving.current = false; }
   };
 
@@ -129,8 +137,7 @@ export function MovementWorkbench() {
         <span className="preview-balance">{formatQuantity(preview.before)}<ArrowRight size={18} aria-hidden="true" /><strong>{preview.after < 0 ? 'Insuficiente' : formatQuantity(preview.after)}</strong></span>
         <small>Saldo previsto · confirmado ao registrar</small>
       </div>}
-      {mutation.error && <p className="field-error" role="alert">{mutation.error.message}</p>}
-      {productQuery.error && <p className="field-error" role="alert">{productQuery.error.message} <button type="button" className="text-button" onClick={() => void productQuery.refetch()}>Tentar novamente</button></p>}
+      {productQuery.error && <Alert tone="error" title="Saldo indisponível." action={{ label: 'Tentar novamente', run: () => { void productQuery.refetch(); } }}>{productQuery.error.message}</Alert>}
       {result && <div className="operation-feedback" role="status"><strong>Movimentação registrada · {result.product.name} · {result.quantity} {presentProduct(result.product).unit}</strong><span className="preview-balance">{result.previousStock}<ArrowRight size={18} aria-hidden="true" /><strong>{result.resultingStock}</strong></span></div>}
       {(selected || result) && <button type="button" className="text-button" disabled={mutation.isPending} onClick={() => { resetPreview(); prepareNext(); }}>Próximo produto</button>}
       <p className="operation-note">{result ? 'Movimento registrado. Campo pronto para o próximo código.' : selected ? 'Confira o saldo previsto antes de confirmar.' : 'Localize um produto para movimentar o estoque.'}</p>
