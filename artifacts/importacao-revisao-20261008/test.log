@@ -1,0 +1,78 @@
+$ pnpm -r --if-present test && pnpm --filter @stock/api exec tsx --test ../web/tests/*.test.mjs
+Scope: 3 of 4 workspace projects
+apps/api test$ tsc -p tsconfig.test.json && tsx --tsconfig tsconfig.test.json --test src/config/env.spec.ts src/auth/*.spec.ts src/inventory/*.spec.ts src/backups/*.spec.ts src/imports/*.spec.ts src/physical-inventories/*.spec.ts
+[ELIFECYCLE] Test failed. See above for more details.
+apps/api test: TAP version 13
+apps/api test: # Subtest: cookie authentication HTTP integration
+apps/api test:     # Subtest: Argon2id verifies passwords and does not store plaintext
+apps/api test:     ok 1 - Argon2id verifies passwords and does not store plaintext
+apps/api test:       ---
+apps/api test:       duration_ms: 2504.948904
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: valid normalized login returns only public fields and creates an 8h HttpOnly cookie
+apps/api test:     ok 2 - valid normalized login returns only public fields and creates an 8h HttpOnly cookie
+apps/api test:       ---
+apps/api test:       duration_ms: 1607.000347
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: wrong password, absent email and inactive account have identical generic errors
+apps/api test:     ok 3 - wrong password, absent email and inactive account have identical generic errors
+apps/api test:       ---
+apps/api test:       duration_ms: 3180.172464
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: malformed and oversized input is rejected by DTO validation
+apps/api test:     ok 4 - malformed and oversized input is rejected by DTO validation
+apps/api test:       ---
+apps/api test:       duration_ms: 112.142941
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: /me restores a valid session without exposing hashes or tokens
+apps/api test:     ok 5 - /me restores a valid session without exposing hashes or tokens
+apps/api test:       ---
+apps/api test:       duration_ms: 52.486452
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: /me rejects missing, invalid, expired and deleted-user sessions
+apps/api test:     ok 6 - /me rejects missing, invalid, expired and deleted-user sessions
+apps/api test:       ---
+apps/api test:       duration_ms: 218.582453
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: disabling an account revokes existing access; database role overrides stale JWT
+apps/api test:     ok 7 - disabling an account revokes existing access; database role overrides stale JWT
+apps/api test:       ---
+apps/api test:       duration_ms: 76.526864
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: RBAC grants ADMIN and rejects MANAGER/OPERATOR with 403
+apps/api test:     ok 8 - RBAC grants ADMIN and rejects MANAGER/OPERATOR with 403
+apps/api test:       ---
+apps/api test:       duration_ms: 179.084636
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: logout clears the cookie with matching attributes and is idempotent
+apps/api test:     ok 9 - logout clears the cookie with matching attributes and is idempotent
+apps/api test:       ---
+apps/api test:       duration_ms: 33.141857
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: production cookie is Secure; development cookie works on local HTTP
+apps/api test:     ok 10 - production cookie is Secure; development cookie works on local HTTP
+apps/api test:       ---
+apps/api test:       duration_ms: 3.409401
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: write requests reject untrusted or missing Origin before setting cookies
+apps/api test:     ok 11 - write requests reject untrusted or missing Origin before setting cookies
+apps/api test:       ---
+apps/api test:       duration_ms: 133.616594
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: Swagger exposes safe user DTO and login body plus cookie security
+apps/api test:     ok 12 - Swagger exposes safe user DTO and login body plus cookie security
+apps/api test:       ---
+apps/api test:       duration_ms: 68.398737
+apps/api test:       type: 'test'
+apps/api test:       ...

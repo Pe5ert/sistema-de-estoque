@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: parse and validate 10 rows without numeric conversion
+ok 1 - parse and validate 10 rows without numeric conversion
+  ---
+  duration_ms: 64.653834
+  type: 'test'
+  ...
+# Subtest: parse and validate 100 rows without numeric conversion
+ok 2 - parse and validate 100 rows without numeric conversion
+  ---
+  duration_ms: 229.844067
+  type: 'test'
+  ...
+# Subtest: parse and validate 1000 rows without numeric conversion
+ok 3 - parse and validate 1000 rows without numeric conversion
+  ---
+  duration_ms: 917.907077
+  type: 'test'
+  ...
+# Subtest: parse and validate 2000 rows without numeric conversion
+ok 4 - parse and validate 2000 rows without numeric conversion
+  ---
+  duration_ms: 605.929791
+  type: 'test'
+  ...
+# Subtest: row/byte/column limits, invalid encoding, file type and empty file are explicit errors
+ok 5 - row/byte/column limits, invalid encoding, file type and empty file are explicit errors
+  ---
+  duration_ms: 74.925192
+  type: 'test'
+  ...
+# Subtest: CSV comma/tab, quoted delimiter, blank records and logical source lines
+ok 6 - CSV comma/tab, quoted delimiter, blank records and logical source lines
+  ---
+  duration_ms: 7.524758
+  type: 'test'
+  ...
+# Subtest: CSV rejects physical-line overflow with CR-only and mixed newline formats
+ok 7 - CSV rejects physical-line overflow with CR-only and mixed newline formats
+  ---
+  duration_ms: 64.045232
+  type: 'test'
+  ...
+# Subtest: CSV ignored-row totals include trailing blank lines without counting the final newline
+ok 8 - CSV ignored-row totals include trailing blank lines without counting the final newline
+  ---
+  duration_ms: 6.303295
+  type: 'test'
+  ...
+# Subtest: CSV error locations use the start of quoted multiline records
+ok 9 - CSV error locations use the start of quoted multiline records
+  ---
+  duration_ms: 25.700534
+  type: 'test'
+  ...
+# Subtest: XLSX shared external formulas remain errors even when cached results exist
+ok 10 - XLSX shared external formulas remain errors even when cached results exist
+  ---
+  duration_ms: 429.26727
+  type: 'test'
+  ...
+# Subtest: XLSX text codes, numeric codes, cached and unresolved formulas, long codes
+ok 11 - XLSX text codes, numeric codes, cached and unresolved formulas, long codes
+  ---
+  duration_ms: 298.397031
+  type: 'test'
+  ...
+# Subtest: all duplicate rows, existing inactive codes and invalid stock/unit/prices block preview
+ok 12 - all duplicate rows, existing inactive codes and invalid stock/unit/prices block preview
+  ---
+  duration_ms: 6.260831
+  type: 'test'
+  ...
+# Subtest: unrecognized prototype-like headers remain unmapped and the suggested preview can be saved
+ok 13 - unrecognized prototype-like headers remain unmapped and the suggested preview can be saved
+  ---
+  duration_ms: 10.860822
+  type: 'test'
+  ...
+# Subtest: category choices are explicit, grouped by case, and inactive targets are rejected
+ok 14 - category choices are explicit, grouped by case, and inactive targets are rejected
+  ---
+  duration_ms: 24.058623
+  type: 'test'
+  ...
+# Subtest: concurrent confirmation and refresh return one result, exact stock and initial audit
+ok 15 - concurrent confirmation and refresh return one result, exact stock and initial audit
+  ---
+  duration_ms: 60.50942
+  type: 'test'
+  ...
+# Subtest: failure after product/movement writes rolls back entire batch and records failure once
+ok 16 - failure after product/movement writes rolls back entire batch and records failure once
+  ---
+  duration_ms: 106.388026
+  type: 'test'
+  ...
+# Subtest: confirmation revalidates duplicates, categories, revision and permissions
+ok 17 - confirmation revalidates duplicates, categories, revision and permissions
+  ---
+  duration_ms: 23.483685
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13536.839344

@@ -35,7 +35,9 @@ export async function apiClient<T>(path: string, options: RequestInit = {}): Pro
     }
     const body = await response.json().catch(() => null);
     const known = ['Este SKU já está em uso.', 'Este código de barras já está em uso.', 'Este nome já está em uso.', 'Quantidade indisponível em estoque.', 'Selecione uma categoria ativa.', 'Produto inativo não pode ser movimentado.', 'Já existe um backup em andamento.'];
-    throw new ApiError(response.status, known.includes(body?.message) || (path.startsWith('/imports') && [400, 409, 413].includes(response.status) && typeof body?.message === 'string') ? body.message : undefined);
+    const operationalMessage = (path.startsWith('/imports') || path.startsWith('/physical-inventories'))
+      && [400, 409, 413].includes(response.status) && typeof body?.message === 'string';
+    throw new ApiError(response.status, known.includes(body?.message) || operationalMessage ? body.message : undefined);
   }
   if (response.status === 204) return undefined as T;
   try {

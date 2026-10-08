@@ -4,6 +4,14 @@ Atualizado em 08/10/2026. Branch: `sistema-de-estoque-v2`.
 
 Importação V1 e feedback operacional estão publicados. Concorrência do estoque validada em PostgreSQL local isolado com duas sessões, disputa comprovada pelo row lock, saídas inteiras/fracionárias, auditoria e dashboard. Leia [PROJECT_STATUS.md](PROJECT_STATUS.md) e [relatório de concorrência](../artifacts/concorrencia-20261008/REVIEW.md) para o estado atual; as evidências anteriores continuam históricas.
 
+## Importação — revisão local
+
+Refinamentos sobre `ef9168d`, com publicação autorizada em 08/10/2026: passos e ajuda na tela, erros por linha, escolhas preservadas ao atualizar, confirmação e validação CSV/XLSX reforçada. Leia [IMPORTACAO_V1.md](IMPORTACAO_V1.md) e [QA da revisão](../artifacts/importacao-revisao-20261008/REVIEW.md). Nenhuma migration de importação nova ou dado de QA no Neon.
+
+## Inventário físico — alterações locais
+
+Nova área Operação → Inventário físico: contagem, divergências e ajustes auditados por ADMIN/MANAGER. Trabalho sobre `1308bb4` após atualizar a branch, com publicação autorizada pelo usuário em 08/10/2026. Migration `20261007000000_physical_inventory` validada em bases locais isoladas e não aplicada ao Neon. Preserve o diff antes de atualizar/trocar notebook. Leia [INVENTARIO_FISICO.md](INVENTARIO_FISICO.md) para fluxo, testes e implantação.
+
 ## Backups — nova funcionalidade
 
 Área Administração → Backups exclusiva do ADMIN. Cópia completa manual + download e escolha semanal/mensal com horário, persistida em pasta privada. Padrão mensal no primeiro dia às 02:00; retenção 365 dias. Instalar/configurar ferramentas PostgreSQL compatíveis (Neon atual: 18), preservar o volume de BACKUP_DIRECTORY e ler [BACKUPS.md](BACKUPS.md). Caminhos de ferramentas e .env são locais, não viajam pelo Git. Um backup real inicial foi gerado nesta máquina sem modificar os dados do Neon.

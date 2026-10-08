@@ -39,6 +39,41 @@ test('CSV comma/tab, quoted delimiter, blank records and logical source lines', 
   assert.equal((await parseImportFile('a.csv', Buffer.from('Nome,SKU\nProduto,0001'))).delimiter, ',');
   assert.equal((await parseImportFile('a.csv', Buffer.from('Nome\tSKU\nProduto\t0001'))).delimiter, '\t');
 });
+test('CSV rejects physical-line overflow with CR-only and mixed newline formats', async () => {
+  await assert.rejects(parseImportFile('old-mac.csv', Buffer.from('Nome;SKU\r' + '\r'.repeat(10001) + 'Produto;0001')), /10\.000 linhas físicas/);
+  await assert.rejects(parseImportFile('mixed.csv', Buffer.from('Nome;SKU\r\n' + '\n\r\r\n'.repeat(3334) + 'Produto;0001')), /10\.000 linhas físicas/);
+  const crlf = await parseImportFile('windows.csv', Buffer.from('Nome;SKU\r\n' + '\r\n'.repeat(6000) + 'Produto;0001'));
+  assert.equal(crlf.rows[0].row, 6002); assert.equal(crlf.ignoredRows, 6000);
+});
+test('CSV ignored-row totals include trailing blank lines without counting the final newline', async () => {
+  for (const newline of ['\n', '\r\n', '\r']) {
+    const parsed = await parseImportFile('blank-lines.csv', Buffer.from(['', 'Nome;SKU', 'Produto;0001', '', '', ''].join(newline)));
+    assert.equal(parsed.rows.length, 1); assert.equal(parsed.rows[0].row, 3);
+    assert.equal(parsed.ignoredRows, 2);
+    const ordinary = await parseImportFile('final-newline.csv', Buffer.from(`Nome;SKU${newline}Produto;0001${newline}`));
+    assert.equal(ordinary.ignoredRows, 0);
+  }
+});
+test('CSV error locations use the start of quoted multiline records', async () => {
+  const parsed = await parseImportFile('multiline.csv', Buffer.from('Nome;SKU;Categoria;Unidade\r\n"Produto\r\nmultilinha";;Acessórios;UN\r\nOutro;0002;Acessórios;UN'));
+  assert.deepEqual(parsed.rows.map(row => row.row), [2, 4]);
+  const validation = validateImportRows(parsed.rows, parsed.headers, suggestedMapping(parsed.headers), [], categories, []);
+  assert(validation.issues.some(issue => issue.row === 2 && issue.field === 'sku'));
+  assert.equal(validation.issues.some(issue => issue.row === 3), false);
+});
+test('XLSX shared external formulas remain errors even when cached results exist', async () => {
+  const workbook = new ExcelJS.Workbook(), sheet = workbook.addWorksheet('Produtos');
+  sheet.addRow(headers.split(';'));
+  sheet.addRow(['P', 'TEXT-1', '', 'Acessórios', 'UN', 0, null, null, 0]);
+  sheet.addRow(['P2', 'TEXT-2', '', 'Acessórios', 'UN', 0, null, null, 0]);
+  // ExcelJS writes shared master metadata although its CellFormulaValue type omits it.
+  const sharedMaster = { formula: '[outro.xlsx]Plan1!A1', result: 10, shareType: 'shared', ref: 'G2:G3' };
+  sheet.getCell('G2').value = sharedMaster;
+  sheet.getCell('G3').value = { sharedFormula: 'G2', result: 20 };
+  const parsed = await parseImportFile('external.xlsx', Buffer.from(await workbook.xlsx.writeBuffer()));
+  const validation = validateImportRows(parsed.rows, parsed.headers, suggestedMapping(parsed.headers), [], categories, []);
+  for (const row of [2, 3]) assert(validation.issues.some(issue => issue.row === row && issue.field === 'costPrice' && issue.message.includes('externa')));
+});
 test('XLSX text codes, numeric codes, cached and unresolved formulas, long codes', async () => {
   const workbook = new ExcelJS.Workbook(), sheet = workbook.addWorksheet('Produtos');
   sheet.addRow(headers.split(';')); sheet.addRow(['P', '000123', '000999', 'Acessórios', 'UN', 0, { formula: '1+1', result: 2 }, null, 0]);
@@ -61,6 +96,11 @@ test('all duplicate rows, existing inactive codes and invalid stock/unit/prices 
   const result = validateImportRows(parsed.rows, parsed.headers, suggestedMapping(parsed.headers), [], categories, [{ sku: 'SKU-0', barcode: parsed.rows[0].cells[2].text }]);
   assert(result.issues.filter(issue => issue.message.includes('repetido')).length === 4);
   for (const field of ['sku', 'barcode', 'unit', 'initialStock', 'costPrice']) assert(result.issues.some(issue => issue.field === field));
+});
+test('unrecognized prototype-like headers remain unmapped and the suggested preview can be saved', () => {
+  const mapping = suggestedMapping(['Nome', 'SKU', 'Categoria', 'Unidade', 'constructor', 'toString', '__proto__']);
+  assert.deepEqual(mapping, { name: 0, sku: 1, category: 2, unit: 3 });
+  assert.equal(setupSchema.safeParse({ mapping, categoryMappings: [], revision: 1 }).success, true);
 });
 test('category choices are explicit, grouped by case, and inactive targets are rejected', async () => {
   const parsed = await parseImportFile('a.csv', csv(2, 'Nova'));

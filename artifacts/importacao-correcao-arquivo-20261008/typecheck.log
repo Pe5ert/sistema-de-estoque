@@ -1,0 +1,11 @@
+Scope: 3 of 4 workspace projects
+$ tsc --noEmit -p tsconfig.json
+$ pnpm db:generate && tsc --noEmit -p tsconfig.json
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 1.27s
+
+$ tsc --noEmit

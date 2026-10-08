@@ -1,0 +1,33 @@
+$ pnpm -r build
+Scope: 3 of 4 workspace projects
+packages/shared build$ tsc -p tsconfig.json
+packages/shared build: Done
+apps/api build$ pnpm db:generate && tsc -p tsconfig.build.json
+apps/web build$ tsc --noEmit && vite build
+apps/api build: $ prisma generate
+apps/api build: Loaded Prisma config from prisma.config.ts.
+apps/api build: Prisma schema loaded from prisma/schema.prisma.
+apps/api build: ✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 2.20s
+apps/api build: Done
+apps/web build: vite v7.3.6 building client environment for production...
+apps/web build: transforming...
+apps/web build: ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js (74:0): A comment
+apps/web build: "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+apps/web build:  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+apps/web build:  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js (400:0): A comment
+apps/web build: "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ✓ 2095 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/index.html                     0.46 kB │ gzip:   0.30 kB
+apps/web build: dist/assets/index-BProIbTW.css     81.48 kB │ gzip:  15.52 kB
+apps/web build: dist/assets/index-NxWLNlIF.js   1,007.78 kB │ gzip: 265.08 kB
+apps/web build: ✓ built in 27.46s
+apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/web build: - Using dynamic import() to code-split the application
+apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: Done

@@ -54,6 +54,10 @@ model User {
   updatedAt      DateTime        @updatedAt
   stockMovements StockMovement[]
   importJobs     ImportJob[]
+  physicalInventoriesCreated PhysicalInventory[] @relation("InventoryCreator")
+  physicalInventoriesCompleted PhysicalInventory[] @relation("InventoryCompleter")
+  physicalInventoriesCancelled PhysicalInventory[] @relation("InventoryCanceller")
+  physicalInventoryCounts PhysicalInventoryItem[]
 }
 
 model Category {
@@ -64,6 +68,7 @@ model Category {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
+  physicalInventories PhysicalInventory[]
 }
 
 model Product {
@@ -84,6 +89,8 @@ model Product {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   stockMovements StockMovement[]
+
+  physicalInventoryItems PhysicalInventoryItem[]
 
   @@index([name])
   @@index([categoryId, active])
@@ -137,4 +144,58 @@ model ImportJob {
   updatedAt        DateTime     @updatedAt
 
   @@index([createdBy, createdAt])
+}
+
+
+enum PhysicalInventoryStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+}
+
+model PhysicalInventory {
+  id                String @id @default(uuid()) @db.Uuid
+  title             String @db.VarChar(160)
+  status            PhysicalInventoryStatus @default(DRAFT)
+  revision          Int @default(1)
+  categoryId        String? @db.Uuid
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryName      String? @db.VarChar(120)
+  createdById       String @db.Uuid
+  createdBy         User @relation("InventoryCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  completedById     String? @db.Uuid
+  completedBy       User? @relation("InventoryCompleter", fields: [completedById], references: [id], onDelete: Restrict)
+  cancelledById     String? @db.Uuid
+  cancelledBy       User? @relation("InventoryCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancellationNotes String? @db.VarChar(1000)
+  adjustmentCount   Int @default(0)
+  items             PhysicalInventoryItem[]
+
+  @@index([status, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model PhysicalInventoryItem {
+  inventoryId           String @db.Uuid
+  inventory             PhysicalInventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  productId             String @db.Uuid
+  product               Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sku                   String @db.VarChar(80)
+  name                  String @db.VarChar(200)
+  unit                  ProductUnit
+  snapshotStock         Decimal @db.Decimal(18,3)
+  snapshotUpdatedAt     DateTime
+  snapshotMovementCount Int
+  countedQuantity       Decimal? @db.Decimal(18,3)
+  notes                 String? @db.VarChar(1000)
+  countedById           String? @db.Uuid
+  countedBy             User? @relation(fields: [countedById], references: [id], onDelete: Restrict)
+  countedAt             DateTime?
+
+  @@id([inventoryId, productId])
+  @@index([productId])
 }

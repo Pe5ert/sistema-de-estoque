@@ -1,0 +1,26 @@
+{
+  "phase": "after",
+  "products": [
+    {
+      "sku": "QA-CORRIGIDO-20261008-A",
+      "barcode": "000077771",
+      "stock": "2.500"
+    },
+    {
+      "sku": "QA-CORRIGIDO-20261008-B",
+      "barcode": "000077772",
+      "stock": "0.000"
+    }
+  ],
+  "audits": [
+    {
+      "sku": "QA-CORRIGIDO-20261008-A",
+      "reason": "INITIAL_STOCK",
+      "quantity": "2.500",
+      "previousStock": "0.000",
+      "resultingStock": "2.500",
+      "author": "Administrador QA"
+    }
+  ],
+  "invalidWrites": 0
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
-  Boxes, ChevronRight, HardDrive, History, LayoutDashboard, Menu, Package, X,
+  Boxes, ChevronRight, ClipboardCheck, HardDrive, History, LayoutDashboard, Menu, Package, X,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { LoginPage } from './auth/LoginPage';
@@ -13,6 +13,8 @@ import { ProductFormPage } from './ProductForm';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
+import { PhysicalInventoriesPage } from './PhysicalInventories';
+import { PhysicalInventoryDetailPage } from './PhysicalInventoryDetail';
 import { useAuth } from './auth/auth';
 import { hasPermission } from '@stock/shared';
 import { PermissionRoute } from './auth/PermissionRoute';
@@ -22,6 +24,7 @@ const navigation = [
   { path: '/products', label: 'Produtos', icon: Package, description: 'Catálogo, disponibilidade e pontos de atenção.' },
   { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight, description: 'Entradas, saídas e ajustes em uma só leitura.' },
   { path: '/history', label: 'Histórico', icon: History, description: 'Rastro de cada alteração de saldo.' },
+  { path: '/physical-inventories', label: 'Inventário físico', icon: ClipboardCheck, description: 'Contagem do estoque real, divergências e ajustes.' },
   { path: '/backups', label: 'Backups', icon: HardDrive, description: 'Cópias completas e agendamento do estoque.' },
 ] as const;
 
@@ -37,7 +40,7 @@ function Shell() {
     ? { path: '/products', label: 'Novo produto', description: 'Identifique, configure e siga para o próximo item.' }
     : /^\/products\/.+\/edit$/.test(location.pathname)
       ? { path: '/products', label: 'Editar produto', description: 'Atualize os dados do catálogo. O saldo permanece preservado.' }
-      : navigation.find((item) => item.path === location.pathname) ?? navigation[0];
+      : navigation.find((item) => item.path === location.pathname || item.path !== '/' && location.pathname.startsWith(item.path + '/')) ?? navigation[0];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
   useEffect(() => {
@@ -83,8 +86,8 @@ function Shell() {
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
-          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 4).map(navItem)}</div>
-          {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
+          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 5).map(navItem)}</div>
+          {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[5])}</div>}
         </nav>
         <UserSession />
         <div className="sidebar-footer">
@@ -128,6 +131,8 @@ export function App() {
       <Route path="products/:id/edit" element={<PermissionRoute permission="product.update"><ProductFormPage /></PermissionRoute>} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
+      <Route path="physical-inventories" element={<PhysicalInventoriesPage />} />
+      <Route path="physical-inventories/:id" element={<PhysicalInventoryDetailPage />} />
       <Route path="backups" element={<PermissionRoute permission="backup.manage"><BackupsPage /></PermissionRoute>} />
     </Route></Route></Routes>
   );

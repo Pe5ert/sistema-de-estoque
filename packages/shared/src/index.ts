@@ -56,3 +56,5 @@ export interface DashboardSummary {
 }
 export * from './imports';
 export * from './permissions';
+
+export * from './physical-inventories';

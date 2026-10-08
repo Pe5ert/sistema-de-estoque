@@ -1,10 +1,14 @@
 # Estado da V2 — 08/10/2026
 
+**Importação — revisão local 08/10/2026:** sobre `ef9168d`, após integrar atualizações remotas de concorrência/permissões. Fluxo Excel/CSV refinado, validação de linhas/fórmulas e testes ampliados. Leia `docs/IMPORTACAO_V1.md` e `artifacts/importacao-revisao-20261008/REVIEW.md`. Publicação na branch V2 autorizada pelo usuário em 08/10/2026, junto com o inventário físico. QA somente em PostgreSQL isolado, sem dados de teste no Neon.
+
 **Permissões — 08/10/2026:** matriz definida com o usuário, centralizada no shared e aplicada em interface/API. OPERATOR pode cadastrar com entrada inicial e registrar entradas/saídas; edição/inativação/categorias/importação/ajustes ficam com ADMIN/MANAGER e backups com ADMIN. Testados os três perfis, chamadas diretas, ausência de escrita em ações negadas e rebaixamento com sessão aberta. Sem migration ou alteração de papéis reais. [Matriz](PERMISSOES.md) e [QA](../artifacts/permissoes-20261008/REVIEW.md).
 
 **Concorrência do estoque — 08/10/2026:** suíte HTTP/PostgreSQL real ativada em base local isolada. Duas sessões distintas disputam o mesmo produto, com espera pelo row lock comprovada no PostgreSQL: saldo 10/duas saídas de 8 → uma aceita, uma recusada, saldo 2; dez saídas de 2 → cinco aceitas, cinco recusadas, saldo 0; quatro saídas de 0.1 com saldo 0.3 → três aceitas, uma recusada, saldo 0. Auditoria, autoria, persistência e agregados conferidos. Nenhuma mudança de regra de estoque ou escrita no Neon. Procedimento e limites: [REVIEW.md](../artifacts/concorrencia-20261008/REVIEW.md).
 
 **Feedback operacional — 07/10/2026:** camada compartilhada de toast, Alert, FieldError e ConfirmDialog publicada em 1308bb4. Corrigidos perda de rascunho na reconexão e fsync de backup no Windows (ac85e7d). QA com PostgreSQL local, desktop/tablet/mobile; [evidências e limites](../artifacts/feedback-20261007/REVIEW.md).
+
+**Inventário físico V1 — 07/10/2026:** implementação local de contagem persistida, divergências, reconferência e ajustes atômicos auditados. Operadores contam; ADMIN/MANAGER concluem/cancelam. Até 500 produtos por sessão, revisão contra sobrescrita e proteção de movimentos concorrentes. Migration validada somente em PostgreSQL isolado; ainda não aplicada ao Neon. Publicação autorizada pelo usuário em 08/10/2026. Leia [INVENTARIO_FISICO.md](INVENTARIO_FISICO.md).
 
 **Importação V1 — 06/10/2026:** integrada e publicada na sistema-de-estoque-v2 em 8c8f718. CSV/XLSX com mapeamento, categorias explícitas, preview, erros, confirmação atômica/idempotente e entradas INITIAL_STOCK. QA em PostgreSQL isolado e navegador. Migration 20261006000000_product_import aplicada ao Neon em 06/10, após backup verificado; Prisma confirmou schema atualizado e fingerprints das quatro tabelas operacionais permaneceram iguais. Sem reset, seed ou importação de fixtures no Neon. Contratos, limites, integração e retomada: [IMPORTACAO_V1.md](IMPORTACAO_V1.md).
 
