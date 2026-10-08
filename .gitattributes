@@ -1,0 +1,6 @@
+# Preserve binary artifacts on Windows checkouts.
+*.pdf binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.zip binary
