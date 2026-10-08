@@ -15,6 +15,11 @@ export const permissionRoles = {
   'stock.adjust': managers,
   'product.import': managers,
   'backup.manage': ['ADMIN'],
+  'supplier.read': operators,
+  'supplier.manage': managers,
+  'purchase.read': operators,
+  'purchase.manage': managers,
+  'purchase.receive': managers,
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type Permission = keyof typeof permissionRoles;

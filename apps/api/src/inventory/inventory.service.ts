@@ -133,7 +133,7 @@ export class InventoryService {
     const from = query.from ? new Date(query.from) : undefined;
     const to = query.to ? new Date(query.to) : undefined;
     if ((from && !Number.isFinite(from.getTime())) || (to && !Number.isFinite(to.getTime())) || (from && to && from > to)) throw new BadRequestException('Período inválido.');
-    const where: Prisma.StockMovementWhereInput = { productId: query.productId, type: query.type, reason: query.reason, createdAt: { gte: from, lte: to } };
+    const where: Prisma.StockMovementWhereInput = { productId: query.productId, reference: query.reference, type: query.type, reason: query.reason, createdAt: { gte: from, lte: to } };
     if (query.search?.trim()) where.product = { OR: ['name', 'sku', 'barcode'].map(field => ({ [field]: { contains: query.search!.trim(), mode: 'insensitive' } })) };
     const [items, total] = await this.db.$transaction([
       this.db.stockMovement.findMany({ where, include: movementInclude, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (query.page - 1) * query.limit, take: query.limit }),

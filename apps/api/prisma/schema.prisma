@@ -44,16 +44,18 @@ enum MovementReason {
 }
 
 model User {
-  id             String          @id @default(uuid()) @db.Uuid
-  name           String          @db.VarChar(120)
-  email          String          @unique @db.VarChar(180)
-  passwordHash   String          @db.VarChar(255)
-  role           UserRole        @default(OPERATOR)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  stockMovements StockMovement[]
-  importJobs     ImportJob[]
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String            @db.VarChar(120)
+  email            String            @unique @db.VarChar(180)
+  passwordHash     String            @db.VarChar(255)
+  role             UserRole          @default(OPERATOR)
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  stockMovements   StockMovement[]
+  importJobs       ImportJob[]
+  purchaseOrders   PurchaseOrder[]
+  purchaseReceipts PurchaseReceipt[]
 }
 
 model Category {
@@ -67,45 +69,143 @@ model Category {
 }
 
 model Product {
-  id             String          @id @default(uuid()) @db.Uuid
-  sku            String          @unique @db.VarChar(80)
-  barcode        String?         @unique @db.VarChar(80)
-  name           String          @db.VarChar(200)
-  description    String?         @db.Text
-  categoryId     String          @db.Uuid
-  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unit           ProductUnit     @default(UNIT)
-  imageUrl       String?         @db.VarChar(2048)
-  costPrice      Decimal?        @db.Decimal(18, 2)
-  salePrice      Decimal?        @db.Decimal(18, 2)
-  stock          Decimal         @default(0) @db.Decimal(18, 3)
-  minimumStock   Decimal         @default(0) @db.Decimal(18, 3)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id             String              @id @default(uuid()) @db.Uuid
+  sku            String              @unique @db.VarChar(80)
+  barcode        String?             @unique @db.VarChar(80)
+  name           String              @db.VarChar(200)
+  description    String?             @db.Text
+  categoryId     String              @db.Uuid
+  category       Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit           ProductUnit         @default(UNIT)
+  imageUrl       String?             @db.VarChar(2048)
+  costPrice      Decimal?            @db.Decimal(18, 2)
+  salePrice      Decimal?            @db.Decimal(18, 2)
+  stock          Decimal             @default(0) @db.Decimal(18, 3)
+  minimumStock   Decimal             @default(0) @db.Decimal(18, 3)
+  active         Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
   stockMovements StockMovement[]
+  purchaseItems  PurchaseOrderItem[]
 
   @@index([name])
   @@index([categoryId, active])
 }
 
 model StockMovement {
-  id             String         @id @default(uuid()) @db.Uuid
-  productId      String         @db.Uuid
-  product        Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
-  userId         String         @db.Uuid
-  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id             String               @id @default(uuid()) @db.Uuid
+  productId      String               @db.Uuid
+  product        Product              @relation(fields: [productId], references: [id], onDelete: Restrict)
+  userId         String               @db.Uuid
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   type           MovementType
-  quantity       Decimal        @db.Decimal(18, 3)
-  previousStock  Decimal        @db.Decimal(18, 3)
-  resultingStock Decimal        @db.Decimal(18, 3)
+  quantity       Decimal              @db.Decimal(18, 3)
+  previousStock  Decimal              @db.Decimal(18, 3)
+  resultingStock Decimal              @db.Decimal(18, 3)
   reason         MovementReason
-  reference      String?        @db.VarChar(120)
-  notes          String?        @db.Text
-  createdAt      DateTime       @default(now())
+  reference      String?              @db.VarChar(120)
+  notes          String?              @db.Text
+  createdAt      DateTime             @default(now())
+  receiptItem    PurchaseReceiptItem?
 
   @@index([productId, createdAt])
   @@index([userId, createdAt])
+}
+
+enum PurchaseStatus {
+  DRAFT
+  SENT
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+model Supplier {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String          @db.VarChar(200)
+  tradeName String?         @db.VarChar(200)
+  document  String?         @unique @db.VarChar(14)
+  email     String?         @db.VarChar(180)
+  phone     String?         @db.VarChar(40)
+  contact   String?         @db.VarChar(120)
+  address   String?         @db.VarChar(1000)
+  notes     String?         @db.VarChar(5000)
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  orders    PurchaseOrder[]
+
+  @@index([name, id])
+  @@index([active, name])
+}
+
+model PurchaseOrder {
+  id               String              @id @default(uuid()) @db.Uuid
+  number           Int                 @unique @default(autoincrement())
+  supplierId       String              @db.Uuid
+  supplier         Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierName     String              @db.VarChar(200)
+  supplierDocument String?             @db.VarChar(14)
+  createdBy        String              @db.Uuid
+  creator          User                @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  status           PurchaseStatus      @default(DRAFT)
+  revision         Int                 @default(1)
+  notes            String?             @db.VarChar(5000)
+  total            Decimal             @db.Decimal(18, 2)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  sentAt           DateTime?
+  cancelledAt      DateTime?
+  items            PurchaseOrderItem[]
+  receipts         PurchaseReceipt[]
+
+  @@index([supplierId, createdAt])
+  @@index([status, createdAt])
+}
+
+model PurchaseOrderItem {
+  id           String                @id @default(uuid()) @db.Uuid
+  orderId      String                @db.Uuid
+  order        PurchaseOrder         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productId    String                @db.Uuid
+  product      Product               @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName  String                @db.VarChar(200)
+  sku          String                @db.VarChar(80)
+  unit         ProductUnit
+  quantity     Decimal               @db.Decimal(18, 3)
+  received     Decimal               @default(0) @db.Decimal(18, 3)
+  unitCost     Decimal               @db.Decimal(18, 2)
+  total        Decimal               @db.Decimal(18, 2)
+  receiptItems PurchaseReceiptItem[]
+
+  @@unique([orderId, productId])
+}
+
+model PurchaseReceipt {
+  id          String                @id @db.Uuid
+  orderId     String                @db.Uuid
+  order       PurchaseOrder         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  createdBy   String                @db.Uuid
+  creator     User                  @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  requestHash String                @db.VarChar(64)
+  notes       String?               @db.VarChar(5000)
+  createdAt   DateTime              @default(now())
+  items       PurchaseReceiptItem[]
+
+  @@index([orderId, createdAt])
+}
+
+model PurchaseReceiptItem {
+  id          String            @id @default(uuid()) @db.Uuid
+  receiptId   String            @db.Uuid
+  receipt     PurchaseReceipt   @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  orderItemId String            @db.Uuid
+  orderItem   PurchaseOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity    Decimal           @db.Decimal(18, 3)
+  movementId  String            @unique @db.Uuid
+  movement    StockMovement     @relation(fields: [movementId], references: [id], onDelete: Restrict)
+
+  @@unique([receiptId, orderItemId])
 }
 
 enum ImportStatus {

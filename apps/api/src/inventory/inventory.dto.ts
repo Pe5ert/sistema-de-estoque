@@ -52,6 +52,7 @@ export class MovementInput {
   @IsOptional() @Transform(trim) @IsString() @MaxLength(10000) notes?: string | null;
 }
 export class MovementQuery extends PageQuery {
+  @IsOptional() @IsString() @MaxLength(120) reference?: string;
   @IsOptional() @IsString() @MaxLength(200) search?: string;
   @IsOptional() @IsUUID() productId?: string;
   @IsOptional() @IsIn(movementTypes) type?: typeof movementTypes[number];
