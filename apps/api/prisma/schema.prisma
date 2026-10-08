@@ -112,6 +112,26 @@ model StockMovement {
   @@index([userId, createdAt])
 }
 
+enum ProductImageState {
+  PENDING
+  READY
+  DELETING
+  DELETED
+}
+
+// Remote storage IDs stay server-side; products retain their existing URL contract.
+model ProductImage {
+  id        String            @id @default(uuid()) @db.Uuid
+  ownerId   String            @db.Uuid
+  publicId  String            @unique @db.VarChar(200)
+  url       String?           @unique @db.VarChar(2048)
+  state     ProductImageState @default(PENDING)
+  createdAt DateTime          @default(now())
+  expiresAt DateTime?
+
+  @@index([state, expiresAt])
+}
+
 enum PurchaseStatus {
   DRAFT
   SENT
