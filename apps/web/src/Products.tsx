@@ -22,6 +22,8 @@ export function Products() {
   const category = params.get('category') ?? '';
   const statusFilter = params.get('stock') ?? '';
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [replenish, setReplenish] = useState<string[]>([]);
+  const selectForPurchase = statusFilter === 'attention' && hasPermission(currentUser?.role, 'purchase.manage');
   const page = Math.max(1, Number(params.get('page')) || 1);
   const query = useProducts({ page, limit: 20, search, category, stockStatus: ({ success: 'NORMAL', danger: 'OUT', warning: 'LOW', attention: 'ATTENTION' } as Record<string, string>)[statusFilter], active: params.get('active') ?? 'true' });
   const filtered = query.data?.items ?? [];
@@ -47,6 +49,7 @@ export function Products() {
           <label className="select-control"><span>Cadastro</span><select aria-label="Situação do cadastro" value={params.get('active') ?? 'true'} onChange={event => updateFilter('active', event.target.value)}><option value="true">Ativos</option><option value="false">Inativos</option><option value="all">Todos</option></select></label>
         </div>
         {categoriesQuery.error && <Alert tone="error" title="Não foi possível carregar categorias." action={{ label: 'Tentar novamente', run: () => { void categoriesQuery.refetch(); } }} />}
+        {selectForPurchase && <div className="procurement-replenish"><span>Selecione até 100 produtos para revisar uma compra. Quantidades e custos serão preenchidos no pedido.</span>{replenish.length > 0 && <><Link className="primary-button" to={'/purchases/new?products=' + replenish.join(',')}>Preparar pedido ({replenish.length})</Link><button type="button" className="text-button" onClick={() => setReplenish([])}>Limpar seleção</button></>}</div>}
         <DataState pending={query.isPending} error={query.error} retry={query.refetch}>
         <div className="table-frame">
           <table className="data-table product-table">
@@ -54,7 +57,7 @@ export function Products() {
             <tbody>{filtered.map((product) => {
               const status = stockStatus(product.stock, product.minimum);
               return <tr key={product.id} tabIndex={0} aria-selected={selectedId === product.id} aria-label={'Detalhes de ' + product.name} className={'product-row clickable-row row-' + status.tone + (selectedId === product.id ? ' row-selected' : '')} onClick={event => openFromRow(event, () => setSelectedId(product.id))} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelectedId(product.id); } }}>
-                <td data-label="Produto"><ProductIdentity product={product} /></td>
+                <td data-label="Produto"><div className="procurement-product-choice">{selectForPurchase && product.active && <input type="checkbox" aria-label={'Selecionar ' + product.name + ' para compra'} checked={replenish.includes(product.id)} disabled={!replenish.includes(product.id) && replenish.length >= 100} onChange={event => setReplenish(event.target.checked ? [...replenish, product.id] : replenish.filter(id => id !== product.id))} />}<ProductIdentity product={product} /></div></td>
                 <td data-label="Disponível"><div className="stock-number">{product.stock}<span>{product.unit}</span></div><StockMeter stock={product.stock} minimum={product.minimum} name={product.name} /></td>
                 <td data-label="Mínimo"><strong className="reference-value">{product.minimum} <span>{product.unit}</span></strong></td>
                 <td data-label="Preço" className={'price-cell' + (product.price == null ? ' price-missing' : '')}>{product.price == null ? <span aria-label="Preço não informado">—</span> : currency.format(product.price)}</td>

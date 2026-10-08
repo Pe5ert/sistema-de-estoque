@@ -8,23 +8,26 @@ import { DetailDrawer, openFromRow } from './DetailDrawer';
 import type { MovementReason, MovementType } from '@stock/shared';
 import { MovementWorkbench } from './MovementWorkbench';
 import { FieldError } from './feedback';
+import { useSearchParams } from 'react-router-dom';
 
 export function Movements() { return <div className="page-stack"><MovementWorkbench /><HistoryTable compact /></div>; }
-export function HistoryPage() { return <HistoryTable />; }
+export function HistoryPage() { const [params] = useSearchParams(); return <HistoryTable key={params.toString()} />; }
 
 function HistoryTable({ compact = false }: { compact?: boolean }) {
-  const [filters, setFilters] = useState<Filters>({ page: 1, limit: 20 });
+  const [params, setParams] = useSearchParams();
+  const [filters, setFilters] = useState<Filters>({ page: 1, limit: 20, search: compact ? '' : params.get('q') ?? '', reference: compact ? '' : params.get('reference') ?? '' });
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const endDate = useRef<HTMLInputElement>(null);
   const invalidRange = Boolean(from && to && from > to);
   const [selected, setSelected] = useState<string | null>(null);
   const query = useMovements({ ...filters, from: from ? new Date(from + 'T00:00:00-03:00').toISOString() : '', to: to ? new Date(to + 'T23:59:59.999-03:00').toISOString() : '' }, !invalidRange);
-  const hasFilters = Boolean(filters.type || filters.reason || filters.search || from || to);
+  const hasFilters = Boolean(filters.type || filters.reason || filters.search || filters.reference || from || to);
   const update = (key: string, value: string) => setFilters(current => ({ ...current, [key]: value, page: 1 }));
-  const clear = () => { setFilters({ page: 1, limit: 20 }); setFrom(''); setTo(''); };
+  const clear = () => { setFilters({ page: 1, limit: 20 }); setFrom(''); setTo(''); if (!compact) setParams({}); };
   return <div className="page-stack">{!compact && <div className="history-intro"><span className="block-label">RASTREABILIDADE DE SALDO</span><p>Produto, motivo e responsável em cada alteração.</p><strong>{invalidRange ? '—' : query.data?.total ?? '…'}<small>REGISTROS</small></strong></div>}
     <section className="history-section" aria-label="Histórico de movimentações"><div className="list-heading"><h2>{compact ? 'Registro de movimentações' : 'Alterações de saldo'}</h2><span>MAIS RECENTES PRIMEIRO</span></div>
+      {filters.reference && <p className="table-note">Movimentos deste recebimento. Limpe os filtros para consultar todas as entradas e saídas.</p>}
       <div className="filter-bar history-filters"><label className="select-control"><span>Movimento</span><select value={filters.type ?? ''} onChange={event => update('type', event.target.value)}><option value="">Todos</option>{Object.entries(typeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="select-control"><span>Motivo</span><select value={filters.reason ?? ''} onChange={event => update('reason', event.target.value)}><option value="">Todos</option>{Object.entries(reasonLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="search-control"><span className="sr-only">Buscar produto no histórico</span><input type="search" placeholder="Produto, SKU ou código de barras" value={filters.search ?? ''} onChange={event => update('search', event.target.value)} /></label>

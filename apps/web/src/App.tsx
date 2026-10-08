@@ -16,6 +16,9 @@ import { ProductImportPage } from './ProductImport';
 import { useAuth } from './auth/auth';
 import { hasPermission } from '@stock/shared';
 import { PermissionRoute } from './auth/PermissionRoute';
+import { Suppliers, SupplierFormPage } from './Suppliers';
+import { Purchases, PurchaseDetail } from './Purchases';
+import { PurchaseFormPage } from './PurchaseForm';
 
 const navigation = [
   { path: '/', label: 'Visão geral', icon: LayoutDashboard, description: 'Pulso do estoque e prioridades do dia.' },
@@ -23,6 +26,8 @@ const navigation = [
   { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight, description: 'Entradas, saídas e ajustes em uma só leitura.' },
   { path: '/history', label: 'Histórico', icon: History, description: 'Rastro de cada alteração de saldo.' },
   { path: '/backups', label: 'Backups', icon: HardDrive, description: 'Cópias completas e agendamento do estoque.' },
+  { path: '/suppliers', label: 'Fornecedores', icon: Boxes, description: 'Contatos e pedidos dos fornecedores da operação.' },
+  { path: '/purchases', label: 'Compras', icon: Package, description: 'Pedidos, entregas parciais e recebimentos no estoque.' },
 ] as const;
 
 function Shell() {
@@ -37,6 +42,11 @@ function Shell() {
     ? { path: '/products', label: 'Novo produto', description: 'Identifique, configure e siga para o próximo item.' }
     : /^\/products\/.+\/edit$/.test(location.pathname)
       ? { path: '/products', label: 'Editar produto', description: 'Atualize os dados do catálogo. O saldo permanece preservado.' }
+      : location.pathname === '/suppliers/new' ? { label: 'Novo fornecedor', description: 'Identificação e contatos para os próximos pedidos.' }
+      : /^\/suppliers\/.+\/edit$/.test(location.pathname) ? { label: 'Editar fornecedor', description: 'Atualize contatos ou inative o cadastro preservando os pedidos.' }
+      : location.pathname === '/purchases/new' ? { label: 'Novo pedido', description: 'Escolha fornecedor, produtos e custos negociados.' }
+      : /^\/purchases\/.+\/edit$/.test(location.pathname) ? { label: 'Editar rascunho', description: 'Revise quantidades e custos antes de enviar.' }
+      : /^\/purchases\/.+/.test(location.pathname) ? { label: 'Pedido de compra', description: 'Acompanhe entregas, saldos pendentes e recebimentos.' }
       : navigation.find((item) => item.path === location.pathname) ?? navigation[0];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
@@ -84,6 +94,7 @@ function Shell() {
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
           <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 4).map(navItem)}</div>
+          <div className="nav-group"><span className="nav-group-label">COMPRAS</span>{navigation.slice(5).map(navItem)}</div>
           {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
         </nav>
         <UserSession />
@@ -128,6 +139,13 @@ export function App() {
       <Route path="products/:id/edit" element={<PermissionRoute permission="product.update"><ProductFormPage /></PermissionRoute>} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
+      <Route path="suppliers" element={<PermissionRoute permission="supplier.read"><Suppliers /></PermissionRoute>} />
+      <Route path="suppliers/new" element={<PermissionRoute permission="supplier.manage"><SupplierFormPage /></PermissionRoute>} />
+      <Route path="suppliers/:id/edit" element={<PermissionRoute permission="supplier.manage"><SupplierFormPage /></PermissionRoute>} />
+      <Route path="purchases" element={<PermissionRoute permission="purchase.read"><Purchases /></PermissionRoute>} />
+      <Route path="purchases/new" element={<PermissionRoute permission="purchase.manage"><PurchaseFormPage /></PermissionRoute>} />
+      <Route path="purchases/:id/edit" element={<PermissionRoute permission="purchase.manage"><PurchaseFormPage /></PermissionRoute>} />
+      <Route path="purchases/:id" element={<PermissionRoute permission="purchase.read"><PurchaseDetail /></PermissionRoute>} />
       <Route path="backups" element={<PermissionRoute permission="backup.manage"><BackupsPage /></PermissionRoute>} />
     </Route></Route></Routes>
   );
