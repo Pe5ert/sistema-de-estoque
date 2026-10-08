@@ -2,6 +2,8 @@
 
 Atualizado em 08/10/2026. Branch: `sistema-de-estoque-v2`.
 
+**Compras V1 está na branch isolada `feat/suppliers-purchases`.** Para continuar essa entrega, preservar alterações locais, buscar o remoto e trocar para essa branch. Ler [COMPRAS_V1.md](COMPRAS_V1.md): existe uma nova migration testada localmente, ainda não aplicada ao Neon. Não iniciar a nova API contra a base compartilhada antes do procedimento de revisão/backup/deploy. A V2 é a base de integração, não contém automaticamente a feature.
+
 Importação V1 e feedback operacional estão publicados. Concorrência do estoque validada em PostgreSQL local isolado com duas sessões, disputa comprovada pelo row lock, saídas inteiras/fracionárias, auditoria e dashboard. Leia [PROJECT_STATUS.md](PROJECT_STATUS.md) e [relatório de concorrência](../artifacts/concorrencia-20261008/REVIEW.md) para o estado atual; as evidências anteriores continuam históricas.
 
 ## Backups — nova funcionalidade

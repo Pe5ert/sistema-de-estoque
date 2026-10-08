@@ -12,6 +12,10 @@ Matriz fechada com o usuário nesta rodada. OPERATOR também pode cadastrar prod
 | Ajuste de entrada/saída ou motivo Ajuste de inventário | Sim | Sim | Não |
 | Importar produtos, modelos e operações próprias | Sim | Sim | Não |
 | Consultar, gerar, baixar e agendar backups | Sim | Não | Não |
+| Consultar fornecedores, pedidos e recebimentos | Sim | Sim | Sim |
+| Cadastrar/editar/inativar fornecedores | Sim | Sim | Não |
+| Criar/editar/enviar/cancelar pedidos | Sim | Sim | Não |
+| Receber mercadorias de pedidos | Sim | Sim | Não |
 
 ## Implementação e contrato
 
@@ -22,6 +26,6 @@ Matriz fechada com o usuário nesta rodada. OPERATOR também pode cadastrar prod
 - A interface oculta ações indisponíveis. Acesso direto às rotas de edição, importação e backups mostra aviso e retorno ao catálogo, sem montar os formulários privados. OPERATOR mantém Novo produto e leitura dos detalhes.
 - O perfil da interface é atualizado pelo mecanismo existente de sessão (foco da janela e intervalo de 60 s). O bloqueio do servidor usa o perfil atual imediatamente, sem aguardar esse intervalo. Não há sincronização contínua nova nesta entrega.
 
-Sem migration, reatribuição de papéis existentes, contas reais novas ou interface de administração de usuários. ADMIN acessa todas as funcionalidades existentes; isso não cria módulos futuros de configuração/usuários.
+A entrega original de permissões não exigiu migration ou reatribuição de papéis existentes. A extensão de fornecedores/compras reutiliza a política e requer somente sua migration de domínio, descrita em [COMPRAS_V1.md](COMPRAS_V1.md). Não cria contas reais nem interface de administração de usuários.
 
 Testes/evidências/limites: [REVIEW.md](../artifacts/permissoes-20261008/REVIEW.md).

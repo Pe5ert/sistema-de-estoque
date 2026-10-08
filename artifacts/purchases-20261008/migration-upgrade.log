@@ -1,0 +1,22 @@
+$ prisma migrate deploy && prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "gavyo_upgrade_purchases_test", schema "public" at "127.0.0.1:55432"
+
+4 migrations found in prisma/migrations
+
+Applying migration `20261008000000_suppliers_purchases`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261008000000_suppliers_purchases/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to .\src\generated\prisma in 182ms

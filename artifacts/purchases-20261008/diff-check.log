@@ -1,0 +1,17 @@
+warning: in the working copy of 'apps/api/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/app.module.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/inventory/inventory.dto.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/inventory/inventory.service.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/History.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/Products.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/feedback.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/lib/api.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/web/src/styles.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/PERMISSOES.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/PROJECT_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/RETOMADA.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/frontend/DESIGN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/shared/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/shared/src/permissions.ts', LF will be replaced by CRLF the next time Git touches it

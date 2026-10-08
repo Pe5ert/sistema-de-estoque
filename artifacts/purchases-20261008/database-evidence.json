@@ -1,0 +1,59 @@
+{
+    "orders": [
+        {
+            "number": 9,
+            "status": "RECEIVED",
+            "quantity": "100.000",
+            "receipts": 2,
+            "received": "100.000",
+            "revision": 4
+        },
+        {
+            "number": 25,
+            "status": "CANCELLED",
+            "quantity": "20.000",
+            "receipts": 1,
+            "received": "5.000",
+            "revision": 5
+        }
+    ],
+    "products": [
+        {
+            "sku": "COMPRA-QA-002",
+            "stock": "5.000",
+            "costPrice": "9.99"
+        },
+        {
+            "sku": "COMPRA-QA-001",
+            "stock": "100.000",
+            "costPrice": "9.99"
+        }
+    ],
+    "movements": [
+        {
+            "sku": "COMPRA-QA-001",
+            "after": "60.000",
+            "author": "QA Compras ADMIN",
+            "before": "0.000",
+            "quantity": "60.000",
+            "receiptId": "c2b6f9a2-b6c4-4bbb-bce9-9f79042922ff"
+        },
+        {
+            "sku": "COMPRA-QA-001",
+            "after": "100.000",
+            "author": "QA Compras ADMIN",
+            "before": "60.000",
+            "quantity": "40.000",
+            "receiptId": "f0acf8e5-9ae2-45a8-9d20-d660823bcacd"
+        },
+        {
+            "sku": "COMPRA-QA-002",
+            "after": "5.000",
+            "author": "QA Compras ADMIN",
+            "before": "0.000",
+            "quantity": "5.000",
+            "receiptId": "3a77e6cb-ca44-4342-8a32-a7b45e44769e"
+        }
+    ],
+    "migrationApplied": true
+}

@@ -4,6 +4,8 @@ O produto é uma ferramenta operacional de estoque. A leitura deve começar pelo
 
 ## Linguagem
 
+- Fornecedores/Compras usam grupo próprio na sidebar e as superfícies existentes. Resumo horizontal apenas com contagens reais; tabela dominante com busca/filtros e ação principal acima. Referência específica inspecionada e comparação em `docs/COMPRAS_V1.md`; não trazer gráficos de desempenho/contratos fictícios. Formulários dedicados, quantidades/custos próximos ao item e confirmação de recebimento. Confirmar envio/recebimento é ação azul; cancelar/inativar mantém tratamento destrutivo. A operação de compra não adiciona campos de fornecedor ao cadastro de produto.
+
 - Base grafite escura, azul cobalto como identidade principal, laranja contido em alertas e verde para disponibilidade. Vermelho fica reservado ao estoque zerado e às saídas. O bloco de alerta usa superfície escura e destaque laranja em texto e borda.
 - Composição assimétrica no painel: um saldo dominante, um bloco de atenção, atividade recente e fila de reposição. Métricas equivalentes não formam uma parede de cards.
 - A sidebar separa painel e operação. Produtos, Movimentações e Histórico pertencem ao mesmo grupo operacional. O item ativo usa azul, uma linha vertical e tipografia forte; não repetir numeradores em cada item.
