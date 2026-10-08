@@ -1,5 +1,7 @@
 # Sistema de Estoque V2 — guia para continuar o projeto
 
+**Estado atual — 08/10/2026:** leia `docs/PROJECT_STATUS.md` e `docs/RETOMADA.md` antes das notas históricas abaixo. Importação V1, feedback operacional e backups estão entregues. Concorrência de saídas validada em HTTP/PostgreSQL local isolado com duas sessões e row lock observado; relatório em `artifacts/concorrencia-20261008/REVIEW.md`. A suíte opt-in exige banco loopback separado terminado em `_stock_test`, sem fallback para o banco da aplicação. Pendências atuais: matriz de permissões, atualização entre usuários, upload/storage, implantação contínua e testes físicos/acessibilidade prolongada. Não executar essas próximas etapas automaticamente.
+
 **Retomada atual — 02/10/2026:** leia primeiro `docs/RETOMADA.md`, `docs/PROJECT_STATUS.md` e `docs/frontend/UI_INTERACTION_REVIEW.md`. Os trechos históricos abaixo sobre demonstração em memória, login ausente e banco indisponível foram superados. A aplicação usa API e PostgreSQL; Neon foi validado nesta máquina por configuração temporária do processo, sem transportar segredos no Git. O último ajuste sobe as ações do dashboard 12 px sem deslocar os cards.
 
 Atualizado em **02/10/2026**, após a integração operacional à API. Este arquivo reúne as regras permanentes, a configuração e o estado verificado da checkout. Deve ser lido antes de continuar em outro notebook ou em uma nova conversa.

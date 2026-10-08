@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+import { Client } from 'pg';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
@@ -23,10 +25,14 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
   const tag = 'test-' + randomUUID();
   const origin = 'http://localhost:5173';
   const userId = randomUUID(), categoryId = randomUUID();
+  const secondUserId = randomUUID();
+  let secondCookie: string;
   const password = randomBytes(24).toString('hex');
   const productIds: string[] = [];
   let fixturesCreated = false;
   before(async () => {
+    const target = new URL(testUrl!);
+    assert(['127.0.0.1', 'localhost'].includes(target.hostname) && target.pathname.endsWith('_stock_test'), 'Use a dedicated loopback database ending in _stock_test.');
     assert.notEqual(testUrl, process.env.DATABASE_URL, 'TEST_DATABASE_URL must differ from the application database');
     db = new PrismaService(new ConfigService({ DATABASE_URL: testUrl }));
     await db.$queryRaw`SELECT 1`;
@@ -39,10 +45,14 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     base = `${await app.getUrl()}/api`;
     await db.$transaction([
       db.user.create({ data: { id: userId, name: tag, email: tag + '@example.test', passwordHash: await hash(password, { type: argon2id }), role: 'OPERATOR' } }),
+      db.user.create({ data: { id: secondUserId, name: tag + '-second', email: tag + '-second@example.test', passwordHash: await hash(password, { type: argon2id }), role: 'OPERATOR' } }),
       db.category.create({ data: { id: categoryId, name: tag } }),
     ]); fixturesCreated = true;
     const login = await request('/auth/login', { email: tag + '@example.test', password }); assert.equal(login.status, 200);
     cookie = login.headers.get('set-cookie')!.split(';')[0];
+    const secondLogin = await request('/auth/login', { email: tag + '-second@example.test', password });
+    assert.equal(secondLogin.status, 200);
+    secondCookie = secondLogin.headers.get('set-cookie')!.split(';')[0];
     baseline = await (await request('/dashboard/summary')).json() as DashboardSummary;
   });
   after(async () => {
@@ -51,11 +61,39 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
         db.product.updateMany({ where: { id: { in: productIds } }, data: { active: false } }),
         db.category.update({ where: { id: categoryId }, data: { active: false } }),
         db.user.update({ where: { id: userId }, data: { active: false } }),
+        db.user.update({ where: { id: secondUserId }, data: { active: false } }),
       ]);
     } finally { await app?.close(); await db?.$disconnect(); }
   });
-  function request(path: string, body?: unknown, method = body ? 'POST' : 'GET') {
-    return fetch(base + path, { method, headers: { Origin: origin, 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  function request(path: string, body?: unknown, method = body ? 'POST' : 'GET', session = cookie) {
+    return fetch(base + path, { method, headers: { Origin: origin, 'Content-Type': 'application/json', ...(session ? { Cookie: session } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  }
+  async function concurrentExits(productId: string, quantity: string, count: number) {
+    // Hold the row until both sessions are visibly waiting in PostgreSQL. This
+    // proves lock contention instead of relying on the timing of Promise.all.
+    const blocker = new Client({ connectionString: testUrl });
+    await blocker.connect();
+    let pending: Promise<Response[]> | undefined;
+    let overlapping = false;
+    try {
+      await blocker.query('BEGIN');
+      await blocker.query('SELECT "id" FROM "Product" WHERE "id" = $1::uuid FOR UPDATE', [productId]);
+      pending = Promise.all(Array.from({ length: count }, (_, index) => request('/stock-movements', {
+        productId, type: 'EXIT', reason: 'SALE', quantity,
+      }, 'POST', index % 2 ? secondCookie : cookie)));
+      const deadline = Date.now() + 3000;
+      while (Date.now() < deadline) {
+        const [{ waiting }] = await db.$queryRaw<{ waiting: bigint }[]>`SELECT COUNT(*) AS waiting FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE '%FOR UPDATE%'`;
+        if (Number(waiting) >= 2) { overlapping = true; break; }
+        await delay(10);
+      }
+    } finally {
+      await blocker.query('ROLLBACK');
+      await blocker.end();
+    }
+    const results = await pending!;
+    assert(overlapping, 'At least two HTTP requests must overlap while waiting for the product row lock');
+    return results;
   }
   test('create/edit/reload, uniqueness, movement audit, rollback, aggregation and logout persistence', async () => {
     assert.equal((await request('/auth/me')).status, 200);
@@ -88,18 +126,52 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     assert.equal((await request('/products?stockStatus=NORMAL&search=' + encodeURIComponent(input.sku))).status, 200);
     const races = await request('/products', { ...input, sku: tag + '-race', barcode: null, costPrice: null, minimumStock: '0', initialEntry: { quantity: '10' } }); assert.equal(races.status, 201);
     const racingProduct = await races.json() as ProductRecord; productIds.push(racingProduct.id);
-    const results = await Promise.all([1, 2].map(() => request('/stock-movements', { productId: racingProduct.id, type: 'EXIT', reason: 'SALE', quantity: '8' })));
+    const results = await concurrentExits(racingProduct.id, '8', 2);
     assert.deepEqual(results.map(response => response.status).sort(), [201, 409]);
     assert.equal((await db.product.findUniqueOrThrow({ where: { id: racingProduct.id } })).stock.toString(), '2');
     assert.equal(await db.stockMovement.count({ where: { productId: racingProduct.id } }), 2);
+    const winner = await results.find(response => response.status === 201)!.json() as MovementRecord;
+    assert.equal(winner.previousStock, '10'); assert.equal(winner.resultingStock, '2');
+    assert.equal(winner.user.id, results[0].status === 201 ? userId : secondUserId);
     const summary = await (await request('/dashboard/summary')).json() as DashboardSummary;
     assert.equal(new Prisma.Decimal(summary.units).minus(baseline.units).toString(), '82');
     assert.equal(new Prisma.Decimal(summary.costValue).minus(baseline.costValue).toString(), '980');
     assert.equal(summary.products - baseline.products, 2); assert.equal(summary.normal - baseline.normal, 2);
     assert.equal(summary.today.entries - baseline.today.entries, 2); assert.equal(summary.today.exits - baseline.today.exits, 2); assert.equal(summary.days.length, 7);
-    assert.equal((await request('/auth/logout', {})).status, 200); cookie = '';
+    assert.equal((await request('/auth/logout', {})).status, 204); cookie = '';
     assert.equal((await request('/products')).status, 401);
     const login = await request('/auth/login', { email: tag + '@example.test', password }); assert.equal(login.status, 200); cookie = login.headers.get('set-cookie')!.split(';')[0];
     assert.equal((await (await request('/products/' + product.id)).json() as ProductRecord).stock, '80');
+  });
+  test('ten concurrent withdrawals exhaust stock exactly, with no audit for rejected requests', async () => {
+    const response = await request('/products', { sku: tag + '-burst', name: 'Concurrent withdrawals', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '10' } });
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    const before = await (await request('/dashboard/summary')).json() as DashboardSummary;
+    const results = await concurrentExits(product.id, '2', 10);
+    assert.deepEqual(results.map(result => result.status).sort(), [...Array<number>(5).fill(201), ...Array<number>(5).fill(409)]);
+    const accepted = await Promise.all(results.filter(result => result.status === 201).map(async result => await result.json() as MovementRecord));
+    assert.deepEqual(accepted.map(record => Number(record.previousStock)).sort((a, b) => a - b), [2, 4, 6, 8, 10]);
+    assert.deepEqual(accepted.map(record => Number(record.resultingStock)).sort((a, b) => a - b), [0, 2, 4, 6, 8]);
+    const audit = await db.stockMovement.findMany({ where: { productId: product.id, type: 'EXIT' } });
+    assert.equal(audit.length, 5);
+    assert.deepEqual(audit.map(record => record.id).sort(), accepted.map(record => record.id).sort());
+    assert(audit.every(record => record.userId === userId || record.userId === secondUserId));
+    assert.equal((await (await request('/products/' + product.id)).json() as ProductRecord).stock, '0');
+    const after = await (await request('/dashboard/summary')).json() as DashboardSummary;
+    assert.equal(new Prisma.Decimal(before.units).minus(after.units).toString(), '10');
+    assert.equal(after.today.exits - before.today.exits, 5);
+  });
+  test('concurrent fractional withdrawals preserve Decimal balance and audit chain', async () => {
+    const response = await request('/products', { sku: tag + '-decimal', name: 'Fractional withdrawals', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '0.3' } });
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    const results = await concurrentExits(product.id, '0.1', 4);
+    assert.deepEqual(results.map(result => result.status).sort(), [201, 201, 201, 409]);
+    const audit = await db.stockMovement.findMany({ where: { productId: product.id, type: 'EXIT' } });
+    assert.equal(audit.length, 3);
+    assert.deepEqual(audit.map(record => record.previousStock.toString()).sort(), ['0.1', '0.2', '0.3']);
+    assert.deepEqual(audit.map(record => record.resultingStock.toString()).sort(), ['0', '0.1', '0.2']);
+    assert.equal((await db.product.findUniqueOrThrow({ where: { id: product.id } })).stock.toString(), '0');
   });
 });

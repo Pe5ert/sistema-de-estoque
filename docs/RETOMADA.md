@@ -1,6 +1,8 @@
 # Retomar no outro notebook
 
-Atualizado em 05/10/2026. Branch: `sistema-de-estoque-v2`.
+Atualizado em 08/10/2026. Branch: `sistema-de-estoque-v2`.
+
+Importação V1 e feedback operacional estão publicados. Concorrência do estoque validada em PostgreSQL local isolado com duas sessões, disputa comprovada pelo row lock, saídas inteiras/fracionárias, auditoria e dashboard. Leia [PROJECT_STATUS.md](PROJECT_STATUS.md) e [relatório de concorrência](../artifacts/concorrencia-20261008/REVIEW.md) para o estado atual; as evidências anteriores continuam históricas.
 
 ## Backups — nova funcionalidade
 
@@ -14,7 +16,7 @@ Atualizado em 05/10/2026. Branch: `sistema-de-estoque-v2`.
 - Último ajuste: ações do dashboard 12 px mais acima; cards mantêm a posição. Conferido em 1366 px e 390 px, sem overflow.
 - Imagens de produto persistem por URL. Upload/storage e atualização entre usuários continuam futuros.
 - Neon: projeto `sistema-de-estoque-dev`. Conexão e migrations validadas nesta máquina. A conexão foi definida somente no processo da API; não está transportada pelo Git.
-- Lint, typecheck, 35 testes locais e build passaram na rodada de polimento. Concorrência real exige `TEST_DATABASE_URL` de uma base separada e ainda não foi validada.
+- Lint, typecheck, testes e build passaram nas rodadas registradas. Concorrência real foi validada em 08/10: para repetir, `TEST_DATABASE_URL` deve apontar para uma base loopback separada terminada em `_stock_test`, já migrada.
 
 ## Atualizar uma checkout existente
 
@@ -60,4 +62,4 @@ No mesmo banco Neon, migrations já foram aplicadas; não executar reset ou seed
 
 Ler `AGENTS.md`, `docs/OPERATIONAL_INTEGRATION.md`, `docs/frontend/DESIGN.md` e `docs/frontend/UI_INTERACTION_REVIEW.md`. Preservar identidade e composição atuais; fazer alterações pequenas conforme a próxima solicitação. Não editar saldo por PATCH, remover auditoria ou alterar auth por efeito colateral de ajustes visuais.
 
-Próximas possibilidades discutidas, sem implementação automática: upload real de imagem, matriz de permissões e sincronização entre usuários. A validação de concorrência continua uma pendência técnica separada.
+Próximas possibilidades discutidas, sem implementação automática: upload real de imagem, matriz de permissões, sincronização entre usuários e implantação contínua. Validação física do bipador, leitor de tela e expiração prolongada continuam pendentes.

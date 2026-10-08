@@ -1,4 +1,8 @@
-# Estado da V2 — 06/10/2026
+# Estado da V2 — 08/10/2026
+
+**Concorrência do estoque — 08/10/2026:** suíte HTTP/PostgreSQL real ativada em base local isolada. Duas sessões distintas disputam o mesmo produto, com espera pelo row lock comprovada no PostgreSQL: saldo 10/duas saídas de 8 → uma aceita, uma recusada, saldo 2; dez saídas de 2 → cinco aceitas, cinco recusadas, saldo 0; quatro saídas de 0.1 com saldo 0.3 → três aceitas, uma recusada, saldo 0. Auditoria, autoria, persistência e agregados conferidos. Nenhuma mudança de regra de estoque ou escrita no Neon. Procedimento e limites: [REVIEW.md](../artifacts/concorrencia-20261008/REVIEW.md).
+
+**Feedback operacional — 07/10/2026:** camada compartilhada de toast, Alert, FieldError e ConfirmDialog publicada em 1308bb4. Corrigidos perda de rascunho na reconexão e fsync de backup no Windows (ac85e7d). QA com PostgreSQL local, desktop/tablet/mobile; [evidências e limites](../artifacts/feedback-20261007/REVIEW.md).
 
 **Importação V1 — 06/10/2026:** integrada e publicada na sistema-de-estoque-v2 em 8c8f718. CSV/XLSX com mapeamento, categorias explícitas, preview, erros, confirmação atômica/idempotente e entradas INITIAL_STOCK. QA em PostgreSQL isolado e navegador. Migration 20261006000000_product_import aplicada ao Neon em 06/10, após backup verificado; Prisma confirmou schema atualizado e fingerprints das quatro tabelas operacionais permaneceram iguais. Sem reset, seed ou importação de fixtures no Neon. Contratos, limites, integração e retomada: [IMPORTACAO_V1.md](IMPORTACAO_V1.md).
 
@@ -23,17 +27,17 @@ Guia curto para continuar em outro notebook. Contratos, migrations e procediment
 
 ## Validação e limite real
 
-PostgreSQL local não respondeu e usuário não lembra a conexão de casa. Foram preenchidos somente JWT_SECRET (aleatório) e VITE_API_URL locais ausentes; DATABASE_URL e demais valores foram preservados. Sem instalação de Docker/PostgreSQL, migration, seed ou reset. O `.env` não foi versionado.
+Neon teve conexão/migrations verificadas; a migration da importação foi aplicada em 06/10 após backup. As rodadas de importação, feedback e concorrência usaram PostgreSQL local e dados fictícios para escrita. O erro de banco indisponível registrado em 02/10 é histórico, não o estado atual. Segredos e `.env` continuam fora do Git.
 
-API iniciada; health real retornou **503 / database down**, `/auth/me` anônimo retornou **401**. Os 35 testes locais de auth/contratos/Decimal/formulário e QA de interação com fixtures passaram. A suíte PostgreSQL de persistência/rollback/concorrência está preparada, mas **não executada** sem `TEST_DATABASE_URL`. Prints/resultados: `artifacts/operational-20261002/`.
+A concorrência de retiradas foi validada via HTTP e PostgreSQL real em 08/10. Importação tem cobertura própria de transação, repetição e concorrência. Isso não comprova atualização automática entre usuários, bipador físico, nem uma implantação contínua em produção.
 
-## Próxima etapa necessária
+## Pendências atuais
 
-1. Recuperar uma conexão PostgreSQL autorizada; configurar `.env` localmente sem versionar segredos.
-2. Verificar migrations e `apps/api/prisma/preflight.sql`; revisar/aplicar migration nova via `pnpm --filter @stock/api db:deploy`, sem reset.
-3. Subir API/web; `/api/health` deve confirmar banco.
-4. Validar login → categoria → produto/entrada 100 → reload → edição → saída 20 → histórico 100→80 → painel → logout/login com persistência.
-5. Executar suíte real em uma base de teste separada para comprovar duas saídas simultâneas de 8 com saldo 10.
+1. Fechar a matriz de permissões por perfil e verificar interface/API.
+2. Definir atualização de dados entre usuários/abas.
+3. Implementar upload/storage de imagens, caso solicitado; hoje são URLs persistidas.
+4. Preparar implantação contínua, ferramentas de backup e volume privado persistente.
+5. Validar bipador físico, leitor de tela real e expiração prolongada da sessão.
 
 ## Decisões futuras
 
