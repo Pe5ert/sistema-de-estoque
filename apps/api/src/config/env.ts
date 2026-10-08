@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().startsWith('postgresql://'),
+  CLOUDINARY_CLOUD_NAME: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^[a-zA-Z0-9_-]+$/).optional()),
+  CLOUDINARY_API_KEY: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^\d+$/).optional()),
+  CLOUDINARY_API_SECRET: z.preprocess(value => value === '' ? undefined : value, z.string().min(1).optional()),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   WEB_ORIGIN: z.url().refine((value) => {
     const url = new URL(value);
@@ -23,7 +26,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
-});
+}).refine(values => [values.CLOUDINARY_CLOUD_NAME, values.CLOUDINARY_API_KEY, values.CLOUDINARY_API_SECRET].filter(Boolean).length % 3 === 0, { message: 'Configure as três variáveis CLOUDINARY ou deixe todas vazias.' });
 
 export function validateEnv(input: Record<string, unknown>) {
   const result = envSchema.safeParse(input);

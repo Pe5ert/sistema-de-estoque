@@ -9,6 +9,7 @@ import { BackupsModule } from './backups/backups.module';
 import { ImportsModule } from './imports/imports.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { PhysicalInventoriesModule } from './physical-inventories/physical-inventories.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PhysicalInventoriesModule } from './physical-inventories/physical-inven
     ImportsModule,
     PurchasesModule,
     PhysicalInventoriesModule,
+    ImagesModule,
   ],
 })
 export class AppModule {}
