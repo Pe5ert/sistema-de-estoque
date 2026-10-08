@@ -9,6 +9,7 @@ import { SESSION_SECONDS } from './auth.config';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { OriginGuard } from './origin.guard';
 import { RolesGuard } from './roles.guard';
+import { PermissionsGuard } from './permissions.guard';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { RolesGuard } from './roles.guard';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 8 }]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, RolesGuard, { provide: APP_GUARD, useClass: OriginGuard }],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  providers: [AuthService, JwtAuthGuard, RolesGuard, PermissionsGuard, { provide: APP_GUARD, useClass: OriginGuard }],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, PermissionsGuard],
 })
 export class AuthModule {}

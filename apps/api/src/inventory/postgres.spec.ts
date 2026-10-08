@@ -44,7 +44,7 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     app.useGlobalFilters(new HttpExceptionFilter()); await app.listen(0, '127.0.0.1');
     base = `${await app.getUrl()}/api`;
     await db.$transaction([
-      db.user.create({ data: { id: userId, name: tag, email: tag + '@example.test', passwordHash: await hash(password, { type: argon2id }), role: 'OPERATOR' } }),
+      db.user.create({ data: { id: userId, name: tag, email: tag + '@example.test', passwordHash: await hash(password, { type: argon2id }), role: 'MANAGER' } }),
       db.user.create({ data: { id: secondUserId, name: tag + '-second', email: tag + '-second@example.test', passwordHash: await hash(password, { type: argon2id }), role: 'OPERATOR' } }),
       db.category.create({ data: { id: categoryId, name: tag } }),
     ]); fixturesCreated = true;
@@ -173,5 +173,30 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     assert.deepEqual(audit.map(record => record.previousStock.toString()).sort(), ['0.1', '0.2', '0.3']);
     assert.deepEqual(audit.map(record => record.resultingStock.toString()).sort(), ['0', '0.1', '0.2']);
     assert.equal((await db.product.findUniqueOrThrow({ where: { id: product.id } })).stock.toString(), '0');
+  });
+  test('operator can create with initial stock, but direct edits/categories/adjustments cannot write', async () => {
+    const response = await request('/products', { sku: tag + '-operator', name: 'Operator creation', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '5' } }, 'POST', secondCookie);
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    const initial = await db.stockMovement.findFirstOrThrow({ where: { productId: product.id } });
+    assert.equal(initial.userId, secondUserId); assert.equal(initial.reason, 'INITIAL_STOCK');
+    assert.equal(initial.resultingStock.toString(), '5');
+    for (const body of [{ name: 'Forbidden edit' }, { active: false }, { stock: '999' }]) {
+      assert.equal((await request('/products/' + product.id, body, 'PATCH', secondCookie)).status, 403);
+    }
+    assert.equal((await request('/categories', { name: tag + '-forbidden' }, 'POST', secondCookie)).status, 403);
+    assert.equal((await request('/categories/' + categoryId, { active: false }, 'PATCH', secondCookie)).status, 403);
+    for (const body of [{ type: 'ADJUSTMENT_IN', reason: 'OTHER' }, { type: 'ADJUSTMENT_OUT', reason: 'OTHER' }, { type: 'ENTRY', reason: 'INVENTORY_ADJUSTMENT' }]) {
+      assert.equal((await request('/stock-movements', { ...body, productId: product.id, quantity: '1' }, 'POST', secondCookie)).status, 403);
+    }
+    assert.equal(await db.stockMovement.count({ where: { productId: product.id } }), 1);
+    const unchanged = await db.product.findUniqueOrThrow({ where: { id: product.id } });
+    assert.equal(unchanged.name, 'Operator creation'); assert.equal(unchanged.active, true); assert.equal(unchanged.stock.toString(), '5');
+    assert.equal((await db.category.findUniqueOrThrow({ where: { id: categoryId } })).active, true);
+    assert.equal(await db.category.count({ where: { name: tag + '-forbidden' } }), 0);
+    await db.user.update({ where: { id: userId }, data: { role: 'OPERATOR' } });
+    try {
+      assert.equal((await request('/products/' + product.id, { name: 'Stale session edit' }, 'PATCH')).status, 403);
+    } finally { await db.user.update({ where: { id: userId }, data: { role: 'MANAGER' } }); }
   });
 });

@@ -6,6 +6,7 @@ import { useAuth } from './auth/auth';
 import { useNavigate } from 'react-router-dom';
 import { DataState } from './data-controls';
 import { apiClient, apiUrl } from './lib/api';
+import { hasPermission } from '@stock/shared';
 
 type Schedule = { enabled: boolean; frequency: 'WEEKLY' | 'MONTHLY'; weekday: number; hour: string };
 type Backup = { id: string; status: 'RUNNING' | 'READY' | 'FAILED'; source: 'MANUAL' | 'AUTOMATIC'; startedAt: string; finishedAt: string | null; author: string; bytes: number; sha256: string; error: string | null };
@@ -16,7 +17,7 @@ const statuses = { READY: 'Disponível', RUNNING: 'Gerando cópia…', FAILED: '
 
 export function BackupsPage() {
   const { currentUser } = useAuth();
-  if (currentUser?.role !== 'ADMIN') return <p role="alert">A área de backups é exclusiva do administrador.</p>;
+  if (!hasPermission(currentUser?.role, 'backup.manage')) return <p role="alert">A área de backups é exclusiva do administrador.</p>;
   return <BackupsContent />;
 }
 
@@ -28,8 +29,10 @@ export function BackupsFeedbackMonitor() {
   const observed = useRef(new Map<string, Backup['status']>());
   const announced = useRef(new Set<string>());
   const created = useMutationState<Backup>({ filters: { mutationKey: ['backup-create'], status: 'success' }, select: mutation => mutation.state.data as Backup });
-  const query = useQuery({ queryKey: key, queryFn: ({ signal }) => apiClient<BackupList>('/backups', { signal }), enabled: currentUser?.role === 'ADMIN', refetchInterval: query => query.state.data?.inProgress ? 2000 : false, retry: false });
+  const allowed = hasPermission(currentUser?.role, 'backup.manage');
+  const query = useQuery({ queryKey: key, queryFn: ({ signal }) => apiClient<BackupList>('/backups', { signal }), enabled: allowed, refetchInterval: query => query.state.data?.inProgress ? 2000 : false, retry: false });
   useEffect(() => {
+    if (!allowed) return;
     for (const item of query.data?.items ?? []) {
       if ((observed.current.get(item.id) === 'RUNNING' || created.some(backup => backup.id === item.id)) && item.status !== 'RUNNING' && !announced.current.has(item.id)) {
         announced.current.add(item.id);
@@ -37,7 +40,7 @@ export function BackupsFeedbackMonitor() {
       }
       observed.current.set(item.id, item.status);
     }
-  }, [query.data, notify, navigate, created]);
+  }, [query.data, notify, navigate, created, allowed]);
   return null;
 }
 

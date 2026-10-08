@@ -56,3 +56,7 @@ Usar FeedbackProvider/useFeedback para resultados de ações, Alert para problem
 Success 4 s, info 5 s, warning 7 s; error e mensagens com CTA permanecem até ação/dispensa. Pausar em hover, foco, aba oculta ou superfície modal. No máximo três visíveis, fila para as demais. Desktop inferior direito, acima do footer sticky; mobile no topo com margens e quebra de texto. A fila atravessa navegação e é limpa ao encerrar/rejeitar sessão; não persiste no reload. Detalhes de importação/auditoria permanecem na página. O painel mantém seus alertas próprios de reposição.
 
 Uma falha de atualização com sessão/dados já conhecidos não deve desmontar um formulário e perder rascunho. 401 segue revogando acesso. Relatório, mensagens e evidências em artifacts/feedback-20261007/REVIEW.md.
+
+## Acesso por perfil — 08/10/2026
+
+Consultar `hasPermission` da política shared para ações restritas; matriz em `docs/PERMISSOES.md`. OPERATOR mantém Novo produto e detalhes, mas não Editar produto, Categorias ou Importar planilha. Backups aparece apenas para ADMIN. Acesso direto a uma rota restrita mostra Alert com retorno ao catálogo e não monta o formulário. Não oferecer um botão que terminará em 403 para o perfil conhecido; a API continua autoritativa quando o perfil muda durante uma sessão.

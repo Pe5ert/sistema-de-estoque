@@ -62,4 +62,6 @@ No mesmo banco Neon, migrations já foram aplicadas; não executar reset ou seed
 
 Ler `AGENTS.md`, `docs/OPERATIONAL_INTEGRATION.md`, `docs/frontend/DESIGN.md` e `docs/frontend/UI_INTERACTION_REVIEW.md`. Preservar identidade e composição atuais; fazer alterações pequenas conforme a próxima solicitação. Não editar saldo por PATCH, remover auditoria ou alterar auth por efeito colateral de ajustes visuais.
 
-Próximas possibilidades discutidas, sem implementação automática: upload real de imagem, matriz de permissões, sincronização entre usuários e implantação contínua. Validação física do bipador, leitor de tela e expiração prolongada continuam pendentes.
+Permissões por perfil estão implementadas e validadas; leia [PERMISSOES.md](PERMISSOES.md). OPERATOR pode cadastrar produtos e movimentar entradas/saídas, mas edição/inativação/categorias/importação/ajustes exigem ADMIN/MANAGER. Backups exigem ADMIN. Não alterar perfis reais para retomar ou facilitar testes.
+
+Próximas possibilidades discutidas, sem implementação automática: upload real de imagem, sincronização entre usuários e implantação contínua. Validação física do bipador, leitor de tela e expiração prolongada continuam pendentes.

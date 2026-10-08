@@ -1,7 +1,9 @@
+import { hasPermission } from './permissions';
+
 export const importFields = ['name', 'sku', 'barcode', 'category', 'unit', 'minimumStock', 'costPrice', 'salePrice', 'initialStock', 'imageUrl'] as const;
 export type ImportField = typeof importFields[number];
 export const PRODUCT_IMPORT_ACTION = 'product.import';
-export const canImportProducts = (role?: string) => role === 'ADMIN' || role === 'MANAGER';
+export const canImportProducts = (role?: string) => hasPermission(role, PRODUCT_IMPORT_ACTION);
 export type ImportMapping = Partial<Record<ImportField, number>>;
 export type ImportCategoryMapping = { source: string; action: 'map'; categoryId: string } | { source: string; action: 'create'; name: string };
 export type ImportIssue = { row: number; field: string; message: string };

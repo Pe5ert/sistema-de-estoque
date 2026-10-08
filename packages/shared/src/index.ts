@@ -55,3 +55,4 @@ export interface DashboardSummary {
   days: { date: string; entries: string; exits: string; entryRecords: number; exitRecords: number }[]; timezone: string;
 }
 export * from './imports';
+export * from './permissions';

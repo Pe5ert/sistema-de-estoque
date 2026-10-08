@@ -1,5 +1,7 @@
 # Estado da V2 — 08/10/2026
 
+**Permissões — 08/10/2026:** matriz definida com o usuário, centralizada no shared e aplicada em interface/API. OPERATOR pode cadastrar com entrada inicial e registrar entradas/saídas; edição/inativação/categorias/importação/ajustes ficam com ADMIN/MANAGER e backups com ADMIN. Testados os três perfis, chamadas diretas, ausência de escrita em ações negadas e rebaixamento com sessão aberta. Sem migration ou alteração de papéis reais. [Matriz](PERMISSOES.md) e [QA](../artifacts/permissoes-20261008/REVIEW.md).
+
 **Concorrência do estoque — 08/10/2026:** suíte HTTP/PostgreSQL real ativada em base local isolada. Duas sessões distintas disputam o mesmo produto, com espera pelo row lock comprovada no PostgreSQL: saldo 10/duas saídas de 8 → uma aceita, uma recusada, saldo 2; dez saídas de 2 → cinco aceitas, cinco recusadas, saldo 0; quatro saídas de 0.1 com saldo 0.3 → três aceitas, uma recusada, saldo 0. Auditoria, autoria, persistência e agregados conferidos. Nenhuma mudança de regra de estoque ou escrita no Neon. Procedimento e limites: [REVIEW.md](../artifacts/concorrencia-20261008/REVIEW.md).
 
 **Feedback operacional — 07/10/2026:** camada compartilhada de toast, Alert, FieldError e ConfirmDialog publicada em 1308bb4. Corrigidos perda de rascunho na reconexão e fsync de backup no Windows (ac85e7d). QA com PostgreSQL local, desktop/tablet/mobile; [evidências e limites](../artifacts/feedback-20261007/REVIEW.md).
@@ -33,15 +35,14 @@ A concorrência de retiradas foi validada via HTTP e PostgreSQL real em 08/10. I
 
 ## Pendências atuais
 
-1. Fechar a matriz de permissões por perfil e verificar interface/API.
-2. Definir atualização de dados entre usuários/abas.
-3. Implementar upload/storage de imagens, caso solicitado; hoje são URLs persistidas.
-4. Preparar implantação contínua, ferramentas de backup e volume privado persistente.
-5. Validar bipador físico, leitor de tela real e expiração prolongada da sessão.
+1. Definir atualização de dados entre usuários/abas.
+2. Implementar upload/storage de imagens, caso solicitado; hoje são URLs persistidas.
+3. Preparar implantação contínua, ferramentas de backup e volume privado persistente.
+4. Validar bipador físico, leitor de tela real e expiração prolongada da sessão.
 
 ## Decisões futuras
 
-Matriz de permissões por role; upload/storage de arquivos; atualização entre usuários. Não implementar vendas, clientes, fornecedores, financeiro, NF, pedidos, múltiplos depósitos ou realtime nesta rodada. O seed DEV permanece opcional e explícito; não é fallback da aplicação.
+Upload/storage de arquivos; atualização entre usuários. Não implementar vendas, clientes, fornecedores, financeiro, NF, pedidos, múltiplos depósitos ou realtime nesta rodada. O seed DEV permanece opcional e explícito; não é fallback da aplicação.
 
 ## Polimento operacional — 02/10/2026
 

@@ -3,9 +3,8 @@ import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsInt, Matches, Max, Min } from 'class-validator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles, RolesGuard } from '../auth/roles.guard';
+import { PermissionsGuard, RequirePermission } from '../auth/permissions.guard';
 import type { UserResponseDto } from '../auth/user-response.dto';
-import { UserRole } from '../generated/prisma/client';
 import { BackupsService } from './backups.service';
 
 export class BackupScheduleInput {
@@ -16,7 +15,7 @@ export class BackupScheduleInput {
 }
 
 @ApiTags('backups') @ApiCookieAuth('stock_session') @Controller('backups')
-@UseGuards(JwtAuthGuard, RolesGuard) @Roles(UserRole.ADMIN)
+@UseGuards(JwtAuthGuard, PermissionsGuard) @RequirePermission('backup.manage')
 export class BackupsController {
   constructor(@Inject(BackupsService) private readonly service: BackupsService) {}
   @Get() @Header('Cache-Control', 'no-store') list() { return this.service.list(); }

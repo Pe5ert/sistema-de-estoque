@@ -58,7 +58,7 @@ Após timeout/desconexão, consulte primeiro o UUID da operação. COMPLETED já
 
 ## API e permissões
 
-Todos os endpoints exigem sessão HttpOnly e ação central **`product.import`**. Regra provisória: ADMIN e MANAGER permitidos; OPERATOR bloqueado, inclusive por acesso direto. A conta/papel atual do banco é usado pelos guards; a confirmação revalida a permissão. Cada autor consulta e altera somente suas próprias operações.
+Todos os endpoints exigem sessão HttpOnly e ação central **`product.import`**. Matriz fechada em 08/10: ADMIN e MANAGER permitidos; OPERATOR bloqueado, inclusive por acesso direto. A política compartilhada está em [PERMISSOES.md](PERMISSOES.md). A conta/papel atual do banco é usado pelos guards; a confirmação revalida a permissão. Cada autor consulta e altera somente suas próprias operações.
 
 | Método / rota sob `/api` | Uso |
 | --- | --- |

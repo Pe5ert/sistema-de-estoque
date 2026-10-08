@@ -54,7 +54,7 @@ describe('operational HTTP boundaries without PostgreSQL', () => {
   };
   before(async () => {
     const module = await Test.createTestingModule({ imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, load: [() => ({ JWT_SECRET: randomBytes(32).toString('hex'), WEB_ORIGIN: origin })] }), InventoryModule] })
-      .overrideProvider(PrismaService).useValue({ user: { findUnique: async ({ where }: { where: { id: string } }) => where.id === actor ? { id: actor, name: 'HTTP fixture', email: 'fixture@example.test', role: 'OPERATOR', active: true } : null } })
+      .overrideProvider(PrismaService).useValue({ user: { findUnique: async ({ where }: { where: { id: string } }) => where.id === actor ? { id: actor, name: 'HTTP fixture', email: 'fixture@example.test', role: 'MANAGER', active: true } : null } })
       .overrideProvider(InventoryService).useValue(service).compile();
     app = module.createNestApplication({ logger: false });
     app.setGlobalPrefix('api'); configureAuthHttp(app, app.get(ConfigService));

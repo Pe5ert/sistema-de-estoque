@@ -14,6 +14,8 @@ import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
 import { useAuth } from './auth/auth';
+import { hasPermission } from '@stock/shared';
+import { PermissionRoute } from './auth/PermissionRoute';
 
 const navigation = [
   { path: '/', label: 'Visão geral', icon: LayoutDashboard, description: 'Pulso do estoque e prioridades do dia.' },
@@ -82,7 +84,7 @@ function Shell() {
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
           <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 4).map(navItem)}</div>
-          {currentUser?.role === 'ADMIN' && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
+          {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
         </nav>
         <UserSession />
         <div className="sidebar-footer">
@@ -121,12 +123,12 @@ export function App() {
       <Route element={<ProtectedRoute />}><Route element={<Shell />}>
       <Route index element={<Overview />} />
       <Route path="products" element={<Products />} />
-      <Route path="products/new" element={<ProductFormPage />} />
-      <Route path="products/import" element={<ProductImportPage />} />
-      <Route path="products/:id/edit" element={<ProductFormPage />} />
+      <Route path="products/new" element={<PermissionRoute permission="product.create"><ProductFormPage /></PermissionRoute>} />
+      <Route path="products/import" element={<PermissionRoute permission="product.import"><ProductImportPage /></PermissionRoute>} />
+      <Route path="products/:id/edit" element={<PermissionRoute permission="product.update"><ProductFormPage /></PermissionRoute>} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
-      <Route path="backups" element={<BackupsPage />} />
+      <Route path="backups" element={<PermissionRoute permission="backup.manage"><BackupsPage /></PermissionRoute>} />
     </Route></Route></Routes>
   );
 }

@@ -6,7 +6,8 @@ import { ArrowRight, Barcode, Minus, Plus } from 'lucide-react';
 import { stockStatus, reasonLabels, presentProduct, type ProductPresentation } from './inventory-model';
 import { useInventoryMutation, useProduct } from './inventory-api';
 import { apiClient, ApiError } from './lib/api';
-import type { MovementRecord, ProductRecord, MovementReason } from '@stock/shared';
+import { hasPermission, type MovementRecord, type ProductRecord, type MovementReason } from '@stock/shared';
+import { useAuth } from './auth/auth';
 import { Field, fieldAccessibility, QuantityInput } from './form-controls';
 import { formatQuantity, normalizeDecimal, parseDecimal } from './product-form-model';
 import { ProductThumbnail, Status, StockMeter } from './inventory-ui';
@@ -16,6 +17,7 @@ const previewSchema = z.object({ quantity: z.string().refine((value) => (parseDe
 type PreviewFields = { quantity: string; type: 'Entrada' | 'Saída'; reason: string };
 
 export function MovementWorkbench() {
+  const { currentUser } = useAuth();
   const { notify } = useFeedback();
   const navigate = useNavigate();
   const mutation = useInventoryMutation((body: Record<string, unknown>) => apiClient<MovementRecord>('/stock-movements', { method: 'POST', body: JSON.stringify(body) }));
@@ -129,7 +131,7 @@ export function MovementWorkbench() {
         <legend className="sr-only">Registrar movimentação</legend>
         <Field id="movement-quantity" label="Quantidade" error={errors.quantity?.message}><Controller name="quantity" control={control} render={({ field }) => <QuantityInput id="movement-quantity" value={field.value} inputRef={field.ref} onChange={(value) => { field.onChange(value); resetPreview(); }} onBlur={field.onBlur} unit={selected?.unit ?? 'un'} error={errors.quantity?.message} disabled={!selected} />} /></Field>
         <div className="operation-field"><span className="field-label" id="movement-type-label">TIPO DE MOVIMENTO</span><div className="type-selector" role="radiogroup" aria-labelledby="movement-type-label">{(['Entrada', 'Saída'] as const).map((item) => <label key={item} className={'type-option type-' + (item === 'Entrada' ? 'in' : 'out') + (type === item ? ' type-selected' : '')}><input type="radio" value={item} {...register('type')} />{item === 'Entrada' ? <Plus size={15} aria-hidden="true" /> : <Minus size={15} aria-hidden="true" />}{item}</label>)}</div></div>
-        <div className="reason-field"><Field id="movement-reason" label="Motivo" error={errors.reason?.message}><select id="movement-reason" {...register('reason')} {...fieldAccessibility('movement-reason', errors.reason?.message)}><option value="">Selecione o motivo</option>{(Object.keys(reasonLabels) as MovementReason[]).filter(key => key !== 'INITIAL_STOCK').map(key => <option value={key} key={key}>{reasonLabels[key]}</option>)}</select></Field></div>
+        <div className="reason-field"><Field id="movement-reason" label="Motivo" error={errors.reason?.message}><select id="movement-reason" {...register('reason')} {...fieldAccessibility('movement-reason', errors.reason?.message)}><option value="">Selecione o motivo</option>{(Object.keys(reasonLabels) as MovementReason[]).filter(key => key !== 'INITIAL_STOCK' && (key !== 'INVENTORY_ADJUSTMENT' || hasPermission(currentUser?.role, 'stock.adjust'))).map(key => <option value={key} key={key}>{reasonLabels[key]}</option>)}</select></Field></div>
         <button type="submit" className="primary-button preview-button" disabled={mutation.isPending || Boolean(preview && preview.after < 0)} aria-busy={mutation.isPending}>{mutation.isPending ? 'Registrando…' : type === 'Saída' ? 'Confirmar saída' : 'Confirmar entrada'}<ArrowRight size={17} aria-hidden="true" /></button>
       </fieldset>
       {preview && <div className={'operation-feedback' + (preview.after < 0 ? ' operation-feedback-error' : '')} role="status">

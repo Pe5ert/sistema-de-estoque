@@ -7,7 +7,7 @@ import { DataState, Pagination } from './data-controls';
 import { DetailDrawer, openFromRow } from './DetailDrawer';
 import { CategoryManager } from './CategoryManager';
 import { ProductIdentity, ProductThumbnail, Status, StockMeter } from './inventory-ui';
-import { canImportProducts } from '@stock/shared';
+import { canImportProducts, hasPermission } from '@stock/shared';
 import { useAuth } from './auth/auth';
 import { Alert } from './feedback';
 
@@ -36,7 +36,7 @@ export function Products() {
 
   return (
     <div className="page-stack">
-      <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions">{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}<CategoryManager onOpen={() => setSelectedId(null)} /><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
+      <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions">{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}{hasPermission(currentUser?.role, 'category.manage') && <CategoryManager onOpen={() => setSelectedId(null)} />}<Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
       <section className="list-section" aria-labelledby="catalog-title">
         <div className="list-heading catalog-heading"><h2 id="catalog-title">Catálogo de produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
         <div className="filter-bar">
@@ -75,13 +75,14 @@ export function Products() {
 }
 
 function ProductDrawer({ id, close }: { id: string; close: () => void }) {
+  const { currentUser } = useAuth();
   const query = useProduct(id);
   const movements = useMovements({ productId: id, limit: 5, page: 1 });
   const product = query.data;
   return <DetailDrawer title="Identificação do produto" close={close}><DataState pending={query.isPending} error={query.error} retry={query.refetch}>{product && <>
     <ProductThumbnail imageUrl={product.imageUrl} name={product.name} large /><h2>{product.name}</h2><p className="detail-meta">{product.sku} · {product.category}</p><Status {...stockStatus(product.stock, product.minimum)} />
     <dl className="detail-facts"><div><dt>Saldo atual</dt><dd>{product.record.stock} {product.unit}</dd></div><div><dt>Estoque mínimo</dt><dd>{product.record.minimumStock} {product.unit}</dd></div><div><dt>Custo</dt><dd>{product.costPrice == null ? 'Não informado' : currency.format(product.costPrice)}</dd></div><div><dt>Venda</dt><dd>{product.price == null ? 'Não informado' : currency.format(product.price)}</dd></div><div><dt>Código de barras</dt><dd>{product.barcode ?? 'Não informado'}</dd></div><div><dt>Cadastro</dt><dd>{product.active ? 'Ativo' : 'Inativo'}</dd></div></dl>
-    {product.description && <p className="detail-meta">{product.description}</p>}<div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div><h3>Movimentações recentes</h3>
+    {product.description && <p className="detail-meta">{product.description}</p>}{hasPermission(currentUser?.role, 'product.update') && <div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div>}<h3>Movimentações recentes</h3>
     <DataState pending={movements.isPending} error={movements.error} retry={movements.refetch}>{movements.data?.items.map(item => <p className="detail-meta" key={item.id}>{typeLabels[item.type]} · {item.quantity} {product.unit}<br />{dateLabel(item.createdAt)} · {reasonLabels[item.reason]}</p>)}{movements.data?.total === 0 && <p className="detail-meta">Nenhuma movimentação registrada.</p>}</DataState>
   </>}</DataState></DetailDrawer>;
 }
