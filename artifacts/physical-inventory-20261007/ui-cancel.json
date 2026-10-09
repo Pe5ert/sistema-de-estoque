@@ -1,0 +1,32 @@
+{
+  "checks": "PASS",
+  "sessions": [
+    {
+      "title": "Conferência de outubro",
+      "status": "COMPLETED",
+      "revision": 3,
+      "adjustmentCount": 2
+    },
+    {
+      "title": "Conferência com movimentação",
+      "status": "CANCELLED",
+      "revision": 6,
+      "adjustmentCount": 0
+    }
+  ],
+  "cancelledSessionMovements": 0,
+  "products": [
+    {
+      "sku": "DET-001",
+      "stock": "13.250"
+    },
+    {
+      "sku": "LUV-002",
+      "stock": "76.000"
+    },
+    {
+      "sku": "PAN-003",
+      "stock": "0.000"
+    }
+  ]
+}

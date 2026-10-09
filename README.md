@@ -42,6 +42,10 @@ O health retorna `200` com `database: up` quando consegue consultar o PostgreSQL
 
 O seed é opcional e somente DEV: cria um ADMIN, três categorias, três produtos e seus movimentos iniciais. Rodar novamente atualiza o hash da senha do administrador de `SEED_ADMIN_EMAIL`; não fazê-lo automaticamente em base compartilhada. Recusa execução em produção. Não há importação automática do legado.
 
+## Inventário físico
+
+Em **Operação → Inventário físico**, abra uma contagem, informe as quantidades reais e salve. Zero indica estoque vazio; campo vazio continua pendente. ADMIN/MANAGER revisam e confirmam as divergências, gerando ajustes auditados em uma transação. Até 500 produtos por sessão; produtos alterados durante a contagem exigem reconferência. Guia de uso, testes e implantação: [docs/INVENTARIO_FISICO.md](docs/INVENTARIO_FISICO.md). A migration `20261007000000_physical_inventory` ainda precisa ser aplicada ao banco real desta instalação; nesta rodada foi validada somente em bases locais isoladas.
+
 ## Comandos
 
 | Comando                         | Função                                       |

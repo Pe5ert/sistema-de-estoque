@@ -1,0 +1,94 @@
+TAP version 13
+# Subtest: feedback queue preserves errors and waits for a visible slot instead of dropping results
+ok 1 - feedback queue preserves errors and waits for a visible slot instead of dropping results
+  ---
+  duration_ms: 9.832217
+  type: 'test'
+  ...
+# Subtest: keyed updates replace only their own result while unrelated messages survive
+ok 2 - keyed updates replace only their own result while unrelated messages survive
+  ---
+  duration_ms: 0.654908
+  type: 'test'
+  ...
+# Subtest: error report preserves every diagnostic, Portuguese labels and original physical lines
+ok 3 - error report preserves every diagnostic, Portuguese labels and original physical lines
+  ---
+  duration_ms: 81.330869
+  type: 'test'
+  ...
+# Subtest: CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+ok 4 - CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+  ---
+  duration_ms: 15.019452
+  type: 'test'
+  ...
+# Subtest: spreadsheet formula prefixes remain inert text, including leading whitespace
+ok 5 - spreadsheet formula prefixes remain inert text, including leading whitespace
+  ---
+  duration_ms: 2.177394
+  type: 'test'
+  ...
+# Subtest: physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+ok 6 - physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+  ---
+  duration_ms: 4.476732
+  type: 'test'
+  ...
+# Subtest: physical divergence remains exact across fractions and the full Decimal(18,3) range
+ok 7 - physical divergence remains exact across fractions and the full Decimal(18,3) range
+  ---
+  duration_ms: 2.327694
+  type: 'test'
+  ...
+# Subtest: Portuguese labels show exact values, signs and three decimal places when needed
+ok 8 - Portuguese labels show exact values, signs and three decimal places when needed
+  ---
+  duration_ms: 1.071796
+  type: 'test'
+  ...
+# Subtest: count batches respect row and HTTP byte limits without losing notes or order
+ok 9 - count batches respect row and HTTP byte limits without losing notes or order
+  ---
+  duration_ms: 532.366027
+  type: 'test'
+  ...
+# Subtest: Brazilian prices and fractional quantities serialize as exact decimal strings
+ok 10 - Brazilian prices and fractional quantities serialize as exact decimal strings
+  ---
+  duration_ms: 14.383122
+  type: 'test'
+  ...
+# Subtest: ambiguous, excessive, negative and nondecimal input is rejected
+ok 11 - ambiguous, excessive, negative and nondecimal input is rejected
+  ---
+  duration_ms: 1.190876
+  type: 'test'
+  ...
+# Subtest: unknown price stays empty/null-capable and barcode leading zeros survive validation
+ok 12 - unknown price stays empty/null-capable and barcode leading zeros survive validation
+  ---
+  duration_ms: 64.356678
+  type: 'test'
+  ...
+# Subtest: initial entry must be positive and only affects creation
+ok 13 - initial entry must be positive and only affects creation
+  ---
+  duration_ms: 14.314816
+  type: 'test'
+  ...
+# Subtest: editing uses exact persisted price/minimum strings, including zero and null
+ok 14 - editing uses exact persisted price/minimum strings, including zero and null
+  ---
+  duration_ms: 0.733062
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4429.575

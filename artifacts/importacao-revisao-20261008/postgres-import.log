@@ -1,0 +1,89 @@
+TAP version 13
+# Subtest: PostgreSQL: atomic import, concurrency, revalidation, audit and authenticated HTTP
+    # Subtest: 10 rows, concurrent confirm and refresh
+    ok 1 - 10 rows, concurrent confirm and refresh
+      ---
+      duration_ms: 5908.467467
+      type: 'test'
+      ...
+    # Subtest: 100 rows, concurrent confirm and refresh
+    ok 2 - 100 rows, concurrent confirm and refresh
+      ---
+      duration_ms: 6018.294236
+      type: 'test'
+      ...
+    # Subtest: 1000 rows, concurrent confirm and refresh
+    ok 3 - 1000 rows, concurrent confirm and refresh
+      ---
+      duration_ms: 27129.668189
+      type: 'test'
+      ...
+    # Subtest: 2000 rows, concurrent confirm and refresh
+    ok 4 - 2000 rows, concurrent confirm and refresh
+      ---
+      duration_ms: 31637.67783
+      type: 'test'
+      ...
+    # Subtest: XLSX confirmation preserves text zeros, nullable prices and exact quantities
+    ok 5 - XLSX confirmation preserves text zeros, nullable prices and exact quantities
+      ---
+      duration_ms: 795.847021
+      type: 'test'
+      ...
+    # Subtest: XLSX validation errors block the entire mixed batch and name source rows
+    ok 6 - XLSX validation errors block the entire mixed batch and name source rows
+      ---
+      duration_ms: 367.750692
+      type: 'test'
+      ...
+    # Subtest: different imports racing for the same codes commit exactly one whole batch
+    ok 7 - different imports racing for the same codes commit exactly one whole batch
+      ---
+      duration_ms: 507.852449
+      type: 'test'
+      ...
+    # Subtest: real writes roll back categories, products and audit together
+    ok 8 - real writes roll back categories, products and audit together
+      ---
+      duration_ms: 604.092895
+      type: 'test'
+      ...
+    # Subtest: category changed after preview blocks confirmation without writes
+    ok 9 - category changed after preview blocks confirmation without writes
+      ---
+      duration_ms: 278.256954
+      type: 'test'
+      ...
+    # Subtest: a code registered after preview is revalidated
+    ok 10 - a code registered after preview is revalidated
+      ---
+      duration_ms: 161.995046
+      type: 'test'
+      ...
+    # Subtest: database constraint is the final boundary when conflict occurs after validation
+    ok 11 - database constraint is the final boundary when conflict occurs after validation
+      ---
+      duration_ms: 393.996027
+      type: 'test'
+      ...
+    # Subtest: HTTP: multipart, origin, current role, ownership, templates and repeat
+    ok 12 - HTTP: multipart, origin, current role, ownership, templates and repeat
+      ---
+      duration_ms: 5775.162539
+      type: 'test'
+      ...
+    1..12
+ok 1 - PostgreSQL: atomic import, concurrency, revalidation, audit and authenticated HTTP
+  ---
+  duration_ms: 89781.091858
+  type: 'test'
+  ...
+1..1
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 172388.975897

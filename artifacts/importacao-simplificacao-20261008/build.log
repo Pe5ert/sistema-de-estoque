@@ -1,0 +1,14 @@
+$ pnpm -r build
+Scope: 3 of 4 workspace projects
+packages/shared build$ tsc -p tsconfig.json
+packages/shared build: Done
+apps/api build$ pnpm db:generate && tsc -p tsconfig.build.json
+apps/web build$ tsc --noEmit && vite build
+apps/api build: $ prisma generate
+apps/api build: Loaded Prisma config from prisma.config.ts.
+apps/api build: Prisma schema loaded from prisma/schema.prisma.
+apps/api build: ✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 3.85s
+[ELIFECYCLE] Command failed.
+apps/api build: Done
+apps/web build: vite v7.3.6 building client environment for production...
+apps/web build: transforming...

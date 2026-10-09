@@ -1,17 +1,19 @@
-# Importação de produtos V1 — 06/10/2026
+# Importação de produtos V1 — atualização local 08/10/2026
 
 Entrada em **Produtos → Importar planilha** (`/products/import`). A V1 cria produtos novos; não atualiza cadastros existentes e não inicia o módulo Lavanderia/EPI.
 
 ## Fluxo e uso
 
-1. Baixe o modelo CSV ou XLSX e preencha os produtos abaixo do cabeçalho.
-2. Envie o arquivo, confira as sugestões de colunas e ajuste o mapeamento.
-3. Para categorias desconhecidas/inativas/ambíguas, selecione uma categoria ativa ou escolha criar uma nova. A criação exige autorização explícita antes de validar.
-4. Clique em **Validar e revisar**. Corrija todos os erros na planilha e envie novamente, ou ajuste o mapeamento. O relatório CSV informa linha, campo e erro.
-5. Confirme somente um preview válido. O servidor revalida as condições atuais do catálogo e da conta.
+1. Baixe o modelo CSV ou XLSX e preencha os produtos abaixo do cabeçalho. Use os nomes das colunas do modelo.
+2. Informe categorias ativas já cadastradas. Para uma nova categoria, cadastre-a em **Produtos → Categorias** antes do envio.
+3. Envie o arquivo. Havendo erros, a tela mostra diretamente **linha no arquivo, campo e o que corrigir**, sem editor de colunas/categorias.
+4. A própria pessoa abre o arquivo original no computador, corrige os dados e clica em **Enviar arquivo corrigido**. Reenviar cria outra conferência; a anterior é preservada nas importações recentes. Não há correção automática dos valores.
+5. Confirme somente uma conferência sem erros. O servidor revalida as condições atuais do catálogo e da conta.
 6. Consulte o resultado na mesma URL ou na lista das suas últimas 20 importações. O parâmetro `job` permite retomar a operação após reload.
 
-Nenhum produto, categoria ou movimento é criado durante upload/preview. Apenas a operação de importação e seus dados normalizados são persistidos nessa etapa. O preview mostra até 50 produtos, mas valida todas as linhas do lote. Os primeiros 50 erros aparecem na tela; o relatório inclui todos.
+Nenhum produto, categoria ou movimento é criado durante upload/conferência. Apenas a operação de importação e seus dados normalizados são persistidos nessa etapa. A prévia mostra até 50 produtos, mas valida todas as linhas do lote. Erros aparecem em páginas de 20; o relatório CSV inclui todos. Problemas do cabeçalho são identificados como **Cabeçalho**, sem inventar uma linha de produto.
+
+A interface local substitui as telas anteriores de mapeamento e escolhas de categorias, por solicitação do usuário em 08/10. Endpoints/contratos de configuração continuam no backend para compatibilidade; novas importações pela interface usam as colunas reconhecidas do arquivo e categorias já cadastradas. Importações antigas com escolhas de categoria salvas exigem reenvio, evitando confirmar substituições ou criação de categoria ocultas. **Conferir novamente** revalida os dados já enviados, não lê as alterações do arquivo no computador. Operações FAILED exigem outro envio para nova tentativa.
 
 ## Arquivos e valores
 
@@ -30,7 +32,7 @@ Nenhum produto, categoria ou movimento é criado durante upload/preview. Apenas 
 | Unidade | UN, CX, PCT, KG, G, L, ML, M e seus nomes/enums correspondentes |
 | Imagem | URL HTTP(S) opcional, validada pelas regras atuais de produto |
 | Fórmulas | Nunca executadas. Aceita apenas resultado já calculado em texto/número; ausência de resultado, erro e referência externa são rejeitados |
-| Categorias | Até 100 decisões explícitas por lote. Se exceder, divida a planilha |
+| Categorias | Nome de uma categoria ativa já cadastrada; corrigir no arquivo ou cadastrar em Produtos → Categorias antes de reenviar |
 | Linhas vazias | Ignoradas; erros usam o número da linha original |
 
 Formatar como Texto **depois** de o Excel remover zeros/arredondar dígitos não recupera o original. A aplicação informa o problema e não tenta reconstruir o código. O modelo XLSX fornece colunas com formato Texto.
@@ -50,7 +52,7 @@ O servidor confere novamente duplicidades, categorias ativas e permissão na con
 | COMPLETED | Resultado persistido e reutilizado em confirmações repetidas |
 | FAILED | Falha após início da gravação; lote revertido, erro seguro e zero importados |
 
-O lock `FOR UPDATE` no UUID da operação serializa confirmações simultâneas. Clique duplo, retry e resposta perdida reutilizam a mesma operação; não criam outro lote. A revisão evita confirmar um mapeamento antigo. Uma operação FAILED retorna o resultado da falha em novos retries; é necessário **Validar e revisar** para gerar uma nova revisão antes de tentar novamente.
+O lock `FOR UPDATE` no UUID da operação serializa confirmações simultâneas. Clique duplo, retry e resposta perdida reutilizam a mesma operação; não criam outro lote. A revisão evita confirmar um mapeamento antigo. Uma operação FAILED retorna o resultado da falha em novos retries; é necessário **Validar planilha** para gerar uma nova revisão antes de tentar novamente.
 
 PROCESSING está dentro da mesma transação e não fica visível em outra conexão antes do commit. Enquanto ela roda, a UI mostra **Importando lote…**. Se o processo cair antes do commit, o PostgreSQL desfaz a transação e a operação permanece PREVIEW; o mesmo UUID pode ser confirmado novamente com segurança. Não há fila ou worker externo.
 
@@ -89,8 +91,22 @@ Antes de commit: confira branch/status, selecione somente arquivos desta demanda
 
 A suíte real cria somente fixtures identificadas por prefixo UUID e preserva o rastro de auditoria. Não limpa tabelas existentes. Use um banco temporário e descarte o ambiente após o teste.
 
-Cobertura: 10/100/1.000 linhas em PostgreSQL, até 2.000 no parser, confirmações simultâneas/repetidas, persistência, auditoria Decimal, rollback após escritas reais, duplicidades antes/depois do preview, constraint concorrente após validação, categoria inativada, Origin, sessão, papel atual, propriedade da operação, multipart e modelos. QA de tela e evidências: [REVIEW.md](../artifacts/importacao-20261006/REVIEW.md).
+Cobertura original: 10/100/1.000 linhas em PostgreSQL, até 2.000 no parser, confirmações simultâneas/repetidas, persistência, auditoria Decimal, rollback após escritas reais, duplicidades antes/depois do preview, constraint concorrente após validação, categoria inativada, Origin, sessão, papel atual, propriedade da operação, multipart e modelos. QA de tela e evidências: [REVIEW.md](../artifacts/importacao-20261006/REVIEW.md).
 
 Gates aprovados: pnpm lint, pnpm typecheck, pnpm test, pnpm build, git diff --check. Foram 65 testes aprovados, incluindo os testes reais desta importação; suítes PostgreSQL antigas de backup/estoque não foram ativadas. Um bloqueio transitório de rename de metadata de backup no Windows foi reproduzido durante os gates e corrigido com retry limitado, sem remover o arquivo anterior; há teste de regressão. Build mantém avisos não impeditivos de Zod/chunk web. A validação física do leitor USB continua pendente e não faz parte desta entrega.
 
 Dependências específicas fixadas no lock: [ExcelJS](https://github.com/exceljs/exceljs) 4.4.0, [csv-parse](https://csv.js.org/parse/options/) 6.1.0 e [yauzl](https://github.com/thejoshwolfe/yauzl) 3.2.0. XLS/XLSM, várias abas preenchidas, atualização de produtos existentes, importação parcial e fila assíncrona ficam fora da V1.
+
+## Revisão local — 08/10/2026
+
+Atualizada sobre `ef9168d`, preservando o inventário físico local, sem commit/push. A tela indica o próximo passo, explica o modelo e exige confirmação antes de importar. Atualizar validação preserva escolhas ainda não salvas; uma revisão alterada em outra aba exige escolher a configuração salva ou manter as próprias escolhas antes de validar novamente. A saída com escolhas pendentes pede confirmação.
+
+O parser agora indica o início da linha original em células CSV com várias linhas, conta quebras CR/LF/CRLF e linhas vazias finais, confere referências externas em fórmulas compartilhadas do XLSX e ignora nomes herdados de objetos na sugestão de colunas. Nenhuma nova migration de importação. Testes e limites desta rodada: [REVIEW.md](../artifacts/importacao-revisao-20261008/REVIEW.md).
+
+## Simplificação da revisão — 08/10/2026
+
+Erros agrupados por linha com expansão individual. Ajustes de colunas, substituição da planilha, instruções e importações recentes ficam recolhidos; o editor abre quando falta associação obrigatória. Categorias aparecem conforme a decisão necessária e a prévia fica opcional enquanto há erros. A tela distingue correções na planilha das escolhas feitas no sistema, sem avisos repetidos de validação. Proteções e confirmação preservadas. Evidências e limites: [REVIEW.md](../artifacts/importacao-simplificacao-20261008/REVIEW.md). Sem commit/push.
+
+## Correção pelo arquivo original — 08/10/2026
+
+Esta revisão substitui a simplificação visual anterior: os detalhes dos erros ficam visíveis em tabela paginada, e os editores de colunas/categorias foram removidos da interface. Mensagens e relatório indicam o cabeçalho ou a linha original e orientam corrigir o arquivo. Evidências: [REVIEW.md](../artifacts/importacao-correcao-arquivo-20261008/REVIEW.md). Alterações locais, sem commit/push.

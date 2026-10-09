@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: physical inventory HTTP authorization and validation
+    # Subtest: every route requires a session, including read and draft operations
+    ok 1 - every route requires a session, including read and draft operations
+      ---
+      duration_ms: 1557.187651
+      type: 'test'
+      ...
+    # Subtest: operator can count zero and fractional quantities; authenticated author cannot be forged
+    ok 2 - operator can count zero and fractional quantities; authenticated author cannot be forged
+      ---
+      duration_ms: 1151.206353
+      type: 'test'
+      ...
+    # Subtest: finalization and cancellation use the current database role, not a stale token role
+    ok 3 - finalization and cancellation use the current database role, not a stale token role
+      ---
+      duration_ms: 283.599391
+      type: 'test'
+      ...
+    # Subtest: cross-origin writes fail before reaching counting or finalization
+    ok 4 - cross-origin writes fail before reaching counting or finalization
+      ---
+      duration_ms: 61.501536
+      type: 'test'
+      ...
+    # Subtest: invalid, omitted, negative, numeric, precision and nested fields fail before service calls
+    ok 5 - invalid, omitted, negative, numeric, precision and nested fields fail before service calls
+      ---
+      duration_ms: 905.833882
+      type: 'test'
+      ...
+    # Subtest: creation, pagination, UUIDs and revisions reject malformed input
+    ok 6 - creation, pagination, UUIDs and revisions reject malformed input
+      ---
+      duration_ms: 1145.138337
+      type: 'test'
+      ...
+    1..6
+ok 1 - physical inventory HTTP authorization and validation
+  ---
+  duration_ms: 13353.494836
+  type: 'suite'
+  ...
+1..1
+# tests 6
+# suites 1
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53960.515068

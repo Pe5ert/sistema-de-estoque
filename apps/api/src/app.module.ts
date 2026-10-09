@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { BackupsModule } from './backups/backups.module';
 import { ImportsModule } from './imports/imports.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { PhysicalInventoriesModule } from './physical-inventories/physical-inventories.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PurchasesModule } from './purchases/purchases.module';
     BackupsModule,
     ImportsModule,
     PurchasesModule,
+    PhysicalInventoriesModule,
   ],
 })
 export class AppModule {}

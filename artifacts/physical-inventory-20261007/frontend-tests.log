@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: feedback queue preserves errors and waits for a visible slot instead of dropping results
+ok 1 - feedback queue preserves errors and waits for a visible slot instead of dropping results
+  ---
+  duration_ms: 91.397193
+  type: 'test'
+  ...
+# Subtest: keyed updates replace only their own result while unrelated messages survive
+ok 2 - keyed updates replace only their own result while unrelated messages survive
+  ---
+  duration_ms: 0.692764
+  type: 'test'
+  ...
+# Subtest: physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+ok 3 - physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+  ---
+  duration_ms: 63.324808
+  type: 'test'
+  ...
+# Subtest: physical divergence remains exact across fractions and the full Decimal(18,3) range
+ok 4 - physical divergence remains exact across fractions and the full Decimal(18,3) range
+  ---
+  duration_ms: 23.027412
+  type: 'test'
+  ...
+# Subtest: Portuguese labels show exact values, signs and three decimal places when needed
+ok 5 - Portuguese labels show exact values, signs and three decimal places when needed
+  ---
+  duration_ms: 2.984211
+  type: 'test'
+  ...
+# Subtest: count batches respect row and HTTP byte limits without losing notes or order
+ok 6 - count batches respect row and HTTP byte limits without losing notes or order
+  ---
+  duration_ms: 2339.054489
+  type: 'test'
+  ...
+# Subtest: Brazilian prices and fractional quantities serialize as exact decimal strings
+ok 7 - Brazilian prices and fractional quantities serialize as exact decimal strings
+  ---
+  duration_ms: 5.948936
+  type: 'test'
+  ...
+# Subtest: ambiguous, excessive, negative and nondecimal input is rejected
+ok 8 - ambiguous, excessive, negative and nondecimal input is rejected
+  ---
+  duration_ms: 4.73117
+  type: 'test'
+  ...
+# Subtest: unknown price stays empty/null-capable and barcode leading zeros survive validation
+ok 9 - unknown price stays empty/null-capable and barcode leading zeros survive validation
+  ---
+  duration_ms: 152.155159
+  type: 'test'
+  ...
+# Subtest: initial entry must be positive and only affects creation
+ok 10 - initial entry must be positive and only affects creation
+  ---
+  duration_ms: 72.619875
+  type: 'test'
+  ...
+# Subtest: editing uses exact persisted price/minimum strings, including zero and null
+ok 11 - editing uses exact persisted price/minimum strings, including zero and null
+  ---
+  duration_ms: 3.230054
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20572.454212

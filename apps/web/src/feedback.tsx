@@ -82,6 +82,6 @@ export function FieldError({ id, children }: { id?: string; children: ReactNode 
   return <span className="field-error" id={id}><CircleAlert size={13} aria-hidden="true" />{children}</span>;
 }
 
-export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Continuar preenchendo', confirm, cancel, busy = false, tone = 'danger' }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; confirm: () => void; cancel: () => void; busy?: boolean; tone?: 'primary' | 'danger' }) {
-  return <DetailDrawer title={title} close={cancel}><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" onClick={cancel}>{cancelLabel}</button><button type="button" className={tone === 'primary' ? 'primary-button' : 'destructive-button'} disabled={busy} onClick={confirm}>{confirmLabel}</button></div></DetailDrawer>;
+export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Continuar preenchendo', confirm, cancel, busy = false, confirmVariant = 'destructive', tone }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; confirm: () => void; cancel: () => void; busy?: boolean; confirmVariant?: 'primary' | 'destructive'; tone?: 'primary' | 'danger' }) {
+  return <DetailDrawer title={title} close={cancel}><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" onClick={cancel}>{cancelLabel}</button><button type="button" className={(tone ? (tone === 'primary' ? 'primary' : 'destructive') : confirmVariant) + '-button'} disabled={busy} onClick={confirm}>{confirmLabel}</button></div></DetailDrawer>;
 }

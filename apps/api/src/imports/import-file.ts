@@ -34,14 +34,25 @@ async function boundedArchive(buffer: Buffer) {
     });
   });
 }
-function spreadsheetCell(value: ExcelJS.CellValue): ImportCell {
+function lineBreaks(value: string) {
+  let count = 0;
+  // Count without allocating one regex result per line in a newline-heavy file.
+  for (let index = 0; index < value.length; index++) {
+    if (value[index] === '\r') {
+      count++;
+      if (value[index + 1] === '\n') index++;
+    } else if (value[index] === '\n') count++;
+  }
+  return count;
+}
+function spreadsheetCell(value: ExcelJS.CellValue, formula?: string): ImportCell {
   if (value == null) return { text: '' };
   if (typeof value === 'string') return { text: value };
   if (typeof value === 'number') return { text: String(value), numeric: true };
   if (typeof value === 'object' && !(value instanceof Date)) {
     if ('richText' in value) return { text: value.richText.map(part => part.text).join('') };
     if ('formula' in value || 'sharedFormula' in value) {
-      if ('formula' in value && /\[|https?:|\|/i.test(value.formula ?? '')) return { text: '', error: 'Fórmula externa não aceita. Cole o valor como texto.' };
+      if (/\[|https?:|\|/i.test(formula ?? ('formula' in value ? value.formula : '') ?? '')) return { text: '', error: 'Fórmula externa não aceita. Cole o valor como texto.' };
       if (typeof value.result === 'string') return { text: value.result };
       if (typeof value.result === 'number' && Number.isFinite(value.result)) return { text: String(value.result), numeric: true };
       return { text: '', error: 'Fórmula sem resultado válido. Recalcule no Excel e cole os valores.' };
@@ -58,18 +69,39 @@ export async function parseImportFile(name: string, buffer: Buffer): Promise<Par
     let text: string;
     try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
     catch { throw new BadRequestException('CSV deve estar em UTF-8. Salve como CSV UTF-8 no Excel.'); }
-    if ((text.match(/\n/g)?.length ?? 0) > 10000) throw new BadRequestException('CSV excede 10.000 linhas físicas. Remova linhas excedentes.');
+    const physicalLines = lineBreaks(text) + (/[\r\n]$/.test(text) ? 0 : 1);
+    if (physicalLines > 10000) throw new BadRequestException('CSV excede 10.000 linhas físicas. Remova linhas excedentes.');
     const candidates = [',', ';', '\t'].flatMap(separator => {
       try {
-        const rows = parse(text, { bom: true, delimiter: separator, cast: false, skip_empty_lines: true, info: true, max_record_size: 65536 }) as unknown as { record: string[]; info: { lines: number; empty_lines: number } }[];
+        const rows = parse(text, { bom: true, delimiter: separator, cast: false, skip_empty_lines: true, info: true, max_record_size: 65536 }) as unknown as { record: string[]; info: { bytes: number; empty_lines: number } }[];
         return rows[0]?.record.length > 1 ? [{ separator, rows }] : [];
       } catch { return []; }
     }).sort((a, b) => b.rows[0].record.length - a.rows[0].record.length);
     if (!candidates.length) throw new BadRequestException('CSV inválido. Use cabeçalho e colunas separadas por vírgula, ponto e vírgula ou tabulação.');
     if (candidates[1]?.rows[0].record.length === candidates[0].rows[0].record.length) throw new BadRequestException('Separador ambíguo. Salve o CSV com um único separador.');
     delimiter = candidates[0].separator;
-    emptyCsvLines = candidates[0].rows.at(-1)!.info.empty_lines - candidates[0].rows[0].info.empty_lines;
-    records = candidates[0].rows.map(({ record, info }) => ({ row: info.lines, cells: record.map(text => ({ text })) }));
+    const source = Buffer.from(text, 'utf8');
+    const lastRecord = candidates[0].rows.at(-1)!;
+    // Empty lines after the last product have no record-level csv-parse info.
+    emptyCsvLines = lastRecord.info.empty_lines - candidates[0].rows[0].info.empty_lines + lineBreaks(source.subarray(lastRecord.info.bytes).toString('utf8'));
+    // Use byte boundaries: csv-parse counts quoted CRLF as two lines. Locate
+    // record starts ourselves so these values cannot shift later error rows.
+    let offset = 0, line = 1;
+    const advance = (end: number) => {
+      while (offset < end) {
+        if (source[offset] === 13) {
+          line++;
+          if (source[offset + 1] === 10) offset++;
+        } else if (source[offset] === 10) line++;
+        offset++;
+      }
+    };
+    records = candidates[0].rows.map(({ record, info }) => {
+      while (source[offset] === 13 || source[offset] === 10) advance(offset + (source[offset] === 13 && source[offset + 1] === 10 ? 2 : 1));
+      const row = line;
+      advance(info.bytes);
+      return { row, cells: record.map(text => ({ text })) };
+    });
   } else {
     await boundedArchive(buffer);
     const workbook = new ExcelJS.Workbook();
@@ -81,7 +113,16 @@ export async function parseImportFile(name: string, buffer: Buffer): Promise<Par
     if (sheet.columnCount > MAX_COLUMNS || sheet.rowCount > 10000) throw new BadRequestException('Arquivo excede 30 colunas ou 10.000 linhas físicas. Remova linhas/colunas excedentes.');
     records = [];
     sheet.eachRow({ includeEmpty: true }, (row, index) => {
-      const cells = Array.from({ length: sheet.columnCount }, (_, i) => spreadsheetCell(row.getCell(i + 1).value));
+      const cells = Array.from({ length: sheet.columnCount }, (_, i) => {
+        const cell = row.getCell(i + 1);
+        try {
+          // Resolve shared formulas through their master cell before inspecting
+          // cached results, so inherited external references are rejected too.
+          return spreadsheetCell(cell.value, cell.formula);
+        } catch {
+          return { text: '', error: 'Fórmula sem referência válida. Cole o valor como texto.' };
+        }
+      });
       records.push({ row: index, cells });
     });
   }

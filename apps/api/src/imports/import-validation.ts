@@ -27,14 +27,18 @@ export type ValidatedRow = { row: number; category: string; product: ProductCrea
 export function suggestedMapping(headers: string[]): ImportMapping {
   const aliases: Record<string, typeof importFields[number]> = { nome: 'name', produto: 'name', 'nome do produto': 'name', sku: 'sku', 'ref.': 'sku', referencia: 'sku', 'código de barras': 'barcode', barcode: 'barcode', ean: 'barcode', categoria: 'category', unidade: 'unit', 'estoque mínimo': 'minimumStock', custo: 'costPrice', venda: 'salePrice', 'preço de venda': 'salePrice', 'saldo inicial': 'initialStock', qtd: 'initialStock', 'imagem url': 'imageUrl' };
   const result: ImportMapping = {};
-  headers.forEach((name, index) => { const field = aliases[name.trim().toLowerCase()]; if (field && result[field] === undefined) result[field] = index; });
+  headers.forEach((name, index) => {
+    const key = name.trim().toLowerCase();
+    const field = Object.hasOwn(aliases, key) ? aliases[key] : undefined;
+    if (field && result[field] === undefined) result[field] = index;
+  });
   return result;
 }
 export function validateImportRows(rows: FileRow[], headers: string[], mapping: ImportMapping, choices: ImportCategoryMapping[], categories: ImportCategory[], existing: { sku: string; barcode: string | null }[]) {
   const issues: ImportIssue[] = [];
   const values = Object.values(mapping);
-  for (const field of ['name', 'sku', 'category', 'unit'] as const) if (mapping[field] === undefined) issues.push({ row: 0, field, message: 'Mapeie a coluna obrigatória: ' + ({ name: 'Nome', sku: 'SKU', category: 'Categoria', unit: 'Unidade' })[field] + '.' });
-  if (new Set(values).size !== values.length || values.some(value => value >= headers.length)) issues.push({ row: 0, field: 'mapping', message: 'Cada coluna deve corresponder a um único campo, dentro do arquivo.' });
+  for (const field of ['name', 'sku', 'category', 'unit'] as const) if (mapping[field] === undefined) issues.push({ row: 0, field, message: 'Coluna obrigatória não reconhecida. No cabeçalho da planilha, use “' + ({ name: 'Nome', sku: 'SKU', category: 'Categoria', unit: 'Unidade' })[field] + '”.' });
+  if (new Set(values).size !== values.length || values.some(value => value >= headers.length)) issues.push({ row: 0, field: 'mapping', message: 'Confira os cabeçalhos da planilha: use uma coluna por campo, conforme o modelo, e envie o arquivo novamente.' });
   if (issues.length) return { issues, rows: [] as ValidatedRow[], unknownCategories: [] as string[], newCategories: [] as { source: string; name: string }[] };
   const decision = new Map(choices.map(choice => [categoryKey(choice.source), choice]));
   if (decision.size !== choices.length) throw new BadRequestException('Escolha uma única ação por categoria da planilha.');
@@ -58,12 +62,12 @@ export function validateImportRows(rows: FileRow[], headers: string[], mapping: 
     if (!category) issue('category', 'Categoria obrigatória.');
     else if (choice?.action === 'map') {
       const target = categories.find(c => c.id === choice.categoryId && c.active);
-      if (target) categoryId = target.id; else issue('category', 'Categoria mapeada não existe ou está inativa. Escolha outra.');
+      if (target) categoryId = target.id; else issue('category', 'Categoria não encontrada ou inativa. Informe na planilha o nome de uma categoria ativa já cadastrada.');
     } else if (choice?.action === 'create') {
-      if (categories.some(c => categoryKey(c.name) === categoryKey(choice.name))) issue('category', 'O nome da nova categoria já existe. Mapeie para a categoria ativa correta.');
+      if (categories.some(c => categoryKey(c.name) === categoryKey(choice.name))) issue('category', 'Essa categoria já existe. Informe na planilha o nome de uma categoria ativa já cadastrada e envie o arquivo novamente.');
       else newCategories.set(categoryKey(category), { source: category, name: choice.name });
     } else if (matched.length === 1 && matched[0].active) categoryId = matched[0].id;
-    else { if (!unknown.has(categoryKey(category))) unknown.set(categoryKey(category), category); issue('category', 'Categoria desconhecida, inativa ou ambígua. Mapeie ou confirme a criação.'); }
+    else { if (!unknown.has(categoryKey(category))) unknown.set(categoryKey(category), category); issue('category', 'Categoria não encontrada, inativa ou com nome duplicado. Informe na planilha uma categoria ativa já cadastrada. Para uma nova categoria, cadastre-a em Produtos → Categorias antes de reenviar.'); }
     const decimal = (field: typeof importFields[number], defaultValue: string | null) => {
       const value = get(field);
       if (!value) return defaultValue;
@@ -84,7 +88,7 @@ export function validateImportRows(rows: FileRow[], headers: string[], mapping: 
   const newNames = new Map<string, string>();
   for (const item of newCategories.values()) {
     const key = categoryKey(item.name);
-    if (newNames.has(key) && newNames.get(key) !== categoryKey(item.source)) issues.push({ row: 0, field: 'category', message: 'Duas categorias da planilha tentam criar o mesmo nome. Mapeie ambas para uma categoria existente.' });
+    if (newNames.has(key) && newNames.get(key) !== categoryKey(item.source)) issues.push({ row: 0, field: 'category', message: 'Duas categorias tentam usar o mesmo nome. Corrija os nomes na planilha, use categorias ativas já cadastradas e envie o arquivo novamente.' });
     newNames.set(key, categoryKey(item.source));
   }
   return { issues, rows: normalized, unknownCategories: [...unknown.values()], newCategories: [...newCategories.values()] };

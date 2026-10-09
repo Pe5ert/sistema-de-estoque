@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
-  Boxes, ChevronRight, HardDrive, History, LayoutDashboard, Menu, Package, X,
+  Boxes, ChevronRight, ClipboardCheck, HardDrive, History, LayoutDashboard, Menu, Package, X,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { LoginPage } from './auth/LoginPage';
@@ -13,6 +13,8 @@ import { ProductFormPage } from './ProductForm';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
+import { PhysicalInventoriesPage } from './PhysicalInventories';
+import { PhysicalInventoryDetailPage } from './PhysicalInventoryDetail';
 import { useAuth } from './auth/auth';
 import { hasPermission } from '@stock/shared';
 import { PermissionRoute } from './auth/PermissionRoute';
@@ -25,6 +27,7 @@ const navigation = [
   { path: '/products', label: 'Produtos', icon: Package, description: 'Catálogo, disponibilidade e pontos de atenção.' },
   { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight, description: 'Entradas, saídas e ajustes em uma só leitura.' },
   { path: '/history', label: 'Histórico', icon: History, description: 'Rastro de cada alteração de saldo.' },
+  { path: '/physical-inventories', label: 'Inventário físico', icon: ClipboardCheck, description: 'Contagem do estoque real, divergências e ajustes.' },
   { path: '/backups', label: 'Backups', icon: HardDrive, description: 'Cópias completas e agendamento do estoque.' },
   { path: '/suppliers', label: 'Fornecedores', icon: Boxes, description: 'Contatos e pedidos dos fornecedores da operação.' },
   { path: '/purchases', label: 'Compras', icon: Package, description: 'Pedidos, entregas parciais e recebimentos no estoque.' },
@@ -47,7 +50,7 @@ function Shell() {
       : location.pathname === '/purchases/new' ? { label: 'Novo pedido', description: 'Escolha fornecedor, produtos e custos negociados.' }
       : /^\/purchases\/.+\/edit$/.test(location.pathname) ? { label: 'Editar rascunho', description: 'Revise quantidades e custos antes de enviar.' }
       : /^\/purchases\/.+/.test(location.pathname) ? { label: 'Pedido de compra', description: 'Acompanhe entregas, saldos pendentes e recebimentos.' }
-      : navigation.find((item) => item.path === location.pathname) ?? navigation[0];
+      : navigation.find((item) => item.path === location.pathname || item.path !== '/' && location.pathname.startsWith(item.path + '/')) ?? navigation[0];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
   useEffect(() => {
@@ -93,9 +96,9 @@ function Shell() {
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
-          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 4).map(navItem)}</div>
-          <div className="nav-group"><span className="nav-group-label">COMPRAS</span>{navigation.slice(5).map(navItem)}</div>
-          {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[4])}</div>}
+          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 5).map(navItem)}</div>
+          <div className="nav-group"><span className="nav-group-label">COMPRAS</span>{navigation.slice(6).map(navItem)}</div>
+          {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[5])}</div>}
         </nav>
         <UserSession />
         <div className="sidebar-footer">
@@ -139,6 +142,8 @@ export function App() {
       <Route path="products/:id/edit" element={<PermissionRoute permission="product.update"><ProductFormPage /></PermissionRoute>} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
+      <Route path="physical-inventories" element={<PhysicalInventoriesPage />} />
+      <Route path="physical-inventories/:id" element={<PhysicalInventoryDetailPage />} />
       <Route path="suppliers" element={<PermissionRoute permission="supplier.read"><Suppliers /></PermissionRoute>} />
       <Route path="suppliers/new" element={<PermissionRoute permission="supplier.manage"><SupplierFormPage /></PermissionRoute>} />
       <Route path="suppliers/:id/edit" element={<PermissionRoute permission="supplier.manage"><SupplierFormPage /></PermissionRoute>} />

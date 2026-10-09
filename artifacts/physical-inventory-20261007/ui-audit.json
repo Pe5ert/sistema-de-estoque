@@ -1,0 +1,24 @@
+{
+  "source": "isolated PostgreSQL UI fixtures",
+  "checks": "PASS",
+  "adjustments": [
+    {
+      "name": "Detergente concentrado",
+      "type": "ADJUSTMENT_IN",
+      "quantity": "0.750",
+      "previousStock": "12.500",
+      "resultingStock": "13.250",
+      "reason": "INVENTORY_ADJUSTMENT",
+      "responsible": "Administrador de teste"
+    },
+    {
+      "name": "Luvas de proteção",
+      "type": "ADJUSTMENT_OUT",
+      "quantity": "5.000",
+      "previousStock": "80.000",
+      "resultingStock": "75.000",
+      "reason": "INVENTORY_ADJUSTMENT",
+      "responsible": "Administrador de teste"
+    }
+  ]
+}

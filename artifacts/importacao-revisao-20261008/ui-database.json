@@ -1,0 +1,76 @@
+{
+  "products": [
+    {
+      "sku": "QA-CSV-20261008-A",
+      "barcode": "0000081001",
+      "stock": "12.125",
+      "costPrice": "1.90",
+      "salePrice": "3.50"
+    },
+    {
+      "sku": "QA-CSV-20261008-B",
+      "barcode": "0000081002",
+      "stock": "0.000",
+      "costPrice": null,
+      "salePrice": null
+    },
+    {
+      "sku": "QA-XLSX-20261008-A",
+      "barcode": "0000082001",
+      "stock": "4.000",
+      "costPrice": "5.75",
+      "salePrice": "9.90"
+    },
+    {
+      "sku": "QA-XLSX-20261008-B",
+      "barcode": "0000082002",
+      "stock": "0.000",
+      "costPrice": null,
+      "salePrice": null
+    }
+  ],
+  "audits": [
+    {
+      "reason": "INITIAL_STOCK",
+      "quantity": "12.125",
+      "previousStock": "0.000",
+      "resultingStock": "12.125",
+      "sku": "QA-CSV-20261008-A",
+      "author": "Administrador QA"
+    },
+    {
+      "reason": "INITIAL_STOCK",
+      "quantity": "4.000",
+      "previousStock": "0.000",
+      "resultingStock": "4.000",
+      "sku": "QA-XLSX-20261008-A",
+      "author": "Administrador QA"
+    }
+  ],
+  "jobs": [
+    {
+      "fileName": "produtos-erros.csv",
+      "status": "PREVIEW",
+      "importedRows": 0,
+      "totalRows": 2
+    },
+    {
+      "fileName": "produtos-validos.csv",
+      "status": "COMPLETED",
+      "importedRows": 2,
+      "totalRows": 2
+    },
+    {
+      "fileName": "codigos-numericos.xlsx",
+      "status": "PREVIEW",
+      "importedRows": 0,
+      "totalRows": 1
+    },
+    {
+      "fileName": "produtos-validos.xlsx",
+      "status": "COMPLETED",
+      "importedRows": 2,
+      "totalRows": 2
+    }
+  ]
+}

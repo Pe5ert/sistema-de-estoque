@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-07",
+  "base": "1308bb4",
+  "branch": "sistema-de-estoque-v2",
+  "newCommitOrPush": false,
+  "gates": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "tests": "PASS",
+    "diffCheck": "PASS"
+  },
+  "physicalTests": {
+    "httpGroups": 6,
+    "postgresGroups": 12,
+    "frontendModelGroups": 4
+  },
+  "postgres": "isolated loopback only",
+  "neonMigrationApplied": false,
+  "maxItems": 500,
+  "countPayloadRows": 50,
+  "browserWidths": [
+    1440,
+    1024,
+    390
+  ],
+  "screenshots": [
+    "desktop-contagem.png",
+    "intermediaria-contagem.png",
+    "mobile-contagem.png",
+    "desktop-concluido.png",
+    "reconferencia.png",
+    "historico-ajustes.png"
+  ]
+}

@@ -1,0 +1,12 @@
+$ pnpm -r typecheck
+Scope: 3 of 4 workspace projects
+packages/shared typecheck$ tsc --noEmit -p tsconfig.json
+packages/shared typecheck: Done
+apps/api typecheck$ pnpm db:generate && tsc --noEmit -p tsconfig.json
+apps/web typecheck$ tsc --noEmit
+apps/api typecheck: $ prisma generate
+apps/api typecheck: Loaded Prisma config from prisma.config.ts.
+apps/api typecheck: Prisma schema loaded from prisma/schema.prisma.
+apps/api typecheck: ✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 2.51s
+apps/web typecheck: Done
+apps/api typecheck: Done

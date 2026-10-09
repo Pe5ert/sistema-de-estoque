@@ -7,7 +7,7 @@
     "build": "pnpm db:generate && tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "typecheck": "pnpm db:generate && tsc --noEmit -p tsconfig.json",
-    "test": "tsc -p tsconfig.test.json && tsx --tsconfig tsconfig.test.json --test src/config/env.spec.ts src/auth/*.spec.ts src/inventory/*.spec.ts src/backups/*.spec.ts src/imports/*.spec.ts src/purchases/*.spec.ts",
+    "test": "tsc -p tsconfig.test.json && tsx --tsconfig tsconfig.test.json --test src/config/env.spec.ts src/auth/*.spec.ts src/inventory/*.spec.ts src/backups/*.spec.ts src/imports/*.spec.ts src/purchases/*.spec.ts src/physical-inventories/*.spec.ts",
     "db:deploy": "prisma migrate deploy && prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev && prisma generate",

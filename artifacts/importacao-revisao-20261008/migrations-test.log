@@ -1,0 +1,41 @@
+$ prisma migrate deploy && prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "stock_review_import_test", schema "public" at "127.0.0.1:5549"
+
+4 migrations found in prisma/migrations
+
+Applying migration `20260930000000_init`
+Applying migration `20261002000000_operational_inventory`
+Applying migration `20261006000000_product_import`
+Applying migration `20261007000000_physical_inventory`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260930000000_init/
+    └─ migration.sql
+  └─ 20261002000000_operational_inventory/
+    └─ migration.sql
+  └─ 20261006000000_product_import/
+    └─ migration.sql
+  └─ 20261007000000_physical_inventory/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.10.0 -> 8.0.0-rc.22                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 1.28s

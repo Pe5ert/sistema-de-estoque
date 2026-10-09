@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageOff } from 'lucide-react';
-import { stockStatus, type ProductPresentation } from './inventory-model';
+import type { MovementType } from '@stock/shared';
+import { isExit, stockStatus, typeLabels, type ProductPresentation } from './inventory-model';
 
 export function ProductThumbnail({ imageUrl, name, large = false }: {
   imageUrl?: string | null; name: string; large?: boolean;
@@ -32,8 +33,8 @@ export function StockMeter({ stock, minimum, name }: { stock: number; minimum: n
   </div>;
 }
 
-export function MovementAmount({ type, quantity }: { type: string; quantity: number }) {
-  return <span className={'delta delta-' + (type === 'Saída' ? 'out' : type === 'Entrada' ? 'in' : 'adjust')}>
-    {type === 'Saída' ? '−' : '+'}{quantity}<small>{type}</small>
+export function MovementAmount({ type, quantity }: { type: MovementType; quantity: string }) {
+  return <span className={'delta delta-' + (isExit(type) ? 'out' : type === 'ENTRY' ? 'in' : 'adjust')}>
+    {isExit(type) ? '−' : '+'}{quantity.replace('.', ',')}<small>{typeLabels[type]}</small>
   </span>;
 }
