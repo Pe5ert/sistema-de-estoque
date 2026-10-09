@@ -1,0 +1,134 @@
+[
+  {
+    "actionY": 102,
+    "height": 1249,
+    "overflow": false,
+    "path": "/",
+    "width": 1280
+  },
+  {
+    "actionY": 102,
+    "height": 828,
+    "overflow": false,
+    "path": "/products",
+    "tableY": 276,
+    "width": 1280
+  },
+  {
+    "height": 2561,
+    "overflow": false,
+    "path": "/movements",
+    "tableY": 587.953125,
+    "width": 1280
+  },
+  {
+    "height": 2240,
+    "overflow": false,
+    "path": "/history",
+    "tableY": 267.265625,
+    "width": 1280
+  },
+  {
+    "actionY": 102,
+    "height": 1906,
+    "overflow": false,
+    "path": "/purchases",
+    "tableY": 274,
+    "width": 1280
+  },
+  {
+    "height": 828,
+    "overflow": false,
+    "path": "/purchases/new",
+    "width": 1280
+  },
+  {
+    "actionY": 102,
+    "height": 828,
+    "overflow": false,
+    "path": "/suppliers",
+    "tableY": 277,
+    "width": 1280
+  },
+  {
+    "actionY": 102,
+    "height": 828,
+    "overflow": false,
+    "path": "/physical-inventories",
+    "tableY": 232,
+    "width": 1280
+  },
+  {
+    "actionY": 102,
+    "height": 828,
+    "overflow": false,
+    "path": "/products/import",
+    "width": 1280
+  },
+  {
+    "actionY": 130.59375,
+    "height": 2139,
+    "overflow": false,
+    "path": "/",
+    "width": 390
+  },
+  {
+    "actionY": 130.59375,
+    "height": 1943,
+    "overflow": false,
+    "path": "/products",
+    "tableY": 428.59375,
+    "width": 390
+  },
+  {
+    "height": 7616,
+    "overflow": false,
+    "path": "/movements",
+    "tableY": 876.59375,
+    "width": 390
+  },
+  {
+    "height": 7130,
+    "overflow": false,
+    "path": "/history",
+    "tableY": 391.09375,
+    "width": 390
+  },
+  {
+    "actionY": 130.59375,
+    "height": 6570,
+    "overflow": false,
+    "path": "/purchases",
+    "tableY": 374.59375,
+    "width": 390
+  },
+  {
+    "height": 1161,
+    "overflow": false,
+    "path": "/purchases/new",
+    "width": 390
+  },
+  {
+    "actionY": 130.59375,
+    "height": 1067,
+    "overflow": false,
+    "path": "/suppliers",
+    "tableY": 376.09375,
+    "width": 390
+  },
+  {
+    "actionY": 130.59375,
+    "height": 844,
+    "overflow": false,
+    "path": "/physical-inventories",
+    "tableY": 267.59375,
+    "width": 390
+  },
+  {
+    "actionY": 130.59375,
+    "height": 844,
+    "overflow": false,
+    "path": "/products/import",
+    "width": 390
+  }
+]

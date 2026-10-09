@@ -1,0 +1,110 @@
+[
+  {
+    "overflow": false,
+    "path": "/",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/products",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/movements",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/history",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/purchases",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/purchases/new",
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/suppliers",
+    "scrollWidth": 768,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/physical-inventories",
+    "scrollWidth": 768,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/products/import",
+    "scrollWidth": 768,
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/products",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/movements",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/history",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/purchases",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/purchases/new",
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/suppliers",
+    "scrollWidth": 1024,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/physical-inventories",
+    "scrollWidth": 1024,
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "path": "/products/import",
+    "scrollWidth": 1024,
+    "width": 1024
+  }
+]
