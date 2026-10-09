@@ -25,8 +25,8 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
   const hasFilters = Boolean(filters.type || filters.reason || filters.search || filters.reference || from || to);
   const update = (key: string, value: string) => setFilters(current => ({ ...current, [key]: value, page: 1 }));
   const clear = () => { setFilters({ page: 1, limit: 20 }); setFrom(''); setTo(''); if (!compact) setParams({}); };
-  return <div className="page-stack">{!compact && <div className="history-intro"><span className="block-label">RASTREABILIDADE DE SALDO</span><p>Produto, motivo e responsável em cada alteração.</p><strong>{invalidRange ? '—' : query.data?.total ?? '…'}<small>REGISTROS</small></strong></div>}
-    <section className="history-section" aria-label="Histórico de movimentações"><div className="list-heading"><h2>{compact ? 'Registro de movimentações' : 'Alterações de saldo'}</h2><span>MAIS RECENTES PRIMEIRO</span></div>
+  return <div className="page-stack">
+    <section className="history-section" aria-label="Histórico de movimentações"><div className="list-heading"><h2 className={compact ? undefined : 'sr-only'}>{compact ? 'Movimentações recentes' : 'Histórico de movimentações'}</h2><span>Mais recentes primeiro</span></div>
       {filters.reference && <p className="table-note">Movimentos deste recebimento. Limpe os filtros para consultar todas as entradas e saídas.</p>}
       <div className="filter-bar history-filters"><label className="select-control"><span>Movimento</span><select value={filters.type ?? ''} onChange={event => update('type', event.target.value)}><option value="">Todos</option>{Object.entries(typeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="select-control"><span>Motivo</span><select value={filters.reason ?? ''} onChange={event => update('reason', event.target.value)}><option value="">Todos</option>{Object.entries(reasonLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>

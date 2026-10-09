@@ -1186,7 +1186,7 @@ button[aria-busy='true'] { cursor: wait; }
 }
 
 .scan-feedback:empty { display: none; }
-@media (min-width: 901px) {
+@media (min-width: 1100px) {
   .catalog-heading + .filter-bar { display: grid; grid-template-columns: minmax(240px, 1fr) repeat(3, minmax(130px, auto)); }
   .catalog-heading + .filter-bar .select-control select { width: 90px; min-width: 0; }
   .catalog-heading + .filter-bar .search-control { min-width: 0; }

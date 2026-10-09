@@ -105,25 +105,25 @@ export function MovementWorkbench() {
   return <section className={'operation-workbench' + (selected ? ' operation-ready' : '')} aria-labelledby="scan-title">
     <div className="scan-stage">
       <div className="scan-main">
-        <div className="scan-kicker"><Barcode size={19} aria-hidden="true" /><span>POSTO DE OPERAÇÃO</span></div>
+
         <h2 id="scan-title">{selected ? 'Produto identificado' : 'Localizar produto'}</h2>
         <form className="scan-lookup" onSubmit={(event) => { event.preventDefault(); void lookup(); }}>
           <label htmlFor="scan-code">SKU OU CÓDIGO DE BARRAS</label>
           <div className="scan-input-wrap"><Barcode size={21} aria-hidden="true" /><input ref={codeInput} id="scan-code" value={code} readOnly={Boolean(selected)} disabled={mutation.isPending} onChange={(event) => { lookupVersion.current++; setLookupBusy(false); setCode(event.target.value); setMatches([]); setLookupState('waiting'); setLookupError(''); resetPreview(); }} placeholder="Bipar código ou digitar SKU" aria-invalid={lookupState === 'missing' || Boolean(lookupError)} aria-describedby="scan-feedback scan-hint" autoComplete="off" spellCheck={false} /><button disabled={Boolean(selected) || lookupBusy || mutation.isPending} type="submit" className="scan-submit">{lookupBusy ? 'Consultando…' : 'Localizar'} <ArrowRight size={17} aria-hidden="true" /></button></div>
         </form>
         <p className={'scan-feedback' + (lookupState === 'missing' || lookupError ? ' scan-feedback-error' : '')} id="scan-feedback" role="status">
-          {lookupError || (lookupBusy ? 'Consultando o código…' : lookupState === 'found' ? 'Produto encontrado. Confira a quantidade e o motivo.' : lookupState === 'missing' ? 'Código não encontrado. Confira a leitura ou consulte Produtos.' : lookupState === 'ambiguous' ? 'Este código identifica mais de um produto. Selecione o item abaixo.' : 'Aguardando leitura do SKU ou código de barras.')}
+          {lookupError || (lookupBusy ? 'Consultando o código…' : lookupState === 'found' ? 'Produto encontrado. Confira a quantidade e o motivo.' : lookupState === 'missing' ? 'Código não encontrado. Confira a leitura ou consulte Produtos.' : lookupState === 'ambiguous' ? 'Este código identifica mais de um produto. Selecione o item abaixo.' : '')}
         </p>
         {matches.length > 1 && <div className="lookup-matches">{matches.map((product) => <button type="button" className="secondary-button" key={product.id} onClick={() => chooseProduct(product)}>{product.name} · {product.sku}</button>)}</div>}
-        <p className="scan-hint" id="scan-hint">{selected ? 'Use Tab ou clique em Quantidade. Para trocar o item antes de confirmar, use Próximo produto.' : 'Digite ou cole o código e pressione Enter. Leitor compatível: teclado + Enter.'}</p>
+        <p className="scan-hint" id="scan-hint">{selected ? 'Tab para quantidade. Próximo produto troca o item.' : 'Digite ou bipe o código e pressione Enter.'}</p>
       </div>
       <div className="scan-example" aria-live="polite">
         {selected ? <>
-          <span className="block-label">PRODUTO LOCALIZADO</span>
+
           <div className="selected-product"><ProductThumbnail imageUrl={selected.imageUrl} name={selected.name} /><span><strong>{selected.name}</strong><small>{selected.sku} · {selected.category}</small></span></div>
           <div className="scan-example-balance"><span>SALDO ATUAL</span><strong>{liveProduct?.stock} <small>{selected.unit}</small></strong></div>
           <StockMeter stock={liveProduct!.stock} minimum={liveProduct!.minimum} name={selected.name} /><Status {...stockStatus(liveProduct!.stock, liveProduct!.minimum)} />
-        </> : <div className="scan-awaiting"><Barcode size={32} aria-hidden="true" /><strong>Identifique o item</strong><p>O produto e seu saldo aparecerão aqui após a consulta.</p></div>}
+        </> : <div className="scan-awaiting"><Barcode size={32} aria-hidden="true" /><strong>Identifique o item</strong></div>}
       </div>
     </div>
     <form className="movement-form" noValidate onSubmit={handleSubmit(confirm)} onChange={resetPreview} onKeyDown={(event) => { if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault(); }}>
@@ -142,7 +142,7 @@ export function MovementWorkbench() {
       {productQuery.error && <Alert tone="error" title="Saldo indisponível." action={{ label: 'Tentar novamente', run: () => { void productQuery.refetch(); } }}>{productQuery.error.message}</Alert>}
       {result && <div className="operation-feedback" role="status"><strong>Movimentação registrada · {result.product.name} · {result.quantity} {presentProduct(result.product).unit}</strong><span className="preview-balance">{result.previousStock}<ArrowRight size={18} aria-hidden="true" /><strong>{result.resultingStock}</strong></span></div>}
       {(selected || result) && <button type="button" className="text-button" disabled={mutation.isPending} onClick={() => { resetPreview(); prepareNext(); }}>Próximo produto</button>}
-      <p className="operation-note">{result ? 'Movimento registrado. Campo pronto para o próximo código.' : selected ? 'Confira o saldo previsto antes de confirmar.' : 'Localize um produto para movimentar o estoque.'}</p>
+      {(selected || result) && <p className="operation-note">{result ? 'Movimento registrado. Campo pronto para o próximo código.' : selected ? 'Confira o saldo previsto antes de confirmar.' : 'Localize um produto para movimentar o estoque.'}</p>}
     </form>
   </section>;
 }
