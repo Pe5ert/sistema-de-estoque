@@ -1,0 +1,266 @@
+[
+  {
+    "name": "dashboard",
+    "size": "desktop",
+    "heading": "Visão geral",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "products",
+    "size": "desktop",
+    "heading": "Produtos",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "product-form",
+    "size": "desktop",
+    "heading": "Novo produto",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "movements",
+    "size": "desktop",
+    "heading": "Movimentações",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "history",
+    "size": "desktop",
+    "heading": "Histórico",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "import",
+    "size": "desktop",
+    "heading": "Importar produtos",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "suppliers",
+    "size": "desktop",
+    "heading": "Fornecedores",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "supplier-form",
+    "size": "desktop",
+    "heading": "Novo fornecedor",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "purchases",
+    "size": "desktop",
+    "heading": "Compras",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "purchase-form",
+    "size": "desktop",
+    "heading": "Novo pedido",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "physical",
+    "size": "desktop",
+    "heading": "Inventário físico",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "backups",
+    "size": "desktop",
+    "heading": "Backups",
+    "overflow": false,
+    "radius": "2px",
+    "viewport": 1440
+  },
+  {
+    "name": "dashboard",
+    "size": "tablet",
+    "heading": "Visão geral",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "products",
+    "size": "tablet",
+    "heading": "Produtos",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "product-form",
+    "size": "tablet",
+    "heading": "Novo produto",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "movements",
+    "size": "tablet",
+    "heading": "Movimentações",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "history",
+    "size": "tablet",
+    "heading": "Histórico",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "import",
+    "size": "tablet",
+    "heading": "Importar produtos",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "suppliers",
+    "size": "tablet",
+    "heading": "Fornecedores",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "supplier-form",
+    "size": "tablet",
+    "heading": "Novo fornecedor",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "purchases",
+    "size": "tablet",
+    "heading": "Compras",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "purchase-form",
+    "size": "tablet",
+    "heading": "Novo pedido",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "physical",
+    "size": "tablet",
+    "heading": "Inventário físico",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "backups",
+    "size": "tablet",
+    "heading": "Backups",
+    "overflow": false,
+    "viewport": 1024
+  },
+  {
+    "name": "dashboard",
+    "size": "mobile",
+    "heading": "Visão geral",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "products",
+    "size": "mobile",
+    "heading": "Produtos",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "product-form",
+    "size": "mobile",
+    "heading": "Novo produto",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "movements",
+    "size": "mobile",
+    "heading": "Movimentações",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "history",
+    "size": "mobile",
+    "heading": "Histórico",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "import",
+    "size": "mobile",
+    "heading": "Importar produtos",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "suppliers",
+    "size": "mobile",
+    "heading": "Fornecedores",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "supplier-form",
+    "size": "mobile",
+    "heading": "Novo fornecedor",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "purchases",
+    "size": "mobile",
+    "heading": "Compras",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "purchase-form",
+    "size": "mobile",
+    "heading": "Novo pedido",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "physical",
+    "size": "mobile",
+    "heading": "Inventário físico",
+    "overflow": false,
+    "viewport": 390
+  },
+  {
+    "name": "backups",
+    "size": "mobile",
+    "heading": "Backups",
+    "overflow": false,
+    "viewport": 390
+  }
+]

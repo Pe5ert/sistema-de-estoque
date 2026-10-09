@@ -1,5 +1,9 @@
 # Direção visual da V2
 
+Atualização aprovada em 09/10/2026: marca **GAVYO Estoque**, geometria de **2 px** e direção grafite/azul do protótipo de Compras/Novo Pedido. Esta decisão substitui as escolhas geométricas e referências visuais históricas abaixo. Referência: Supplier Management Overview Dashboard, https://dribbble.com/shots/25174577-Supplier-Management-Overview-Dashboard. Evidências e cobertura: `artifacts/global-visual-20261009/REVIEW.md` e `index.html`.
+
+Reutilizar a arquitetura, os grupos da navegação e os componentes atuais. O fundo da área de trabalho é #191e27, as superfícies #222833 e o azul de identidade #5275ff. Ações com texto branco usam `accent-action` (#4262e8, contraste 5,07:1) e hover #4b6bef (4,52:1). Não adicionar métricas globais calculadas apenas com a página atual da API. Compras separa pedido e fornecedor na tabela; Novo Pedido usa documento + resumo lateral no desktop e resumo no fluxo abaixo dos itens em telas menores. A gravação continua criando rascunho, seguida do detalhe e das confirmações existentes.
+
 O produto é uma ferramenta operacional de estoque. A leitura deve começar pelo saldo, mostrar rapidamente o que precisa de atenção e manter o rastro de entradas, saídas e ajustes.
 
 ## Linguagem
