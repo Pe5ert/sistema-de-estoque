@@ -4,10 +4,10 @@ import { Alert } from '../feedback';
 
 export function SessionGate({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) return <main className="auth-state" role="status"><span className="block-label">ESTOQUE V2</span><h1>Verificando sessão…</h1></main>;
+  if (auth.isLoading) return <main className="auth-state" role="status"><span className="block-label">GAVYO ESTOQUE</span><h1>Verificando sessão…</h1></main>;
   if (auth.error && !auth.currentUser) return (
     <main className="auth-state">
-      <span className="block-label">ESTOQUE V2</span><h1>Não foi possível verificar sua sessão.</h1>
+      <span className="block-label">GAVYO ESTOQUE</span><h1>Não foi possível verificar sua sessão.</h1>
       <Alert tone="error" title="Servidor indisponível." action={{ label: 'Tentar novamente', run: auth.retry }}>Verifique a conexão com o servidor e tente novamente.</Alert>
     </main>
   );

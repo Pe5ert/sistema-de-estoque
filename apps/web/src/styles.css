@@ -77,7 +77,8 @@
   --text-secondary: #c5cad4;
   --text-muted: #a8b3c5;
   --accent: #5275ff;
-  --accent-hover: #5777ff;
+  --accent-action: #4262e8;
+  --accent-hover: #4b6bef;
   --accent-surface: #26385b;
   --scanner-surface: #2b4183;
   --surface-elevated: #303b4b;
@@ -1076,6 +1077,12 @@ button[aria-busy='true'] { cursor: wait; }
 
 /* Approved GAVYO direction: document surfaces, quiet dividers and 2px geometry. */
 .catalog-actions { gap: 16px; margin-bottom: 18px; }
+.hero-stock, .primary-button, .auth-submit, .scan-submit { background: var(--accent-action); }
+.primary-button, .auth-submit, .scan-submit { border-color: var(--accent-action); }
+.procurement-overview { background: transparent; border: 0; border-bottom: 1px solid var(--border); padding: 8px 0 24px; }
+.procurement-overview > div { border-right: 1px solid var(--border); padding: 0 24px; }
+.procurement-overview > div:first-child { padding-left: 0; }
+.procurement-overview p { font-size: 13px; align-self: center; }
 .data-table td { line-height: 1.55; }
 .data-table strong { font-weight: 600; }
 .numeric-cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -1121,6 +1128,8 @@ button[aria-busy='true'] { cursor: wait; }
 }
 @media (max-width: 700px) {
   .topbar { height: 58px; }
+  .procurement-overview > div:nth-child(2) { border: 0; }
+  .procurement-overview p { padding-top: 6px; }
   .catalog-actions { flex-wrap: wrap; }
   .order-form .order-document { padding: 20px 16px; }
   .order-form .procurement-order-line { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }
