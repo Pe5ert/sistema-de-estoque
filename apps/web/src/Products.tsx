@@ -38,9 +38,9 @@ export function Products() {
 
   return (
     <div className="page-stack">
-      <div className="catalog-actions"><span>Cadastro e consulta do catálogo</span><div className="inline-actions">{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}{hasPermission(currentUser?.role, 'category.manage') && <CategoryManager onOpen={() => setSelectedId(null)} />}<Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link></div></div>
+      <div className="catalog-actions"><div className="inline-actions"><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link>{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}{hasPermission(currentUser?.role, 'category.manage') && <CategoryManager onOpen={() => setSelectedId(null)} />}</div></div>
       <section className="list-section" aria-labelledby="catalog-title">
-        <div className="list-heading catalog-heading"><h2 id="catalog-title">Catálogo de produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
+        <div className="list-heading catalog-heading"><h2 id="catalog-title" className="sr-only">Produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
         <div className="filter-bar">
           <label className="search-control"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar produto, SKU ou código de barras</span><input type="search" value={search} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Buscar produto, SKU ou código de barras" /></label>
           <label className="select-control"><span>Categoria</span><select aria-label="Categoria" value={category} onChange={(event) => updateFilter('category', event.target.value)}><option value="">Todas</option>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>

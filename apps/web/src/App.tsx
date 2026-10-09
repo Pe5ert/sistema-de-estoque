@@ -23,14 +23,14 @@ import { Purchases, PurchaseDetail } from './Purchases';
 import { PurchaseFormPage } from './PurchaseForm';
 
 const navigation = [
-  { path: '/', label: 'Visão geral', icon: LayoutDashboard, description: 'Pulso do estoque e prioridades do dia.' },
-  { path: '/products', label: 'Produtos', icon: Package, description: 'Catálogo, disponibilidade e pontos de atenção.' },
-  { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight, description: 'Entradas, saídas e ajustes em uma só leitura.' },
-  { path: '/history', label: 'Histórico', icon: History, description: 'Rastro de cada alteração de saldo.' },
-  { path: '/physical-inventories', label: 'Inventário físico', icon: ClipboardCheck, description: 'Contagem do estoque real, divergências e ajustes.' },
-  { path: '/backups', label: 'Backups', icon: HardDrive, description: 'Cópias completas e agendamento do estoque.' },
-  { path: '/suppliers', label: 'Fornecedores', icon: Boxes, description: 'Contatos e pedidos dos fornecedores da operação.' },
-  { path: '/purchases', label: 'Compras', icon: Package, description: 'Pedidos, entregas parciais e recebimentos no estoque.' },
+  { path: '/', label: 'Visão geral', icon: LayoutDashboard },
+  { path: '/products', label: 'Produtos', icon: Package },
+  { path: '/movements', label: 'Movimentações', icon: ArrowLeftRight },
+  { path: '/history', label: 'Histórico', icon: History },
+  { path: '/physical-inventories', label: 'Inventário físico', icon: ClipboardCheck },
+  { path: '/backups', label: 'Backups', icon: HardDrive },
+  { path: '/suppliers', label: 'Fornecedores', icon: Boxes },
+  { path: '/purchases', label: 'Compras', icon: Package },
 ] as const;
 
 function Shell() {
@@ -40,16 +40,16 @@ function Shell() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const current = location.pathname === '/products/import'
-    ? { path: '/products', label: 'Importar produtos', description: 'Traga o catálogo da planilha e confira antes de gravar.' }
+    ? { path: '/products', label: 'Importar produtos' }
     : location.pathname === '/products/new'
-    ? { path: '/products', label: 'Novo produto', description: 'Identifique, configure e siga para o próximo item.' }
+    ? { path: '/products', label: 'Novo produto' }
     : /^\/products\/.+\/edit$/.test(location.pathname)
-      ? { path: '/products', label: 'Editar produto', description: 'Atualize os dados do catálogo. O saldo permanece preservado.' }
-      : location.pathname === '/suppliers/new' ? { label: 'Novo fornecedor', description: 'Identificação e contatos para os próximos pedidos.' }
-      : /^\/suppliers\/.+\/edit$/.test(location.pathname) ? { label: 'Editar fornecedor', description: 'Atualize contatos ou inative o cadastro preservando os pedidos.' }
-      : location.pathname === '/purchases/new' ? { label: 'Novo pedido', description: 'Escolha fornecedor, produtos e custos negociados.' }
-      : /^\/purchases\/.+\/edit$/.test(location.pathname) ? { label: 'Editar rascunho', description: 'Revise quantidades e custos antes de enviar.' }
-      : /^\/purchases\/.+/.test(location.pathname) ? { label: 'Pedido de compra', description: 'Acompanhe entregas, saldos pendentes e recebimentos.' }
+      ? { path: '/products', label: 'Editar produto' }
+      : location.pathname === '/suppliers/new' ? { label: 'Novo fornecedor' }
+      : /^\/suppliers\/.+\/edit$/.test(location.pathname) ? { label: 'Editar fornecedor' }
+      : location.pathname === '/purchases/new' ? { label: 'Novo pedido' }
+      : /^\/purchases\/.+\/edit$/.test(location.pathname) ? { label: 'Editar rascunho' }
+      : /^\/purchases\/.+/.test(location.pathname) ? { label: 'Pedido de compra' }
       : navigation.find((item) => item.path === location.pathname || item.path !== '/' && location.pathname.startsWith(item.path + '/')) ?? navigation[0];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
@@ -103,7 +103,7 @@ function Shell() {
         <UserSession />
         <div className="sidebar-footer">
           <Boxes size={20} strokeWidth={1.6} aria-hidden="true" />
-          <span>CONTROLE DE ESTOQUE<small>Área operacional</small></span>
+          <span>CONTROLE DE ESTOQUE</span>
         </div>
       </aside>
       <div className="workspace" inert={menuOpen}>
@@ -117,11 +117,11 @@ function Shell() {
             <ChevronRight size={15} aria-hidden="true" />
             <strong>{current.label}</strong>
           </div>
-          <div className="topbar-demo">CONTROLE OPERACIONAL</div>
+
         </header>
         <main className="main-content" id="main-content" tabIndex={-1}>
           <div className="page-heading">
-            <div><h1>{current.label}</h1><p className="page-description">{current.description}</p></div>
+            <h1>{current.label}</h1>
           </div>
           <Outlet />
         </main>
