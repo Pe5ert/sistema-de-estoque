@@ -39,7 +39,7 @@ export function LoginPage() {
     <main className="login-page">
       <div className="login-workspace">
         <header className="login-topbar">
-          <div className="brand"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span className="brand-wordmark">ESTOQUE<span>V2</span></span></div>
+          <div className="brand"><span className="brand-mark" aria-hidden="true">G</span><span className="brand-wordmark">GAVYO<span>ESTOQUE</span></span></div>
           <span className="login-restricted"><LockKeyhole size={14} aria-hidden="true" /> Acesso restrito à equipe</span>
         </header>
         <div className="login-body">
@@ -80,7 +80,7 @@ export function LoginPage() {
             </div>
           </section>
         </div>
-        <footer className="login-footer"><span>CONTROLE OPERACIONAL / ESTOQUE V2</span><span>ACESSO COM CREDENCIAIS DA EQUIPE</span></footer>
+        <footer className="login-footer"><span>CONTROLE OPERACIONAL / GAVYO ESTOQUE</span><span>ACESSO COM CREDENCIAIS DA EQUIPE</span></footer>
       </div>
     </main>
   )}</SessionGate>;

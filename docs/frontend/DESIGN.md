@@ -19,7 +19,7 @@ O produto é uma ferramenta operacional de estoque. A leitura deve começar pelo
 
 Os tokens semânticos ficam em `apps/web/src/styles.css`: `background`, `surface`, `surface-muted`, `surface-elevated`, `surface-strong`, `border`, `border-strong`, `text-primary`, `text-secondary`, `text-muted`, `accent`, `accent-hover`, `accent-contrast`, `success`, `warning`, `danger` e `info`. Superfícies de contexto, scanner, alertas, campos e thumbnails também são centralizadas ali. Não espalhar cores de interface pelos componentes.
 
-Geometria: radius de 4px em superfícies/controles e sem radius por linha. Tipografia Arial/Segoe UI sans-serif; título 30–38px, seções 15–24px, tabela 12–13px, metadata 11px e labels 10–11px. Números usam tabulares. Espaçamento segue ritmo de 4/8/12/16/24px; linhas do catálogo têm aproximadamente 66px no desktop. Sem sombras em superfícies comuns; sombra apenas no detalhe sobreposto.
+Geometria: radius de 2px em superfícies/controles e sem radius por linha. Tipografia Segoe UI/Arial sans-serif; título 30–38px, seções 15–24px, tabela 12–13px, metadata 11px e labels 10–11px. Números usam tabulares. Espaçamento segue ritmo de 4/8/12/16/24px; linhas do catálogo têm aproximadamente 66px no desktop. Sem sombras em superfícies comuns; sombra apenas no detalhe sobreposto.
 
 Referências concretas: composição azul/laranja de Maruf domina identidade e hierarquia; IronNest orienta organização/sidebar; a tabela verde orienta thumbnail + nome/SKU e densidade. O layout preserva o painel assimétrico já existente e usa laranja para atenção, sem mapas, gráficos ou indicadores inventados.
 

@@ -89,9 +89,9 @@ function Shell() {
       <a className="skip-link" href="#main-content">Ir para o conteúdo</a>
       {menuOpen && <button className="sidebar-backdrop" type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
       <aside ref={sidebar} className={'sidebar' + (menuOpen ? ' sidebar-open' : '')} id="primary-sidebar" aria-label="Áreas de trabalho">
-        <Link className="brand" to="/" onClick={() => setMenuOpen(false)} aria-label="Sistema de Estoque, visão geral">
-          <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
-          <span className="brand-wordmark">ESTOQUE<span>V2</span></span>
+        <Link className="brand" to="/" onClick={() => setMenuOpen(false)} aria-label="GAVYO Estoque, visão geral">
+          <span className="brand-mark" aria-hidden="true">G</span>
+          <span className="brand-wordmark">GAVYO<span>ESTOQUE</span></span>
         </Link>
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
@@ -113,7 +113,7 @@ function Shell() {
               aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="primary-sidebar">
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <span className="topbar-system">SISTEMA / ESTOQUE</span>
+            <span className="topbar-system">GAVYO ESTOQUE</span>
             <ChevronRight size={15} aria-hidden="true" />
             <strong>{current.label}</strong>
           </div>
