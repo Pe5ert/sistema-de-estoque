@@ -199,14 +199,14 @@ body, .sidebar, .workspace, .topbar, .list-section, .history-section, .detail-dr
 }
 
 /* Theme color transitions must not replace the mobile navigation transition. */
-.sidebar { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
-.sidebar::-webkit-scrollbar { width: 5px; }
-.sidebar::-webkit-scrollbar-track { background: transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-muted) 40%, transparent); border-radius: 8px; }
-.sidebar::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-.sidebar::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+html, .sidebar { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+html::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width: 5px; height: 5px; }
+html::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-muted) 40%, transparent); border-radius: 8px; }
+html::-webkit-scrollbar-thumb:hover, .sidebar::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+html::-webkit-scrollbar-button, .sidebar::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 @supports selector(::-webkit-scrollbar) {
-  .sidebar { scrollbar-width: auto; scrollbar-color: auto; }
+  html, .sidebar { scrollbar-width: auto; scrollbar-color: auto; }
 }
 @media (max-width: 900px) {
   .sidebar { transition: transform 180ms ease-out, visibility 180ms, background-color 180ms, border-color 180ms, color 180ms; }
