@@ -197,6 +197,15 @@ body, .sidebar, .workspace, .topbar, .list-section, .history-section, .detail-dr
   .global-search-panel { animation: none; }
   .global-search-panel [role="option"] { transition: none; }
 }
+
+/* Theme color transitions must not replace the mobile navigation transition. */
+@media (max-width: 900px) {
+  .sidebar { transition: transform 180ms ease-out, visibility 180ms, background-color 180ms, border-color 180ms, color 180ms; }
+  .sidebar-open { transition: transform 180ms ease-out, background-color 180ms, border-color 180ms, color 180ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .sidebar-open { transition: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle svg, :is(.primary-button, .secondary-button, .icon-button, .text-button), :is(.search-control, .select-control, .quantity-control, .form-field > input, .form-field > select, .form-field > textarea), details > summary { transition: none; }
   .theme-toggle:hover svg { transform: none; }

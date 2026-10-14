@@ -124,7 +124,10 @@ a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 3px solid var(--success); outline-offset: 3px; }
 
 .app-layout { display: grid; grid-template-columns: 218px minmax(0, 1fr); min-height: 100vh; }
-.sidebar { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; padding: 27px 16px 20px; background: var(--sidebar); border-right: 1px solid var(--border); }
+.sidebar { position: fixed; z-index: 10; inset: 0 auto 0 0; width: 218px; height: 100dvh; overflow-y: auto; overscroll-behavior-y: contain; display: flex; flex-direction: column; padding: 27px 16px 20px; background: var(--sidebar); border-right: 1px solid var(--border); }
+.sidebar > * { flex-shrink: 0; }
+.sidebar-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sidebar .sidebar-close { display: none; }
 .brand { display: flex; align-items: center; gap: 13px; min-height: 39px; padding: 0 5px; }
 .brand-mark { display: grid; place-items: center; flex: none; width: 32px; height: 34px; background: var(--accent); color: var(--accent-contrast); border-radius: var(--radius); font-size: 23px; font-weight: 700; }
 .brand-wordmark { color: var(--text-primary); font-size: 16px; font-weight: 700; letter-spacing: .04em; }
@@ -141,7 +144,7 @@ a { color: inherit; text-decoration: none; }
 .sidebar-footer svg { flex: none; color: var(--info); }
 .sidebar-footer small { display: block; margin-top: 5px; color: var(--text-muted); font-size: 11px; font-weight: 450; letter-spacing: 0; }
 .sidebar-backdrop, .menu-toggle { display: none; }
-.workspace { min-width: 0; }
+.workspace { min-width: 0; grid-column: 2; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 70px; padding: 0 36px; border-bottom: 1px solid var(--border); background: var(--surface-strong); }
 .topbar-leading { display: flex; align-items: center; gap: 11px; min-width: 0; color: var(--text-muted); font-size: 11px; font-weight: 600; }
 .topbar-leading strong { color: var(--text-primary); font-size: 12px; white-space: nowrap; }
@@ -420,6 +423,7 @@ h1 { margin-bottom: 0; font-size: clamp(30px, 2.6vw, 38px); font-weight: 650; li
   .app-layout { display: block; }
   .sidebar { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 218px; visibility: hidden; transform: translateX(-100%); transition: transform .18s, visibility .18s; top: 0; height: 100dvh; min-height: 0; }
   .sidebar-open { visibility: visible; transform: translateX(0); transition: transform .18s; }
+  .sidebar .sidebar-close { display: grid; width: 44px; height: 44px; padding: 10px; flex-shrink: 0; }
   .sidebar-backdrop { position: fixed; z-index: 20; inset: 0; display: block; border: 0; background: var(--overlay); }
   .menu-toggle { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary); }
   .topbar { padding: 0 22px; }

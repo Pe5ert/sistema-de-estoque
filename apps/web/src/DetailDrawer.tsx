@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { motionDelay } from './motion';
+import { lockPageScroll } from './scroll-lock';
 
 export function DetailDrawer({ title, close, children, busy = false }: { title: string; close: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode); busy?: boolean }) {
   const [host] = useState(() => document.createElement('div'));
@@ -25,9 +26,8 @@ export function DetailDrawer({ title, close, children, busy = false }: { title: 
     const previousFocus = document.activeElement as HTMLElement | null;
     const root = document.getElementById('root');
     const previousInert = root?.inert ?? false;
-    const overflow = document.body.style.overflow;
+    const unlockScroll = lockPageScroll();
     if (root) root.inert = true;
-    document.body.style.overflow = 'hidden';
     const controls = () => Array.from(panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]') ?? []).filter(node => node.getClientRects().length > 0 && !node.closest('[inert]'));
     const focusFirst = () => (controls()[0] ?? panel.current)?.focus();
     focusFirst();
@@ -51,7 +51,7 @@ export function DetailDrawer({ title, close, children, busy = false }: { title: 
       window.removeEventListener('keydown', key);
       document.removeEventListener('focusin', containFocus);
       if (root) root.inert = previousInert;
-      document.body.style.overflow = overflow;
+      unlockScroll();
       previousFocus?.focus({ preventScroll: true });
       queueMicrotask(() => { if (!panel.current?.isConnected && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }); });
     };

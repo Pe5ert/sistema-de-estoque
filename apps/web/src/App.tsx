@@ -13,6 +13,7 @@ import { ProductFormPage } from './ProductForm';
 import { motionDelay } from './motion';
 import { ThemeToggle } from './Theme';
 import { GlobalSearch } from './GlobalSearch';
+import { lockPageScroll } from './scroll-lock';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
@@ -39,6 +40,14 @@ const navigation = [
 function Shell() {
   const { currentUser } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 900px)').matches);
+  const mobileMenuOpen = mobile && menuOpen;
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 900px)');
+    const change = () => { setMobile(media.matches); if (!media.matches) setMenuOpen(false); };
+    change(); media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
+  }, []);
   const [menuVisible, setMenuVisible] = useState(false);
   useEffect(() => {
     if (menuOpen) { setMenuVisible(true); return; }
@@ -73,12 +82,16 @@ function Shell() {
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
   useEffect(() => {
-    if (!menuOpen) return;
-    sidebar.current?.querySelector<HTMLAnchorElement>('a')?.focus();
+    if (!mobileMenuOpen) return;
+    const unlockScroll = lockPageScroll();
+    const controls = () => Array.from(sidebar.current?.querySelectorAll<HTMLElement>('a,button:not(:disabled)') ?? []).filter(node => node.getClientRects().length > 0 && !node.closest('[inert]'));
+    const focusFirst = () => (sidebar.current?.querySelector<HTMLButtonElement>('.sidebar-close') ?? controls()[0])?.focus();
+    focusFirst();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
+      if (document.getElementById('root')?.inert) return;
+      if (event.key === 'Escape') { event.preventDefault(); setMenuOpen(false); }
       if (event.key === 'Tab') {
-        const links = sidebar.current?.querySelectorAll<HTMLElement>('a,button:not(:disabled)');
+        const links = controls();
         if (!links?.length) return;
         const first = links[0];
         const last = links[links.length - 1];
@@ -86,9 +99,19 @@ function Shell() {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     };
+    const containFocus = (event: FocusEvent) => {
+      if (!document.getElementById('root')?.inert && event.target instanceof Node && !sidebar.current?.contains(event.target)) focusFirst();
+    };
     window.addEventListener('keydown', closeOnEscape);
-    return () => { window.removeEventListener('keydown', closeOnEscape); menuButton.current?.focus(); };
-  }, [menuOpen]);
+    document.addEventListener('focusin', containFocus);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape); document.removeEventListener('focusin', containFocus); unlockScroll();
+      if (sidebar.current?.contains(document.activeElement) || document.activeElement === document.body) {
+        if (menuButton.current?.getClientRects().length) menuButton.current.focus({ preventScroll: true });
+        else document.getElementById('main-content')?.focus({ preventScroll: true });
+      }
+    };
+  }, [mobileMenuOpen]);
 
   const navItem = (item: (typeof navigation)[number]) => {
     const Icon = item.icon;
@@ -106,12 +129,15 @@ function Shell() {
     <div className="app-layout">
       <BackupsFeedbackMonitor />
       <a className="skip-link" href="#main-content">Ir para o conteúdo</a>
-      {menuVisible && <button className={'sidebar-backdrop' + (!menuOpen ? ' is-closing' : '')} type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
-      <aside ref={sidebar} className={'sidebar' + (menuOpen ? ' sidebar-open' : '')} id="primary-sidebar" aria-label="Áreas de trabalho">
+      {mobile && menuVisible && <button tabIndex={-1} className={'sidebar-backdrop' + (!mobileMenuOpen ? ' is-closing' : '')} type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
+      <aside ref={sidebar} inert={mobile && !mobileMenuOpen} className={'sidebar' + (mobileMenuOpen ? ' sidebar-open' : '')} id="primary-sidebar" aria-label="Áreas de trabalho">
+        <div className="sidebar-brand-row">
         <Link className="brand" to="/" onClick={() => setMenuOpen(false)} aria-label="GAVYO Estoque, visão geral">
           <span className="brand-mark" aria-hidden="true">G</span>
           <span className="brand-wordmark">GAVYO<span>ESTOQUE</span></span>
         </Link>
+        <button className="icon-button sidebar-close" type="button" aria-label="Fechar navegação" onClick={() => setMenuOpen(false)}><X size={18} aria-hidden="true" /></button>
+        </div>
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
@@ -125,7 +151,7 @@ function Shell() {
           <span>CONTROLE DE ESTOQUE</span>
         </div>
       </aside>
-      <div className="workspace" inert={menuOpen}>
+      <div className="workspace" inert={mobileMenuOpen}>
         <header className="topbar">
           <div className="topbar-leading">
             <button ref={menuButton} className="menu-toggle" type="button" onClick={() => setMenuOpen((open) => !open)}

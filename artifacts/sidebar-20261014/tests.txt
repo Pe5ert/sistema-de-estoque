@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+ok 1 - 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+  ---
+  duration_ms: 6.8965
+  type: 'test'
+  ...
+# Subtest: drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+ok 2 - drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+  ---
+  duration_ms: 0.9648
+  type: 'test'
+  ...
+# Subtest: zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+ok 3 - zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+  ---
+  duration_ms: 47.818
+  type: 'test'
+  ...
+# Subtest: feedback queue preserves errors and waits for a visible slot instead of dropping results
+ok 4 - feedback queue preserves errors and waits for a visible slot instead of dropping results
+  ---
+  duration_ms: 5.6191
+  type: 'test'
+  ...
+# Subtest: keyed updates replace only their own result while unrelated messages survive
+ok 5 - keyed updates replace only their own result while unrelated messages survive
+  ---
+  duration_ms: 0.5588
+  type: 'test'
+  ...
+# Subtest: global search matches Portuguese labels, operation aliases and multiple words
+ok 6 - global search matches Portuguese labels, operation aliases and multiple words
+  ---
+  duration_ms: 4.9297
+  type: 'test'
+  ...
+# Subtest: function shortcuts follow the role matrix and anonymous users get none
+ok 7 - function shortcuts follow the role matrix and anonymous users get none
+  ---
+  duration_ms: 0.8724
+  type: 'test'
+  ...
+# Subtest: product selection preserves exact SKU and record identity in the destination
+ok 8 - product selection preserves exact SKU and record identity in the destination
+  ---
+  duration_ms: 1.492
+  type: 'test'
+  ...
+# Subtest: error report preserves every diagnostic, Portuguese labels and original physical lines
+ok 9 - error report preserves every diagnostic, Portuguese labels and original physical lines
+  ---
+  duration_ms: 30.0204
+  type: 'test'
+  ...
+# Subtest: CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+ok 10 - CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+  ---
+  duration_ms: 1.3887
+  type: 'test'
+  ...
+# Subtest: spreadsheet formula prefixes remain inert text, including leading whitespace
+ok 11 - spreadsheet formula prefixes remain inert text, including leading whitespace
+  ---
+  duration_ms: 1.8605
+  type: 'test'
+  ...
+# Subtest: file correction labels distinguish the header from product lines and name initial stock
+ok 12 - file correction labels distinguish the header from product lines and name initial stock
+  ---
+  duration_ms: 1.904
+  type: 'test'
+  ...
+# Subtest: physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+ok 13 - physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+  ---
+  duration_ms: 3.0783
+  type: 'test'
+  ...
+# Subtest: physical divergence remains exact across fractions and the full Decimal(18,3) range
+ok 14 - physical divergence remains exact across fractions and the full Decimal(18,3) range
+  ---
+  duration_ms: 1.3445
+  type: 'test'
+  ...
+# Subtest: Portuguese labels show exact values, signs and three decimal places when needed
+ok 15 - Portuguese labels show exact values, signs and three decimal places when needed
+  ---
+  duration_ms: 0.7879
+  type: 'test'
+  ...
+# Subtest: count batches respect row and HTTP byte limits without losing notes or order
+ok 16 - count batches respect row and HTTP byte limits without losing notes or order
+  ---
+  duration_ms: 547.0614
+  type: 'test'
+  ...
+# Subtest: Brazilian prices and fractional quantities serialize as exact decimal strings
+ok 17 - Brazilian prices and fractional quantities serialize as exact decimal strings
+  ---
+  duration_ms: 4.4637
+  type: 'test'
+  ...
+# Subtest: ambiguous, excessive, negative and nondecimal input is rejected
+ok 18 - ambiguous, excessive, negative and nondecimal input is rejected
+  ---
+  duration_ms: 1.0701
+  type: 'test'
+  ...
+# Subtest: unknown price stays empty/null-capable and barcode leading zeros survive validation
+ok 19 - unknown price stays empty/null-capable and barcode leading zeros survive validation
+  ---
+  duration_ms: 32.3998
+  type: 'test'
+  ...
+# Subtest: initial entry must be positive and only affects creation
+ok 20 - initial entry must be positive and only affects creation
+  ---
+  duration_ms: 10.371
+  type: 'test'
+  ...
+# Subtest: editing uses exact persisted price/minimum strings, including zero and null
+ok 21 - editing uses exact persisted price/minimum strings, including zero and null
+  ---
+  duration_ms: 0.5827
+  type: 'test'
+  ...
+# Subtest: purchase subtotal uses half-up cents and preserves PostgreSQL precision
+ok 22 - purchase subtotal uses half-up cents and preserves PostgreSQL precision
+  ---
+  duration_ms: 5.5235
+  type: 'test'
+  ...
+# Subtest: overlapping menu/dialog locks restore scrolling only after both release
+ok 23 - overlapping menu/dialog locks restore scrolling only after both release
+  ---
+  duration_ms: 2.4076
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1547.9791
