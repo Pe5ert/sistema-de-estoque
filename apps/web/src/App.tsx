@@ -12,6 +12,7 @@ import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
 import { motionDelay } from './motion';
 import { ThemeToggle } from './Theme';
+import { GlobalSearch } from './GlobalSearch';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
@@ -135,7 +136,7 @@ function Shell() {
             <ChevronRight size={15} aria-hidden="true" />
             <strong>{current.label}</strong>
           </div>
-          <ThemeToggle />
+          <div className="topbar-actions"><GlobalSearch /><ThemeToggle /></div>
         </header>
         <main className="main-content" id="main-content" tabIndex={-1}>
           <div className="page-heading">

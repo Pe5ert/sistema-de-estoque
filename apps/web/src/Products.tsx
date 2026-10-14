@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronRight, Pencil, Plus, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { stockStatus, dateLabel, reasonLabels, typeLabels } from './inventory-model';
@@ -21,7 +21,10 @@ export function Products() {
   const search = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   const statusFilter = params.get('stock') ?? '';
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const requestedDetail = params.get('detail');
+  const [selectedId, setSelectedId] = useState<string | null>(requestedDetail);
+  useEffect(() => { setSelectedId(requestedDetail); }, [requestedDetail]);
+  const closeDetail = () => { setSelectedId(null); if (requestedDetail) setParams(previous => { const next = new URLSearchParams(previous); next.delete('detail'); return next; }, { replace: true }); };
   const [replenish, setReplenish] = useState<string[]>([]);
   const selectForPurchase = statusFilter === 'attention' && hasPermission(currentUser?.role, 'purchase.manage');
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -38,7 +41,7 @@ export function Products() {
 
   return (
     <div className="page-stack">
-      <div className="catalog-actions"><div className="inline-actions"><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link>{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}{hasPermission(currentUser?.role, 'category.manage') && <CategoryManager onOpen={() => setSelectedId(null)} />}</div></div>
+      <div className="catalog-actions"><div className="inline-actions"><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link>{canImportProducts(currentUser?.role) && <Link className="secondary-button" to="/products/import">Importar planilha</Link>}{hasPermission(currentUser?.role, 'category.manage') && <CategoryManager onOpen={closeDetail} />}</div></div>
       <section className="list-section" aria-labelledby="catalog-title">
         <div className="list-heading catalog-heading"><h2 id="catalog-title" className="sr-only">Produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
         <div className="filter-bar">
@@ -72,7 +75,7 @@ export function Products() {
         </DataState>
         <div className="table-note"><span className="meter-legend"><i /> A marca na barra indica o mínimo.</span><span>Preços não informados aparecem como —.</span></div>
       </section>
-      {selectedId && <ProductDrawer id={selectedId} close={() => setSelectedId(null)} />}
+      {selectedId && <ProductDrawer id={selectedId} close={closeDetail} />}
     </div>
   );
 }
