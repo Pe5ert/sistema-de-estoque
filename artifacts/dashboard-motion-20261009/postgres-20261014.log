@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: real PostgreSQL operational flow and concurrent exits
+    # Subtest: create/edit/reload, uniqueness, movement audit, rollback, aggregation and logout persistence
+    ok 1 - create/edit/reload, uniqueness, movement audit, rollback, aggregation and logout persistence
+      ---
+      duration_ms: 881.6893
+      type: 'test'
+      ...
+    # Subtest: ten concurrent withdrawals exhaust stock exactly, with no audit for rejected requests
+    ok 2 - ten concurrent withdrawals exhaust stock exactly, with no audit for rejected requests
+      ---
+      duration_ms: 468.6369
+      type: 'test'
+      ...
+    # Subtest: concurrent fractional withdrawals preserve Decimal balance and audit chain
+    ok 3 - concurrent fractional withdrawals preserve Decimal balance and audit chain
+      ---
+      duration_ms: 251.1598
+      type: 'test'
+      ...
+    # Subtest: dashboard returns complete periods, São Paulo boundaries, record counts and category totals
+    ok 4 - dashboard returns complete periods, São Paulo boundaries, record counts and category totals
+      ---
+      duration_ms: 398.3609
+      type: 'test'
+      ...
+    # Subtest: operator can create with initial stock, but direct edits/categories/adjustments cannot write
+    ok 5 - operator can create with initial stock, but direct edits/categories/adjustments cannot write
+      ---
+      duration_ms: 119.1754
+      type: 'test'
+      ...
+    1..5
+ok 1 - real PostgreSQL operational flow and concurrent exits
+  ---
+  duration_ms: 4509.3824
+  type: 'suite'
+  ...
+1..1
+# tests 5
+# suites 1
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7633.3076

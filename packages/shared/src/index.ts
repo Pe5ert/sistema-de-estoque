@@ -49,6 +49,8 @@ export interface MovementRecord {
 }
 export interface Page<T> { items: T[]; total: number; page: number; limit: number; }
 export interface DashboardSummary {
+  periodDays: number; from: string; to: string;
+  categories: { id: string; name: string; products: number }[];
   units: string; products: number; normal: number; low: number; out: number;
   costValue: string; productsWithoutCost: number; priorities: ProductRecord[];
   recent: MovementRecord[]; today: { entries: number; exits: number; adjustments: number };

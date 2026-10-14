@@ -5,7 +5,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PermissionsGuard, RequirePermission } from '../auth/permissions.guard';
 import type { UserResponseDto } from '../auth/user-response.dto';
-import { CategoryInput, CategoryPatch, LookupQuery, MovementInput, MovementQuery, ProductCreate, ProductPatch, ProductQuery } from './inventory.dto';
+import { CategoryInput, CategoryPatch, DashboardQuery, LookupQuery, MovementInput, MovementQuery, ProductCreate, ProductPatch, ProductQuery } from './inventory.dto';
 import { InventoryService } from './inventory.service';
 import { DashboardService } from './dashboard.service';
 
@@ -43,5 +43,5 @@ export class MovementsController {
 @ApiTags('dashboard') @ApiCookieAuth('stock_session') @Controller('dashboard') @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DashboardController {
   constructor(@Inject(DashboardService) private readonly service: DashboardService) {}
-  @Get('summary') @RequirePermission('dashboard.read') summary() { return this.service.summary(); }
+  @Get('summary') @RequirePermission('dashboard.read') summary(@Query(input(DashboardQuery)) query: DashboardQuery) { return this.service.summary(query.days); }
 }

@@ -1,0 +1,50 @@
+[
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after update 35.600",
+    "timestamp": "2026-10-09T18:19:32.643Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after update 34.000",
+    "timestamp": "2026-10-09T18:19:32.833Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after mount 0.600",
+    "timestamp": "2026-10-09T18:19:42.633Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after update 30.800",
+    "timestamp": "2026-10-09T18:19:42.759Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after mount 0.600",
+    "timestamp": "2026-10-09T18:19:43.445Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after update 30.400",
+    "timestamp": "2026-10-09T18:19:43.524Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after mount 0.500",
+    "timestamp": "2026-10-09T18:19:44.087Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after update 30.100",
+    "timestamp": "2026-10-09T18:19:44.157Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791569972425"
+  }
+]

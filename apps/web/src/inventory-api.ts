@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CategoryRecord, DashboardSummary, MovementRecord, Page, ProductRecord } from '@stock/shared';
 import { apiClient } from './lib/api';
 import { presentProduct } from './inventory-model';
@@ -21,7 +21,7 @@ export function useProduct(id?: string | null) {
 export function useCategories() { return useQuery({ queryKey: ['categories'], queryFn: ({ signal }) => apiClient<CategoryRecord[]>('/categories', { signal }) }); }
 export function useMovements(filters: Filters, enabled = true) { return useQuery({ queryKey: ['movements', filters], enabled, queryFn: ({ signal }) => apiClient<Page<MovementRecord>>('/stock-movements?' + queryString(filters), { signal }) }); }
 export function useMovement(id?: string | null) { return useQuery({ queryKey: ['movement', id], enabled: Boolean(id), queryFn: ({ signal }) => apiClient<MovementRecord>('/stock-movements/' + id, { signal }) }); }
-export function useDashboard() { return useQuery({ queryKey: ['dashboard'], queryFn: ({ signal }) => apiClient<DashboardSummary>('/dashboard/summary', { signal }) }); }
+export function useDashboard(days = 7) { return useQuery({ queryKey: ['dashboard', days], placeholderData: keepPreviousData, queryFn: ({ signal }) => apiClient<DashboardSummary>('/dashboard/summary?days=' + days, { signal }) }); }
 export function useInventoryMutation<T, V>(perform: (input: V) => Promise<T>) {
   const client = useQueryClient();
   return useMutation({ mutationFn: perform, onSuccess: async () => {

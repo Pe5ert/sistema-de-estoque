@@ -1,0 +1,68 @@
+[
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 62.100",
+    "timestamp": "2026-10-09T18:24:06.967Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246336"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 33.700",
+    "timestamp": "2026-10-09T18:24:07.163Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246336"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 31.300",
+    "timestamp": "2026-10-09T18:24:07.217Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final nested-update 31.100",
+    "timestamp": "2026-10-09T18:24:07.251Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 23.200",
+    "timestamp": "2026-10-09T18:24:07.280Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.400",
+    "timestamp": "2026-10-09T18:24:16.080Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 28.000",
+    "timestamp": "2026-10-09T18:24:16.148Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.400",
+    "timestamp": "2026-10-09T18:24:16.765Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 38.100",
+    "timestamp": "2026-10-09T18:24:16.862Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.500",
+    "timestamp": "2026-10-09T18:24:17.565Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 28.600",
+    "timestamp": "2026-10-09T18:24:17.650Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  }
+]

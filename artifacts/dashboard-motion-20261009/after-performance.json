@@ -1,0 +1,164 @@
+[
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0.000615973360885874",
+    "timestamp": "2026-10-09T18:23:30.962Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 1.300",
+    "timestamp": "2026-10-09T18:23:39.096Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 16.200",
+    "timestamp": "2026-10-09T18:23:39.150Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0",
+    "timestamp": "2026-10-09T18:23:40.029Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:43.681Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 20.300",
+    "timestamp": "2026-10-09T18:23:43.790Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:44.384Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 20.100",
+    "timestamp": "2026-10-09T18:23:44.445Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:44.960Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 17.500",
+    "timestamp": "2026-10-09T18:23:45.018Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0",
+    "timestamp": "2026-10-09T18:23:45.857Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 62.100",
+    "timestamp": "2026-10-09T18:24:06.967Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246336"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 33.700",
+    "timestamp": "2026-10-09T18:24:07.163Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246336"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 31.300",
+    "timestamp": "2026-10-09T18:24:07.217Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final nested-update 31.100",
+    "timestamp": "2026-10-09T18:24:07.251Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 23.200",
+    "timestamp": "2026-10-09T18:24:07.280Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.400",
+    "timestamp": "2026-10-09T18:24:16.080Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 28.000",
+    "timestamp": "2026-10-09T18:24:16.148Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.400",
+    "timestamp": "2026-10-09T18:24:16.765Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 38.100",
+    "timestamp": "2026-10-09T18:24:16.862Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final mount 0.500",
+    "timestamp": "2026-10-09T18:24:17.565Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 28.600",
+    "timestamp": "2026-10-09T18:24:17.650Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 21.900",
+    "timestamp": "2026-10-09T18:24:18.010Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 28.400",
+    "timestamp": "2026-10-09T18:24:18.067Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0",
+    "timestamp": "2026-10-09T18:24:18.503Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 14.800",
+    "timestamp": "2026-10-09T18:24:44.396Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-after-final update 11.800",
+    "timestamp": "2026-10-09T18:24:44.819Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570246470"
+  }
+]

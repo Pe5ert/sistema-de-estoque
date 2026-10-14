@@ -5,7 +5,8 @@ import { dateLabel, isExit, presentProduct, reasonLabels, typeLabels, unitCodes 
 import { ProductIdentity, MovementAmount } from './inventory-ui';
 import { DataState, Pagination } from './data-controls';
 import { DetailDrawer, openFromRow } from './DetailDrawer';
-import type { MovementReason, MovementType } from '@stock/shared';
+import { movementTypes, type MovementReason, type MovementType } from '@stock/shared';
+import { calendarDate } from './dashboard-model';
 import { MovementWorkbench } from './MovementWorkbench';
 import { FieldError } from './feedback';
 import { useSearchParams } from 'react-router-dom';
@@ -15,9 +16,9 @@ export function HistoryPage() { const [params] = useSearchParams(); return <Hist
 
 function HistoryTable({ compact = false }: { compact?: boolean }) {
   const [params, setParams] = useSearchParams();
-  const [filters, setFilters] = useState<Filters>({ page: 1, limit: 20, search: compact ? '' : params.get('q') ?? '', reference: compact ? '' : params.get('reference') ?? '' });
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [filters, setFilters] = useState<Filters>({ page: 1, limit: 20, search: compact ? '' : params.get('q') ?? '', reference: compact ? '' : params.get('reference') ?? '', type: !compact && movementTypes.includes(params.get('type') as MovementType) ? params.get('type')! : '' });
+  const [from, setFrom] = useState(compact ? '' : calendarDate(params.get('from')));
+  const [to, setTo] = useState(compact ? '' : calendarDate(params.get('to')));
   const endDate = useRef<HTMLInputElement>(null);
   const invalidRange = Boolean(from && to && from > to);
   const [selected, setSelected] = useState<string | null>(null);

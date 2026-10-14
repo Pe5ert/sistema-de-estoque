@@ -1,0 +1,68 @@
+[
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0.000615973360885874",
+    "timestamp": "2026-10-09T18:23:30.962Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 1.300",
+    "timestamp": "2026-10-09T18:23:39.096Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 16.200",
+    "timestamp": "2026-10-09T18:23:39.150Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0",
+    "timestamp": "2026-10-09T18:23:40.029Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:43.681Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 20.300",
+    "timestamp": "2026-10-09T18:23:43.790Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:44.384Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 20.100",
+    "timestamp": "2026-10-09T18:23:44.445Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final mount 0.500",
+    "timestamp": "2026-10-09T18:23:44.960Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_PERF motion-baseline-final update 17.500",
+    "timestamp": "2026-10-09T18:23:45.018Z",
+    "url": "http://localhost:5173/src/Overview.tsx?t=1791570209031"
+  },
+  {
+    "level": "info",
+    "message": "DASHBOARD_CLS first-second 0",
+    "timestamp": "2026-10-09T18:23:45.857Z",
+    "url": "http://localhost:5173/src/main.tsx?t=1791570209034"
+  }
+]

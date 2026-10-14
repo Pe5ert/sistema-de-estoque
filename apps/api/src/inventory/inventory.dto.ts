@@ -4,6 +4,9 @@ import { PartialType } from '@nestjs/swagger';
 import { movementReasons, movementTypes, productUnits } from '@stock/shared';
 
 const trim = ({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value;
+export class DashboardQuery {
+  @Type(() => Number) @IsInt() @IsIn([7, 30, 90]) days = 7;
+}
 export class PageQuery {
   @Type(() => Number) @IsInt() @Min(1) @Max(1000000) page = 1;
   @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;

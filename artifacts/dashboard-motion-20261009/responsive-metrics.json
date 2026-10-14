@@ -1,0 +1,20 @@
+[
+  {
+    "chartHeight": 512,
+    "height": 900,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "chartHeight": 512,
+    "height": 768,
+    "overflow": false,
+    "width": 1024
+  },
+  {
+    "chartHeight": 604.5,
+    "height": 844,
+    "overflow": false,
+    "width": 390
+  }
+]

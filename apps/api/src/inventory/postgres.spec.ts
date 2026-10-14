@@ -174,6 +174,39 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     assert.deepEqual(audit.map(record => record.resultingStock.toString()).sort(), ['0', '0.1', '0.2']);
     assert.equal((await db.product.findUniqueOrThrow({ where: { id: product.id } })).stock.toString(), '0');
   });
+  test('dashboard returns complete periods, São Paulo boundaries, record counts and category totals', async () => {
+    for (const days of [0, 8, 31, 91, 7.5]) assert.equal((await request('/dashboard/summary?days=' + days)).status, 400);
+    const snapshots = await Promise.all([7, 30, 90].map(async days => await (await request('/dashboard/summary?days=' + days)).json() as DashboardSummary));
+    const response = await request('/products', { sku: tag + '-periods', name: 'Dashboard period QA', categoryId, unit: 'METER', minimumStock: '0' });
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    for (const [index, offset] of [0, 10, 40, 90].entries()) {
+      const movement = await request('/stock-movements', { productId: product.id, type: 'ENTRY', reason: 'OTHER', quantity: String((index + 1) * 100) });
+      assert.equal(movement.status, 201);
+      const record = await movement.json() as MovementRecord;
+      // UTC 03:00 is the first instant of the local calendar day. Only UUID fixtures are changed.
+      const date = new Date(snapshots[0].to + 'T03:00:00Z'); date.setUTCDate(date.getUTCDate() - offset);
+      await db.stockMovement.update({ where: { id: record.id }, data: { createdAt: date } });
+    }
+    for (const [index, period] of [7, 30, 90].entries()) {
+      const summary = await (await request('/dashboard/summary?days=' + period)).json() as DashboardSummary;
+      assert.equal(summary.periodDays, period); assert.equal(summary.days.length, period);
+      assert.equal(summary.from, summary.days[0].date); assert.equal(summary.to, summary.days.at(-1)!.date);
+      assert.equal(summary.days.reduce((sum, day) => sum + day.entryRecords, 0) - snapshots[index].days.reduce((sum, day) => sum + day.entryRecords, 0), index + 1);
+      assert.equal(summary.categories.reduce((sum, category) => sum + category.products, 0), summary.products);
+      assert(summary.days.some(day => day.entryRecords === 0 && day.exitRecords === 0));
+      const history = await (await request('/stock-movements?' + new URLSearchParams({ productId: product.id, type: 'ENTRY', from: summary.from + 'T03:00:00.000Z', to: new Date(new Date(summary.to + 'T03:00:00Z').getTime() + 86400000 - 1).toISOString() }))).json() as { total: number };
+      assert.equal(history.total, index + 1);
+    }
+    const start = new Date(snapshots[0].from + 'T03:00:00Z');
+    const edge = await request('/stock-movements', { productId: product.id, type: 'EXIT', reason: 'OTHER', quantity: '1' });
+    const record = await edge.json() as MovementRecord;
+    await db.stockMovement.update({ where: { id: record.id }, data: { createdAt: new Date(start.getTime() - 1) } });
+    const before = await (await request('/dashboard/summary')).json() as DashboardSummary;
+    await db.stockMovement.update({ where: { id: record.id }, data: { createdAt: start } });
+    const after = await (await request('/dashboard/summary')).json() as DashboardSummary;
+    assert.equal(after.days[0].exitRecords - before.days[0].exitRecords, 1);
+  });
   test('operator can create with initial stock, but direct edits/categories/adjustments cannot write', async () => {
     const response = await request('/products', { sku: tag + '-operator', name: 'Operator creation', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '5' } }, 'POST', secondCookie);
     assert.equal(response.status, 201);
