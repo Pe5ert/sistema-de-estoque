@@ -165,7 +165,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
       {confirmingLeave ? <ConfirmDialog title="Descartar o preenchimento?" description={busy ? 'Aguarde o produto ser salvo.' : 'As alterações não salvas serão perdidas.'} confirmLabel="Descartar e sair" cancel={stay} confirm={discard} busy={busy} /> : <>
         <button type="button" className="text-button cancel-button" onClick={cancel} disabled={busy}>Cancelar</button>
         <span className="session-note">Alterações gravadas ao salvar</span>
-        <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>
+        <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" aria-busy={busy && savingAction === 'another'} disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" aria-busy={busy && savingAction === 'save'} disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>
       </>}
     </div>
   </form>;

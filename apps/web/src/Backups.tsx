@@ -64,7 +64,7 @@ function BackupsContent() {
       <div><h2 id="backup-create-title"><HardDrive size={20} aria-hidden="true" />Cópia completa do estoque</h2>
         <p>Inclui produtos, categorias, saldos, usuários e todo o histórico registrado até o momento da cópia.</p>
         <span>O administrador da sua empresa cria, baixa e guarda as cópias do banco de dados da empresa.</span></div>
-      <button className="primary-button" type="button" disabled={query.isPending || Boolean(query.error) || create.isPending || running} onClick={() => create.mutate()}>
+      <button className="primary-button" type="button" aria-busy={create.isPending || Boolean(running)} disabled={query.isPending || Boolean(query.error) || create.isPending || running} onClick={() => create.mutate()}>
         <Plus size={16} aria-hidden="true" />{create.isPending || running ? 'Gerando backup…' : 'Criar backup'}</button>
     </section>
     <details className="backup-restore-guide">
@@ -123,7 +123,7 @@ function ScheduleForm({ schedule, timeZone, onSaved }: { schedule: Schedule; tim
         <label className="form-field">Frequência<select value={draft.frequency} disabled={mutation.isPending} onChange={event => change({ frequency: event.target.value as Schedule['frequency'] })}><option value="MONTHLY">Mensal</option><option value="WEEKLY">Semanal</option></select></label>
         {draft.frequency === 'WEEKLY' ? <label className="form-field">Dia da semana<select value={draft.weekday} disabled={mutation.isPending} onChange={event => change({ weekday: Number(event.target.value) })}>{weekdays.map((label, day) => <option key={day} value={day}>{label}</option>)}</select></label> : <div className="backup-day"><span>Dia do mês</span><strong>Primeiro dia</strong></div>}
         <label className="form-field">Horário<input type="time" required value={draft.hour} disabled={mutation.isPending} onChange={event => change({ hour: event.target.value })} /></label>
-        <button type="submit" className="secondary-button" disabled={!changed || mutation.isPending}>{mutation.isPending ? 'Salvando…' : 'Salvar agendamento'}</button>
+        <button type="submit" className="secondary-button" disabled={!changed || mutation.isPending} aria-busy={mutation.isPending}>{mutation.isPending ? 'Salvando…' : 'Salvar agendamento'}</button>
       </div>
       <p className="backup-schedule-note">{schedule.enabled ? (schedule.frequency === 'MONTHLY' ? 'Todo primeiro dia do mês' : `Toda semana: ${weekdays[schedule.weekday]}`) + `, às ${schedule.hour} (${timeZone}).` : 'A geração manual continua disponível.'} O servidor precisa estar em execução. Se ficar desligado, a cópia pendente será gerada ao reiniciar.</p>
       {changed && <Alert tone="warning" title="Alterações ainda não salvas." />}

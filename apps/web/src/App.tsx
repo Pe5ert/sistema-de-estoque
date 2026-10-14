@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
   Boxes, ChevronRight, ClipboardCheck, HardDrive, History, LayoutDashboard, Menu, Package, X,
 } from 'lucide-react';
-import { Link, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import { LoginPage } from './auth/LoginPage';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { UserSession } from './auth/UserSession';
 import { Overview } from './Overview';
 import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
+import { motionDelay } from './motion';
 import { ThemeToggle } from './Theme';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
@@ -37,9 +38,25 @@ const navigation = [
 function Shell() {
   const { currentUser } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  useEffect(() => {
+    if (menuOpen) { setMenuVisible(true); return; }
+    const timer = window.setTimeout(() => setMenuVisible(false), motionDelay(180));
+    return () => window.clearTimeout(timer);
+  }, [menuOpen]);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const location = useLocation();
+  const navigationType = useNavigationType();
+  const navigationTypeRef = useRef(navigationType);
+  navigationTypeRef.current = navigationType;
+  const positions = useRef(new Map<string, number>());
+  useLayoutEffect(() => {
+    const position = navigationTypeRef.current === 'POP' ? positions.current.get(location.pathname) ?? 0 : 0;
+    window.scrollTo({ top: position, behavior: 'instant' });
+    document.getElementById('main-content')?.focus({ preventScroll: true });
+    return () => { positions.current.set(location.pathname, window.scrollY); };
+  }, [location.pathname]);
   const current = location.pathname === '/products/import'
     ? { path: '/products', label: 'Importar produtos' }
     : location.pathname === '/products/new'
@@ -88,7 +105,7 @@ function Shell() {
     <div className="app-layout">
       <BackupsFeedbackMonitor />
       <a className="skip-link" href="#main-content">Ir para o conteúdo</a>
-      {menuOpen && <button className="sidebar-backdrop" type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
+      {menuVisible && <button className={'sidebar-backdrop' + (!menuOpen ? ' is-closing' : '')} type="button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
       <aside ref={sidebar} className={'sidebar' + (menuOpen ? ' sidebar-open' : '')} id="primary-sidebar" aria-label="Áreas de trabalho">
         <Link className="brand" to="/" onClick={() => setMenuOpen(false)} aria-label="GAVYO Estoque, visão geral">
           <span className="brand-mark" aria-hidden="true">G</span>
@@ -124,7 +141,7 @@ function Shell() {
           <div className="page-heading">
             <h1>{current.label}</h1>
           </div>
-          <Outlet />
+          <div className="route-surface" key={location.pathname}><Outlet /></div>
         </main>
       </div>
     </div>

@@ -29,5 +29,5 @@ export function ThemeToggle() {
   if (!context) throw new Error('ThemeProvider ausente.');
   const light = context.theme === 'light';
   const label = light ? 'Ativar modo escuro' : 'Ativar modo claro';
-  return <button type="button" className="secondary-button theme-toggle" onClick={context.toggle} aria-label={label} title={label}>{light ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}<span>{light ? 'Modo escuro' : 'Modo claro'}</span></button>;
+  return <button type="button" className="secondary-button theme-toggle" onClick={context.toggle} aria-label={label} title={label}><span className="theme-icon" key={context.theme}>{light ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}</span><span>{light ? 'Modo escuro' : 'Modo claro'}</span></button>;
 }

@@ -7,11 +7,12 @@ export function ProductThumbnail({ imageUrl, name, large = false }: {
   imageUrl?: string | null; name: string; large?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const hasImage = Boolean(imageUrl && failedUrl !== imageUrl);
   return (
-    <span className={'product-thumbnail' + (large ? ' product-thumbnail-large' : '')}>
+    <span className={'product-thumbnail' + (large ? ' product-thumbnail-large' : '') + (hasImage && loadedUrl !== imageUrl ? ' image-loading' : '')}>
       {hasImage
-        ? <img src={imageUrl!} alt={name} loading="lazy" onError={() => setFailedUrl(imageUrl!)} />
+        ? <img src={imageUrl!} alt={name} loading="lazy" className={loadedUrl === imageUrl ? 'image-ready' : 'image-pending'} onLoad={() => setLoadedUrl(imageUrl!)} onError={() => setFailedUrl(imageUrl!)} />
         : <span role="img" aria-label={name + ': sem imagem'} className="thumbnail-placeholder"><ImageOff size={large ? 30 : 19} aria-hidden="true" /></span>}
     </span>
   );

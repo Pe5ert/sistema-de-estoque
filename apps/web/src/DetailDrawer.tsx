@@ -1,12 +1,25 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { motionDelay } from './motion';
 
-export function DetailDrawer({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
+export function DetailDrawer({ title, close, children, busy = false }: { title: string; close: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode); busy?: boolean }) {
   const [host] = useState(() => document.createElement('div'));
   const panel = useRef<HTMLElement>(null);
   const closeRef = useRef(close);
   closeRef.current = close;
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
+  const [closing, setClosing] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  const requestClose = () => {
+    if (busyRef.current || timer.current !== undefined) return;
+    setClosing(true);
+    timer.current = window.setTimeout(() => closeRef.current(), motionDelay(160));
+  };
+  const requestRef = useRef(requestClose);
+  requestRef.current = requestClose;
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   useLayoutEffect(() => { document.body.append(host); return () => host.remove(); }, [host]);
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -22,7 +35,7 @@ export function DetailDrawer({ title, close, children }: { title: string; close:
       if (event.key === 'Escape') {
         // Let a native select consume its first Escape before closing the containing form.
         if (event.defaultPrevented || (CSS.supports('selector(select:open)') && panel.current?.querySelector('select:open'))) return;
-        event.preventDefault(); closeRef.current();
+        event.preventDefault(); requestRef.current();
       }
       if (event.key !== 'Tab') return;
       const nodes = controls();
@@ -43,7 +56,7 @@ export function DetailDrawer({ title, close, children }: { title: string; close:
       queueMicrotask(() => { if (!panel.current?.isConnected && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }); });
     };
   }, []);
-  return createPortal(<><div className="drawer-backdrop" aria-hidden="true" /><aside ref={panel} tabIndex={-1} className="detail-drawer" role="dialog" aria-modal="true" aria-label={title}><div className="detail-header"><span className="block-label">{title}</span><button className="icon-button" aria-label="Fechar detalhes" type="button" onClick={close}><X size={20} aria-hidden="true" /></button></div><div className="detail-content">{children}</div></aside></>, host);
+  return createPortal(<><div className={'drawer-backdrop' + (closing ? ' is-closing' : '')} aria-hidden="true" /><aside ref={panel} tabIndex={-1} className={'detail-drawer' + (closing ? ' is-closing' : '')} role="dialog" aria-modal="true" aria-label={title} aria-busy={busy}><div className="detail-header"><span className="block-label">{title}</span><button className="icon-button" aria-label="Fechar detalhes" type="button" disabled={busy || closing} onClick={requestClose}><X size={20} aria-hidden="true" /></button></div><div className="detail-content" inert={closing || undefined}>{typeof children === 'function' ? children(requestClose) : children}</div></aside></>, host);
 }
 export function openFromRow(event: { target: EventTarget | null }, open: () => void) {
   if (event.target instanceof Element && event.target.closest('button,a,input,select,textarea')) return;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CircleCheck, Info, TriangleAlert, CircleAlert, X } from 'lucide-react';
 import { DetailDrawer } from './DetailDrawer';
+import { BusyIndicator, motionDelay } from './motion';
 import { enqueueFeedback, feedbackDurations, visibleToastLimit, type FeedbackTone } from './feedback-model';
 import { FeedbackContext, type FeedbackMessage as Message, type FeedbackAction as Action } from './feedback-context';
 export { useFeedback } from './feedback-context';
@@ -33,6 +34,12 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastItem({ message, dismiss }: { message: Toast; dismiss: (id: number) => void }) {
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (!closing) return;
+    const timer = window.setTimeout(() => dismiss(message.id), motionDelay(160));
+    return () => window.clearTimeout(timer);
+  }, [closing, dismiss, message.id]);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [hovered, setHovered] = useState(false), [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(document.hidden);
@@ -55,7 +62,7 @@ function ToastItem({ message, dismiss }: { message: Toast; dismiss: (id: number)
   useEffect(() => {
     if (!remaining.current || hovered || focused || hidden || modalOpen) return;
     const start = Date.now();
-    const timer = window.setTimeout(() => dismiss(message.id), remaining.current);
+    const timer = window.setTimeout(() => setClosing(true), remaining.current);
     return () => { window.clearTimeout(timer); remaining.current = Math.max(1, remaining.current - (Date.now() - start)); };
   }, [dismiss, message.id, hovered, focused, hidden, modalOpen]);
   const Icon = icons[message.tone];
@@ -63,13 +70,13 @@ function ToastItem({ message, dismiss }: { message: Toast; dismiss: (id: number)
     const previous = returnFocus.current;
     if (previous?.isConnected) previous.focus({ preventScroll: true });
     else (document.getElementById('main-content') ?? document.querySelector<HTMLElement>('input'))?.focus({ preventScroll: true });
-    dismiss(message.id);
+    setClosing(true);
   };
-  return <div className={'feedback toast feedback-' + message.tone} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) returnFocus.current = event.relatedTarget instanceof HTMLElement ? event.relatedTarget : null; setFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); close(); } }}>
+  return <div className={'feedback toast feedback-' + message.tone + (closing ? ' is-closing' : '')} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) returnFocus.current = event.relatedTarget instanceof HTMLElement ? event.relatedTarget : null; setFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); close(); } }}>
     <Icon className="feedback-icon" size={19} aria-hidden="true" />
     <div className="feedback-copy"><div><strong>{message.title}</strong>{message.description && <p>{message.description}</p>}</div>
-      {message.action && <button className="text-button" type="button" onClick={() => { message.action!.run(); dismiss(message.id); }}>{message.action.label}</button>}
-    </div><button type="button" className="icon-button feedback-close" aria-label={'Fechar aviso: ' + message.title} onClick={close}><X size={17} aria-hidden="true" /></button>
+      {message.action && <button className="text-button" type="button" disabled={closing} onClick={() => { message.action!.run(); setClosing(true); }}>{message.action.label}</button>}
+    </div><button type="button" className="icon-button feedback-close" aria-label={'Fechar aviso: ' + message.title} disabled={closing} onClick={close}><X size={17} aria-hidden="true" /></button>
   </div>;
 }
 
@@ -83,5 +90,5 @@ export function FieldError({ id, children }: { id?: string; children: ReactNode 
 }
 
 export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Continuar preenchendo', confirm, cancel, busy = false, confirmVariant = 'destructive', tone }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; confirm: () => void; cancel: () => void; busy?: boolean; confirmVariant?: 'primary' | 'destructive'; tone?: 'primary' | 'danger' }) {
-  return <DetailDrawer title={title} close={cancel}><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" onClick={cancel}>{cancelLabel}</button><button type="button" className={(tone ? (tone === 'primary' ? 'primary' : 'destructive') : confirmVariant) + '-button'} disabled={busy} onClick={confirm}>{confirmLabel}</button></div></DetailDrawer>;
+  return <DetailDrawer title={title} close={cancel} busy={busy}>{requestClose => <><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" disabled={busy} onClick={requestClose}>{cancelLabel}</button><button type="button" className={(tone ? (tone === 'primary' ? 'primary' : 'destructive') : confirmVariant) + '-button'} disabled={busy} aria-busy={busy} onClick={confirm}>{busy && <BusyIndicator />}{busy ? 'Processando…' : confirmLabel}</button></div></>}</DetailDrawer>;
 }

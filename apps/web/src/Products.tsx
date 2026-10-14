@@ -50,7 +50,7 @@ export function Products() {
         </div>
         {categoriesQuery.error && <Alert tone="error" title="Não foi possível carregar categorias." action={{ label: 'Tentar novamente', run: () => { void categoriesQuery.refetch(); } }} />}
         {selectForPurchase && <div className="procurement-replenish"><span>Selecione até 100 produtos para revisar uma compra. Quantidades e custos serão preenchidos no pedido.</span>{replenish.length > 0 && <><Link className="primary-button" to={'/purchases/new?products=' + replenish.join(',')}>Preparar pedido ({replenish.length})</Link><button type="button" className="text-button" onClick={() => setReplenish([])}>Limpar seleção</button></>}</div>}
-        <DataState pending={query.isPending} error={query.error} retry={query.refetch}>
+        <DataState pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}>
         <div className="table-frame">
           <table className="data-table product-table">
             <thead><tr><th scope="col">PRODUTO / SKU</th><th scope="col">DISPONÍVEL</th><th scope="col">MÍNIMO</th><th scope="col">PREÇO</th><th scope="col">SITUAÇÃO</th><th scope="col"><span className="sr-only">Detalhes</span></th></tr></thead>
@@ -68,7 +68,7 @@ export function Products() {
           </table>
           {filtered.length === 0 && <div className="empty-state" role="status"><Search size={24} aria-hidden="true" /><strong>Nenhum produto encontrado para estes filtros.</strong><p>Confira o nome ou SKU, ou limpe os filtros para ver o catálogo.</p><button type="button" className="secondary-button" onClick={() => setParams({})}>Limpar filtros</button></div>}
         </div>
-        <Pagination data={query.data} change={page => updateFilter('page', String(page))} />
+        <Pagination busy={query.isFetching} data={query.data} change={page => updateFilter('page', String(page))} />
         </DataState>
         <div className="table-note"><span className="meter-legend"><i /> A marca na barra indica o mínimo.</span><span>Preços não informados aparecem como —.</span></div>
       </section>
@@ -82,7 +82,7 @@ function ProductDrawer({ id, close }: { id: string; close: () => void }) {
   const query = useProduct(id);
   const movements = useMovements({ productId: id, limit: 5, page: 1 });
   const product = query.data;
-  return <DetailDrawer title="Identificação do produto" close={close}><DataState pending={query.isPending} error={query.error} retry={query.refetch}>{product && <>
+  return <DetailDrawer title="Identificação do produto" close={close}><DataState pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}>{product && <>
     <ProductThumbnail imageUrl={product.imageUrl} name={product.name} large /><h2>{product.name}</h2><p className="detail-meta">{product.sku} · {product.category}</p><Status {...stockStatus(product.stock, product.minimum)} />
     <dl className="detail-facts"><div><dt>Saldo atual</dt><dd>{product.record.stock} {product.unit}</dd></div><div><dt>Estoque mínimo</dt><dd>{product.record.minimumStock} {product.unit}</dd></div><div><dt>Custo</dt><dd>{product.costPrice == null ? 'Não informado' : currency.format(product.costPrice)}</dd></div><div><dt>Venda</dt><dd>{product.price == null ? 'Não informado' : currency.format(product.price)}</dd></div><div><dt>Código de barras</dt><dd>{product.barcode ?? 'Não informado'}</dd></div><div><dt>Cadastro</dt><dd>{product.active ? 'Ativo' : 'Inativo'}</dd></div></dl>
     {product.description && <p className="detail-meta">{product.description}</p>}{hasPermission(currentUser?.role, 'product.update') && <div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div>}<h3>Movimentações recentes</h3>

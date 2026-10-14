@@ -50,6 +50,83 @@ details[open] > :not(summary) { animation: disclosure-enter 180ms ease-out; }
 .procurement-search-results { animation: disclosure-enter 180ms ease-out; }
 @keyframes disclosure-enter { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Operational motion: stable content, truthful pending states, quiet feedback. */
+.busy-indicator, button[aria-busy="true"]:not(:has(.busy-indicator))::before, p[aria-busy="true"]::before {
+  content: ''; display: inline-block; width: 14px; height: 14px; flex: 0 0 14px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: busy-turn 750ms linear infinite; vertical-align: middle;
+}
+p[aria-busy="true"]::before { margin-right: 8px; }
+@keyframes busy-turn { to { transform: rotate(360deg); } }
+.data-loading { min-height: 260px; padding: 20px; color: var(--text-secondary); }
+.data-loading > span { display: flex; align-items: center; gap: 10px; }
+.loading-skeleton { margin-top: 18px; }
+.loading-skeleton > div { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+.loading-skeleton i { display: block; height: 12px; background: var(--surface-muted); border-radius: 2px; }
+.loading-skeleton i:first-child { width: 75%; }
+.data-state { position: relative; min-width: 0; }
+.data-update-status { position: absolute; top: 0; right: 0; z-index: 2; max-width: 100%; display: flex; gap: 8px; align-items: center; padding: 8px 14px; margin: 0; background: var(--accent-surface); color: var(--text-primary); font-size: 12px; }
+.data-content { min-width: 0; animation: content-reveal 160ms ease-out; }
+.data-content[inert] { opacity: .65; }
+@keyframes content-reveal { from { opacity: .65; } to { opacity: 1; } }
+.route-surface { min-width: 0; animation: page-enter 200ms ease-out; }
+/* Route entry owns movement; data refresh does not replay the page animation. */
+.main-content .page-stack, .dashboard-grid { animation: none; }
+.inline-alert, .operation-feedback, .image-url-field { animation: disclosure-enter 160ms ease-out; }
+.field-error { animation: content-reveal 140ms ease-out; }
+.form-field:has(.field-error) { scroll-margin-block: 24px; }
+.detail-drawer.is-closing { animation: drawer-leave 160ms ease-in forwards; pointer-events: none; }
+.drawer-backdrop.is-closing { animation: overlay-leave 160ms ease-in forwards; }
+@keyframes drawer-leave { to { opacity: 0; transform: translateX(12px); } }
+@keyframes overlay-leave { to { opacity: 0; } }
+.toast.is-closing { animation: toast-leave 160ms ease-in forwards; pointer-events: none; }
+@keyframes toast-leave { to { opacity: 0; transform: translateY(-4px); max-height: 0; padding-block: 0; margin-block: 0; border-width: 0; } }
+.toast { max-height: 800px; overflow: hidden; }
+.toast-stack { interpolate-size: allow-keywords; }
+.row-detail-action { transition: opacity 120ms ease-out, color 120ms; }
+.stock-meter > span { transition: width 200ms ease-out, background-color 150ms; }
+.procurement-order-line { animation: line-enter 180ms ease-out; transition: background-color 160ms; }
+.procurement-order-line:focus-within { background: var(--accent-surface); }
+.procurement-order-line.is-removing { animation: line-leave 160ms ease-in forwards; pointer-events: none; }
+@keyframes line-enter { from { opacity: 0; transform: translateY(-4px); background: var(--accent-surface); } to { opacity: 1; transform: translateY(0); } }
+@keyframes line-leave { to { opacity: 0; transform: translateX(4px); } }
+.physical-draft-row { background: var(--accent-surface); }
+.count-save-state { display: block; margin-top: 5px; color: var(--text-secondary); font-size: 11px; }
+.count-save-state, .physical-count-table tr { transition: background-color 150ms, color 150ms; }
+.image-loading { position: relative; background: var(--surface-muted); }
+.image-loading::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: 14px; height: 14px; margin: -7px; border: 2px solid var(--text-muted); border-right-color: transparent; border-radius: 50%; animation: busy-turn 750ms linear infinite; pointer-events: none; }
+.image-pending { opacity: 0; }
+.image-ready { opacity: 1; animation: content-reveal 180ms ease-out; }
+.nav-link::before { content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3px; background: var(--info); opacity: 0; transition: opacity 140ms; }
+.nav-link-active::before { opacity: 1; }
+.sidebar-backdrop { animation: overlay-enter 180ms ease-out; }
+.sidebar-backdrop.is-closing { animation: overlay-leave 180ms ease-in forwards; pointer-events: none; }
+.selected-product, .theme-icon { animation: disclosure-enter 160ms ease-out; }
+.theme-icon { display: inline-flex; }
+.field-feedback { min-height: 18px; }
+.field-feedback > :is(.field-error, .field-hint) { margin-top: 5px; }
+.lookup-matches { animation: disclosure-enter 160ms ease-out; }
+.scan-example { transition: background-color 160ms; }
+.movement-tooltip, .stock-chart-detail { animation: content-reveal 140ms ease-out; }
+body, .sidebar, .workspace, .topbar, .list-section, .history-section, .detail-drawer, .movement-chart-panel, .category-chart-panel { transition: background-color 180ms, border-color 180ms, color 180ms; }
+/* Native disclosure retains semantics; older engines keep the existing fade. */
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+  details { interpolate-size: allow-keywords; }
+  details::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size 180ms ease-out, opacity 140ms, content-visibility 180ms allow-discrete; }
+  details[open]::details-content { block-size: auto; opacity: 1; }
+}
+@media (max-width: 600px) {
+  .data-loading { padding: 16px; }
+  .loading-skeleton > div { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-surface, .data-content, .inline-alert, .operation-feedback, .image-url-field, .field-error, .procurement-order-line, .image-ready, .sidebar-backdrop, .movement-tooltip, .stock-chart-detail, .selected-product, .theme-icon, .lookup-matches { animation: none; }
+  .sidebar-backdrop.is-closing { animation: none; opacity: 0; }
+  .busy-indicator, button[aria-busy="true"]::before, p[aria-busy="true"]::before, .image-loading::after { animation: none; border-right-color: currentColor; }
+  .detail-drawer.is-closing, .drawer-backdrop.is-closing, .toast.is-closing, .procurement-order-line.is-removing { animation: none; opacity: 0; }
+  .stock-meter > span, .row-detail-action, details::details-content, body, .sidebar, .workspace, .topbar, .list-section, .history-section, .detail-drawer, .movement-chart-panel, .category-chart-panel { transition: none; }
+}
+
 /* Progressive enhancement preserves native form values, keyboard and mobile fallback. */
 @supports (appearance: base-select) and selector(select::picker(select)) {
   select:not([multiple]):not([size]), select:not([multiple]):not([size])::picker(select) { appearance: base-select; }

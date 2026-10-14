@@ -109,7 +109,7 @@ export function MovementWorkbench() {
         <h2 id="scan-title">{selected ? 'Produto identificado' : 'Localizar produto'}</h2>
         <form className="scan-lookup" onSubmit={(event) => { event.preventDefault(); void lookup(); }}>
           <label htmlFor="scan-code">SKU OU CÓDIGO DE BARRAS</label>
-          <div className="scan-input-wrap"><Barcode size={21} aria-hidden="true" /><input ref={codeInput} id="scan-code" value={code} readOnly={Boolean(selected)} disabled={mutation.isPending} onChange={(event) => { lookupVersion.current++; setLookupBusy(false); setCode(event.target.value); setMatches([]); setLookupState('waiting'); setLookupError(''); resetPreview(); }} placeholder="Bipar código ou digitar SKU" aria-invalid={lookupState === 'missing' || Boolean(lookupError)} aria-describedby="scan-feedback scan-hint" autoComplete="off" spellCheck={false} /><button disabled={Boolean(selected) || lookupBusy || mutation.isPending} type="submit" className="scan-submit">{lookupBusy ? 'Consultando…' : 'Localizar'} <ArrowRight size={17} aria-hidden="true" /></button></div>
+          <div className="scan-input-wrap"><Barcode size={21} aria-hidden="true" /><input ref={codeInput} id="scan-code" value={code} readOnly={Boolean(selected)} disabled={mutation.isPending} onChange={(event) => { lookupVersion.current++; setLookupBusy(false); setCode(event.target.value); setMatches([]); setLookupState('waiting'); setLookupError(''); resetPreview(); }} placeholder="Bipar código ou digitar SKU" aria-invalid={lookupState === 'missing' || Boolean(lookupError)} aria-describedby="scan-feedback scan-hint" autoComplete="off" spellCheck={false} /><button disabled={Boolean(selected) || lookupBusy || mutation.isPending} type="submit" className="scan-submit" aria-busy={lookupBusy}>{lookupBusy ? 'Consultando…' : 'Localizar'} <ArrowRight size={17} aria-hidden="true" /></button></div>
         </form>
         <p className={'scan-feedback' + (lookupState === 'missing' || lookupError ? ' scan-feedback-error' : '')} id="scan-feedback" role="status">
           {lookupError || (lookupBusy ? 'Consultando o código…' : lookupState === 'found' ? 'Produto encontrado. Confira a quantidade e o motivo.' : lookupState === 'missing' ? 'Código não encontrado. Confira a leitura ou consulte Produtos.' : lookupState === 'ambiguous' ? 'Este código identifica mais de um produto. Selecione o item abaixo.' : '')}
@@ -120,7 +120,7 @@ export function MovementWorkbench() {
       <div className="scan-example" aria-live="polite">
         {selected ? <>
 
-          <div className="selected-product"><ProductThumbnail imageUrl={selected.imageUrl} name={selected.name} /><span><strong>{selected.name}</strong><small>{selected.sku} · {selected.category}</small></span></div>
+          <div className="selected-product" key={selected.id}><ProductThumbnail imageUrl={selected.imageUrl} name={selected.name} /><span><strong>{selected.name}</strong><small>{selected.sku} · {selected.category}</small></span></div>
           <div className="scan-example-balance"><span>SALDO ATUAL</span><strong>{liveProduct?.stock} <small>{selected.unit}</small></strong></div>
           <StockMeter stock={liveProduct!.stock} minimum={liveProduct!.minimum} name={selected.name} /><Status {...stockStatus(liveProduct!.stock, liveProduct!.minimum)} />
         </> : <div className="scan-awaiting"><Barcode size={32} aria-hidden="true" /><strong>Identifique o item</strong></div>}

@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './auth';
+import { BusyIndicator } from '../motion';
 import { Alert } from '../feedback';
 
 export function SessionGate({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
-  if (auth.isLoading) return <main className="auth-state" role="status"><span className="block-label">GAVYO ESTOQUE</span><h1>Verificando sessão…</h1></main>;
+  if (auth.isLoading) return <main className="auth-state" role="status"><span className="block-label">GAVYO ESTOQUE</span><h1><BusyIndicator /> Verificando sessão…</h1></main>;
   if (auth.error && !auth.currentUser) return (
     <main className="auth-state">
       <span className="block-label">GAVYO ESTOQUE</span><h1>Não foi possível verificar sua sessão.</h1>

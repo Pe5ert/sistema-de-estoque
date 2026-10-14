@@ -8,8 +8,8 @@ export function Field({ id, label, hint, error, required, children }: {
 }) {
   return <div className={'form-field' + (error ? ' form-field-invalid' : '')}>
     <label htmlFor={id}>{label}{required && <span aria-hidden="true"> *</span>}</label>{children}
-    {hint && <span className="field-hint" id={id + '-hint'}>{hint}</span>}
-    {error && <FieldError id={id + '-error'}>{error}</FieldError>}
+    <div className="field-feedback">{hint && <span className="field-hint" id={id + '-hint'}>{hint}</span>}
+    {error && <FieldError id={id + '-error'}>{error}</FieldError>}</div>
   </div>;
 }
 
