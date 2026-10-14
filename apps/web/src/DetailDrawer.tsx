@@ -19,7 +19,11 @@ export function DetailDrawer({ title, close, children }: { title: string; close:
     const focusFirst = () => (controls()[0] ?? panel.current)?.focus();
     focusFirst();
     const key = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
+      if (event.key === 'Escape') {
+        // Let a native select consume its first Escape before closing the containing form.
+        if (event.defaultPrevented || (CSS.supports('selector(select:open)') && panel.current?.querySelector('select:open'))) return;
+        event.preventDefault(); closeRef.current();
+      }
       if (event.key !== 'Tab') return;
       const nodes = controls();
       const first = nodes[0], last = nodes[nodes.length - 1];

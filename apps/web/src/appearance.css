@@ -1,0 +1,88 @@
+/* Approved 2px geometry in both appearances; colors convey the same stock states. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --background: #f3f5f9;
+  --surface: #ffffff;
+  --surface-muted: #edf1f7;
+  --surface-strong: #f7f9fc;
+  --surface-elevated: #e7edf6;
+  --sidebar: #ffffff;
+  --border: #d4dce8;
+  --border-strong: #7c8aa0;
+  --text-primary: #1b2738;
+  --text-secondary: #425168;
+  --text-muted: #58677a;
+  --accent-surface: #e8eeff;
+  --scanner-surface: #e9efff;
+  --input-background: #ffffff;
+  --input-text: #1b2738;
+  --thumbnail-background: #edf1f7;
+  --thumbnail-placeholder: #64758c;
+  --success: #16724c;
+  --warning: #875015;
+  --danger: #aa2e3e;
+  --info: #3558bf;
+  --focus-ring: #375ae8;
+  --warning-surface: #fff4e4;
+  --danger-surface: #fff0f2;
+  --success-surface: #eaf6ef;
+  --danger-hover: #fce0e5;
+  --danger-pressed: #f4cdd5;
+  --interactive-hover: #e5ebf5;
+  --interactive-active: #dce5f5;
+  --selected-row: #e5ecff;
+  --overlay: #14263d66;
+  --drawer-backdrop: #14263d33;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23425168' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.hero-stock { --success: #a8dfc5; --warning: #ffcc9d; --danger: #ff9696; }
+.theme-toggle { min-height: 44px; flex-shrink: 0; gap: 8px; }
+.theme-toggle svg { transition: transform 180ms ease-out; }
+.physical-list-table td:last-child .text-button { white-space: nowrap; padding-inline: 8px; }
+.theme-toggle:hover svg { transform: rotate(-12deg); }
+.login-topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+:is(.primary-button, .secondary-button, .icon-button, .text-button) { transition: background-color 150ms, border-color 150ms, color 150ms, transform 120ms ease-out; }
+:is(.search-control, .select-control, .quantity-control, .form-field > input, .form-field > select, .form-field > textarea) { transition: background-color 150ms, border-color 150ms, box-shadow 150ms; }
+.select-control:focus-within, .form-field > select:focus-visible { box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 12%, transparent); }
+details > summary { transition: background-color 140ms, color 140ms; }
+details > summary:hover { color: var(--text-primary); background: var(--surface-muted); }
+details[open] > :not(summary) { animation: disclosure-enter 180ms ease-out; }
+.procurement-search-results { animation: disclosure-enter 180ms ease-out; }
+@keyframes disclosure-enter { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Progressive enhancement preserves native form values, keyboard and mobile fallback. */
+@supports (appearance: base-select) and selector(select::picker(select)) {
+  select:not([multiple]):not([size]), select:not([multiple]):not([size])::picker(select) { appearance: base-select; }
+  select:not([multiple]):not([size]) { background-image: none !important; padding-right: 12px !important; align-items: center; gap: 10px; }
+  select::picker-icon { color: var(--text-secondary); transition: transform 180ms ease-out; }
+  select:open::picker-icon { transform: rotate(180deg); }
+  select::picker(select) {
+    background: var(--surface); color: var(--text-primary);
+    border: 1px solid var(--border-strong); border-radius: var(--radius);
+    padding: 4px; box-shadow: 0 8px 24px #0002;
+    max-block-size: min(320px, 60dvh); overflow: auto;
+    min-inline-size: anchor-size(width); max-inline-size: calc(100vw - 24px);
+    opacity: 0; transform: translateY(-4px);
+    transition: opacity 180ms ease-out, transform 180ms ease-out, display 180ms allow-discrete, overlay 180ms allow-discrete;
+  }
+  select:open::picker(select) { opacity: 1; transform: translateY(0); }
+  @starting-style { select:open::picker(select) { opacity: 0; transform: translateY(-4px); } }
+  select option { min-height: 40px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); color: var(--text-primary); gap: 10px; white-space: normal; overflow-wrap: anywhere; transition: background-color 120ms, color 120ms; }
+  select option:hover, select option:focus { background: var(--interactive-hover); }
+  select option:checked { background: var(--accent-surface); color: var(--text-primary); font-weight: 650; }
+  select option:disabled { color: var(--text-muted); }
+  select option::checkmark { color: var(--info); margin-inline-start: auto; order: 1; }
+}
+@media (max-width: 600px) {
+  .theme-toggle { width: 44px; min-width: 44px; padding: 10px; justify-content: center; }
+  .theme-toggle > span { display: none; }
+  .login-topbar-actions { gap: 10px; }
+  .login-restricted { max-width: 140px; }
+  select option { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle svg, :is(.primary-button, .secondary-button, .icon-button, .text-button), :is(.search-control, .select-control, .quantity-control, .form-field > input, .form-field > select, .form-field > textarea), details > summary { transition: none; }
+  .theme-toggle:hover svg { transform: none; }
+  details[open] > :not(summary), .procurement-search-results { animation: none; }
+  @supports (appearance: base-select) { select::picker(select), select::picker-icon, select option { transition: none; } }
+}

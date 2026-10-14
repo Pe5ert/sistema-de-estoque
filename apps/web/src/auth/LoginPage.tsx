@@ -8,6 +8,7 @@ import { ApiError } from '../lib/api';
 import { useAuth } from './auth';
 import { SessionGate } from './ProtectedRoute';
 import { Alert, FieldError } from '../feedback';
+import { ThemeToggle } from '../Theme';
 
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().min(1, 'Informe seu e-mail.').email('Informe um e-mail válido.').max(180, 'Use até 180 caracteres.'),
@@ -40,7 +41,7 @@ export function LoginPage() {
       <div className="login-workspace">
         <header className="login-topbar">
           <div className="brand"><span className="brand-mark" aria-hidden="true">G</span><span className="brand-wordmark">GAVYO<span>ESTOQUE</span></span></div>
-          <span className="login-restricted"><LockKeyhole size={14} aria-hidden="true" /> Acesso restrito à equipe</span>
+          <div className="login-topbar-actions"><span className="login-restricted"><LockKeyhole size={14} aria-hidden="true" /> Acesso restrito à equipe</span><ThemeToggle /></div>
         </header>
         <div className="login-body">
           <section className="login-identity" aria-label="Controle de estoque">

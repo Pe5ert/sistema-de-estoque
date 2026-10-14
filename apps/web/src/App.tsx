@@ -10,6 +10,7 @@ import { UserSession } from './auth/UserSession';
 import { Overview } from './Overview';
 import { Movements, HistoryPage } from './History';
 import { ProductFormPage } from './ProductForm';
+import { ThemeToggle } from './Theme';
 import { Products } from './Products';
 import { BackupsPage, BackupsFeedbackMonitor } from './Backups';
 import { ProductImportPage } from './ProductImport';
@@ -117,7 +118,7 @@ function Shell() {
             <ChevronRight size={15} aria-hidden="true" />
             <strong>{current.label}</strong>
           </div>
-
+          <ThemeToggle />
         </header>
         <main className="main-content" id="main-content" tabIndex={-1}>
           <div className="page-heading">

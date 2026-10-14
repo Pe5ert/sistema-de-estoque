@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+ok 1 - 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+  ---
+  duration_ms: 3.6979
+  type: 'test'
+  ...
+# Subtest: drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+ok 2 - drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+  ---
+  duration_ms: 0.5493
+  type: 'test'
+  ...
+# Subtest: zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+ok 3 - zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+  ---
+  duration_ms: 28.9014
+  type: 'test'
+  ...
+# Subtest: feedback queue preserves errors and waits for a visible slot instead of dropping results
+ok 4 - feedback queue preserves errors and waits for a visible slot instead of dropping results
+  ---
+  duration_ms: 2.7369
+  type: 'test'
+  ...
+# Subtest: keyed updates replace only their own result while unrelated messages survive
+ok 5 - keyed updates replace only their own result while unrelated messages survive
+  ---
+  duration_ms: 0.4338
+  type: 'test'
+  ...
+# Subtest: error report preserves every diagnostic, Portuguese labels and original physical lines
+ok 6 - error report preserves every diagnostic, Portuguese labels and original physical lines
+  ---
+  duration_ms: 11.1588
+  type: 'test'
+  ...
+# Subtest: CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+ok 7 - CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+  ---
+  duration_ms: 1.2797
+  type: 'test'
+  ...
+# Subtest: spreadsheet formula prefixes remain inert text, including leading whitespace
+ok 8 - spreadsheet formula prefixes remain inert text, including leading whitespace
+  ---
+  duration_ms: 1.5957
+  type: 'test'
+  ...
+# Subtest: file correction labels distinguish the header from product lines and name initial stock
+ok 9 - file correction labels distinguish the header from product lines and name initial stock
+  ---
+  duration_ms: 2.6814
+  type: 'test'
+  ...
+# Subtest: physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+ok 10 - physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+  ---
+  duration_ms: 2.3718
+  type: 'test'
+  ...
+# Subtest: physical divergence remains exact across fractions and the full Decimal(18,3) range
+ok 11 - physical divergence remains exact across fractions and the full Decimal(18,3) range
+  ---
+  duration_ms: 0.9067
+  type: 'test'
+  ...
+# Subtest: Portuguese labels show exact values, signs and three decimal places when needed
+ok 12 - Portuguese labels show exact values, signs and three decimal places when needed
+  ---
+  duration_ms: 0.6412
+  type: 'test'
+  ...
+# Subtest: count batches respect row and HTTP byte limits without losing notes or order
+ok 13 - count batches respect row and HTTP byte limits without losing notes or order
+  ---
+  duration_ms: 364.5098
+  type: 'test'
+  ...
+# Subtest: Brazilian prices and fractional quantities serialize as exact decimal strings
+ok 14 - Brazilian prices and fractional quantities serialize as exact decimal strings
+  ---
+  duration_ms: 2.9241
+  type: 'test'
+  ...
+# Subtest: ambiguous, excessive, negative and nondecimal input is rejected
+ok 15 - ambiguous, excessive, negative and nondecimal input is rejected
+  ---
+  duration_ms: 0.7539
+  type: 'test'
+  ...
+# Subtest: unknown price stays empty/null-capable and barcode leading zeros survive validation
+ok 16 - unknown price stays empty/null-capable and barcode leading zeros survive validation
+  ---
+  duration_ms: 13.1747
+  type: 'test'
+  ...
+# Subtest: initial entry must be positive and only affects creation
+ok 17 - initial entry must be positive and only affects creation
+  ---
+  duration_ms: 4.6862
+  type: 'test'
+  ...
+# Subtest: editing uses exact persisted price/minimum strings, including zero and null
+ok 18 - editing uses exact persisted price/minimum strings, including zero and null
+  ---
+  duration_ms: 0.2876
+  type: 'test'
+  ...
+# Subtest: purchase subtotal uses half-up cents and preserves PostgreSQL precision
+ok 19 - purchase subtotal uses half-up cents and preserves PostgreSQL precision
+  ---
+  duration_ms: 3.1632
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1514.9114

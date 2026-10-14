@@ -1,0 +1,56 @@
+[
+  {
+    "element": "Principal",
+    "foreground": "#1b2738",
+    "background": "#f3f5f9",
+    "ratio": 13.8
+  },
+  {
+    "element": "Secundário",
+    "foreground": "#425168",
+    "background": "#ffffff",
+    "ratio": 8.05
+  },
+  {
+    "element": "Texto auxiliar",
+    "foreground": "#58677a",
+    "background": "#ffffff",
+    "ratio": 5.78
+  },
+  {
+    "element": "Entrada",
+    "foreground": "#16724c",
+    "background": "#ffffff",
+    "ratio": 5.92
+  },
+  {
+    "element": "Alerta",
+    "foreground": "#875015",
+    "background": "#fff4e4",
+    "ratio": 6.06
+  },
+  {
+    "element": "Erro",
+    "foreground": "#aa2e3e",
+    "background": "#fff0f2",
+    "ratio": 5.99
+  },
+  {
+    "element": "Informação",
+    "foreground": "#3558bf",
+    "background": "#ffffff",
+    "ratio": 6.36
+  },
+  {
+    "element": "Ação azul",
+    "foreground": "#ffffff",
+    "background": "#4262e8",
+    "ratio": 5.07
+  },
+  {
+    "element": "Borda de campo",
+    "foreground": "#7c8aa0",
+    "background": "#ffffff",
+    "ratio": 3.5
+  }
+]
