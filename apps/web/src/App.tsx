@@ -146,10 +146,6 @@ function Shell() {
           {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[5])}</div>}
         </nav>
         <UserSession />
-        <div className="sidebar-footer">
-          <Boxes size={20} strokeWidth={1.6} aria-hidden="true" />
-          <span>CONTROLE DE ESTOQUE</span>
-        </div>
       </aside>
       <div className="workspace" inert={mobileMenuOpen}>
         <header className="topbar">
