@@ -9,6 +9,7 @@ import { CategoryManager } from './CategoryManager';
 import { ProductIdentity, ProductThumbnail, Status, StockMeter } from './inventory-ui';
 import { canImportProducts, hasPermission } from '@stock/shared';
 import { useAuth } from './auth/auth';
+import { ProductStockChart } from './ProductStockChart';
 import { Alert } from './feedback';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -88,7 +89,7 @@ function ProductDrawer({ id, close }: { id: string; close: () => void }) {
   return <DetailDrawer title="Identificação do produto" close={close}><DataState retainContentOnError={Boolean(query.data)} pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}>{product && <>
     <ProductThumbnail imageUrl={product.imageUrl} name={product.name} large /><h2>{product.name}</h2><p className="detail-meta">{product.sku} · {product.category}</p><Status {...stockStatus(product.stock, product.minimum)} />
     <dl className="detail-facts"><div><dt>Saldo atual</dt><dd>{product.record.stock} {product.unit}</dd></div><div><dt>Estoque mínimo</dt><dd>{product.record.minimumStock} {product.unit}</dd></div><div><dt>Custo</dt><dd>{product.costPrice == null ? 'Não informado' : currency.format(product.costPrice)}</dd></div><div><dt>Venda</dt><dd>{product.price == null ? 'Não informado' : currency.format(product.price)}</dd></div><div><dt>Código de barras</dt><dd>{product.barcode ?? 'Não informado'}</dd></div><div><dt>Cadastro</dt><dd>{product.active ? 'Ativo' : 'Inativo'}</dd></div></dl>
-    {product.description && <p className="detail-meta">{product.description}</p>}{hasPermission(currentUser?.role, 'product.update') && <div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div>}<h3>Movimentações recentes</h3>
+    {product.description && <p className="detail-meta">{product.description}</p>}{hasPermission(currentUser?.role, 'product.update') && <div className="detail-actions"><Link className="secondary-button" to={'/products/' + id + '/edit'}><Pencil size={16} aria-hidden="true" />Editar produto</Link></div>}<ProductStockChart id={id} unit={product.unit} /><h3>Movimentações recentes</h3>
     <DataState pending={movements.isPending} error={movements.error} retry={movements.refetch}>{movements.data?.items.map(item => <p className="detail-meta" key={item.id}>{typeLabels[item.type]} · {item.quantity} {product.unit}<br />{dateLabel(item.createdAt)} · {reasonLabels[item.reason]}</p>)}{movements.data?.total === 0 && <p className="detail-meta">Nenhuma movimentação registrada.</p>}</DataState>
   </>}</DataState></DetailDrawer>;
 }

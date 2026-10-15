@@ -26,9 +26,10 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
   }, [params, compact]);
   const endDate = useRef<HTMLInputElement>(null);
   const invalidRange = Boolean(from && to && from > to);
-  const [selected, setSelected] = useState<string | null>(null);
-  const query = useMovements({ ...filters, from: from ? new Date(from + 'T00:00:00-03:00').toISOString() : '', to: to ? new Date(to + 'T23:59:59.999-03:00').toISOString() : '' }, !invalidRange);
-  const hasFilters = Boolean(filters.type || filters.reason || filters.search || filters.reference || from || to);
+  const [selected, setSelected] = useState<string | null>(compact ? null : params.get('detail'));
+  useEffect(() => { if (!compact) setSelected(params.get('detail')); }, [params, compact]);
+  const query = useMovements({ ...filters, productId: compact ? undefined : params.get('productId') ?? undefined, from: from ? new Date(from + 'T00:00:00-03:00').toISOString() : '', to: to ? new Date(to + 'T23:59:59.999-03:00').toISOString() : '' }, !invalidRange);
+  const hasFilters = Boolean(filters.type || filters.reason || filters.search || filters.reference || params.get('productId') || from || to);
   const update = (key: string, value: string) => {
     setFilters(current => ({ ...current, [key]: value, page: 1 }));
     if (!compact) setParams(previous => {
@@ -52,7 +53,7 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
       {invalidRange ? <div className="empty-state">Ajuste o período para consultar as movimentações.</div> : <DataState retainContentOnError={Boolean(query.data)} pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}><div className="table-frame"><table className="data-table history-table"><thead><tr><th>PRODUTO / SKU</th><th>DATA / HORA</th><th>MOVIMENTO</th><th>ANTES → DEPOIS</th><th>MOTIVO</th><th>RESPONSÁVEL</th><th><span className="sr-only">Detalhes</span></th></tr></thead><tbody>{query.data?.items.map(movement => <tr className={'history-entry clickable-row history-' + (isExit(movement.type) ? 'out' : movement.type === 'ENTRY' ? 'in' : 'adjust') + (selected === movement.id ? ' row-selected' : '')} key={movement.id} tabIndex={0} aria-selected={selected === movement.id} aria-label={'Detalhes do movimento de ' + movement.product.name} onClick={event => openFromRow(event, () => setSelected(movement.id))} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelected(movement.id); } }}>
         <td data-label="Produto"><ProductIdentity product={presentProduct(movement.product)} /></td><td data-label="Data"><span className="date-cell">{dateLabel(movement.createdAt)}</span></td><td data-label="Movimento"><MovementAmount type={movement.type} quantity={movement.quantity} /></td><td data-label="Antes → depois"><span className="balance-flow"><span>{movement.previousStock}<ArrowRight size={17} /><strong>{movement.resultingStock}</strong></span></span></td><td data-label="Motivo">{reasonLabels[movement.reason]}</td><td data-label="Responsável">{movement.user.name}</td><td className="row-action-cell"><button type="button" className="row-action row-detail-action" aria-label={'Ver movimento de ' + movement.product.name} onClick={() => setSelected(movement.id)}><ChevronRight size={18} aria-hidden="true" /><span className="mobile-action-label">Ver detalhes</span></button></td>
       </tr>)}</tbody></table>{query.data?.total === 0 && <div className="empty-state" role="status">Nenhuma movimentação encontrada.</div>}</div><Pagination busy={query.isFetching} data={query.data} change={page => { setFilters(current => ({ ...current, page })); if (!compact) setParams(previous => { const next = new URLSearchParams(previous); next.set('page', String(page)); return next; }, { replace: true }); }} /></DataState>}
-    </section>{selected && <MovementDrawer id={selected} close={() => setSelected(null)} />}
+    </section>{selected && <MovementDrawer id={selected} close={() => { setSelected(null); if (!compact && params.has('detail')) setParams(previous => { const next = new URLSearchParams(previous); next.delete('detail'); return next; }, { replace: true }); }} />}
   </div>;
 }
 function MovementDrawer({ id, close }: { id: string; close: () => void }) {

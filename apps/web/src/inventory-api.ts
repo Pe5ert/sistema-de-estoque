@@ -35,6 +35,6 @@ export function useDashboard(days = 7) { return useQuery({ queryKey: ['dashboard
 export function useInventoryMutation<T, V>(perform: (input: V) => Promise<T>) {
   const client = useQueryClient();
   return useMutation({ mutationFn: perform, onSuccess: async () => {
-    await Promise.all(['products', 'product', 'movements', 'movement', 'dashboard', 'categories', 'global-search'].map(key => client.invalidateQueries({ queryKey: [key] })));
+    await Promise.all(['products', 'product', 'movements', 'movement', 'dashboard', 'categories', 'global-search', 'product-history'].map(key => client.invalidateQueries({ queryKey: [key] })));
   } });
 }
