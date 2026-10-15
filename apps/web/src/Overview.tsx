@@ -18,7 +18,7 @@ export function Overview() {
   const summary = query.data ?? client.getQueryData<DashboardSummary>(['dashboard', previousPeriod]);
   const changePeriod = (days: number) => { setPreviousPeriod(summary?.periodDays ?? period); setPeriod(days); };
   const attention = (summary?.low ?? 0) + (summary?.out ?? 0);
-  return <DataState pending={query.isPending && !summary} error={summary ? null : query.error} retry={query.refetch}>{summary && <div className="overview-page">
+  return <DataState retainContentOnError={Boolean(summary)} updating={query.isFetching} pending={query.isPending && !summary} error={query.error} retry={query.refetch}>{summary && <div className="overview-page">
     <div className="catalog-actions"><div className="inline-actions"><Link className="primary-button" to="/products/new"><Plus size={16} aria-hidden="true" />Novo produto</Link><Link className="secondary-button" to="/movements">Movimentar estoque</Link></div></div>
     <div className="dashboard-grid">
       <section className="hero-stock" aria-labelledby="stock-title"><div className="hero-main"><h2 id="stock-title">Produtos ativos</h2><div className="hero-value">{summary.products}<span>produtos</span></div></div><StockChart summary={summary} /></section>

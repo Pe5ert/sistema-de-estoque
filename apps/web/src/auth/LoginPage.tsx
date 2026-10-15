@@ -27,12 +27,11 @@ export function LoginPage() {
     setError(null);
     try {
       await auth.login(credentials);
+      resetField('password');
     } catch (error) {
       setError(error instanceof ApiError
         ? error.status === 401 ? 'E-mail ou senha inválidos.' : error.message
         : 'Ocorreu um erro inesperado. Tente novamente.');
-    } finally {
-      resetField('password');
     }
   });
 

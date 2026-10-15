@@ -1,3 +1,4 @@
+import { RouteFailure } from './RouteFailure';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,7 +11,7 @@ import { ThemeProvider } from './Theme';
 import './appearance.css';
 
 const queryClient = new QueryClient();
-const router = createBrowserRouter([{ path: '*', element: <FeedbackProvider><AuthProvider><App /></AuthProvider></FeedbackProvider> }]);
+const router = createBrowserRouter([{ path: '*', errorElement: <RouteFailure />, element: <FeedbackProvider><AuthProvider><App /></AuthProvider></FeedbackProvider> }]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

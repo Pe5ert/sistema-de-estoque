@@ -7,5 +7,5 @@ export function useSupplier(id?: string) { return useQuery({ queryKey: ['supplie
 export function useOrders(filters: Filters) { return useQuery({ queryKey: ['purchases', filters], placeholderData: keepPreviousData, queryFn: ({ signal }) => apiClient<Page<PurchaseRecord>>('/purchase-orders?' + queryString(filters), { signal }) }); }
 export function useOrder(id?: string) { return useQuery({ queryKey: ['purchase', id], enabled: Boolean(id), queryFn: ({ signal }) => apiClient<PurchaseRecord>('/purchase-orders/' + id, { signal }) }); }
 export function usePurchaseMutation<T, V>(perform: (input: V) => Promise<T>) {
-  const client = useQueryClient(); return useMutation({ mutationFn: perform, onSuccess: async () => { await Promise.all(['suppliers', 'supplier', 'purchases', 'purchase', 'products', 'product', 'movements', 'movement', 'dashboard'].map(key => client.invalidateQueries({ queryKey: [key] }))); } });
+  const client = useQueryClient(); return useMutation({ mutationFn: perform, onSuccess: async () => { await Promise.all(['suppliers', 'supplier', 'purchases', 'purchase', 'products', 'product', 'movements', 'movement', 'dashboard', 'global-search'].map(key => client.invalidateQueries({ queryKey: [key] }))); } });
 }

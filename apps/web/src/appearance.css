@@ -225,3 +225,36 @@ html::-webkit-scrollbar-button, .sidebar::-webkit-scrollbar-button { display: no
 .image-dropzone.image-dragging { outline: 2px dashed var(--info); outline-offset: 4px; background: var(--accent-surface); }
 .image-link-option { min-height: 32px; font-size: 11px; padding: 4px; }
 .product-image-field > .field-hint { overflow-wrap: anywhere; max-width: 180px; }
+
+/* Cadastro: identificação primeiro; saldo e preços em etapas distintas. */
+.product-form-intro { margin: 0 0 16px; max-width: 760px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.product-form .identification-grid { grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.product-form .identification-grid > .product-name-field { grid-column: 2 / -1; }
+.product-form .identification-grid > .form-field:has(#product-sku) { grid-column: 2; }
+.product-form .identification-grid > .form-field:has(#product-category) { grid-column: 3; }
+.product-form .identification-grid > .form-field:has(#product-unit) { grid-column: 2; }
+.product-form .barcode-field { grid-column: 3; }
+.product-form .scanner-input-hint { display: none; }
+.product-form .product-image-field { grid-column: 1; grid-row: 1 / span 3; padding-top: 22px; }
+.product-form .product-form-bottom { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+.product-form .stock-control-section { padding: 24px; border-top: 0; border-left: 0; }
+.product-form .commercial-section { border-left: 1px solid var(--border); padding: 24px; }
+.product-form .inventory-control-grid { grid-template-columns: 1fr; gap: 20px; }
+.product-form .initial-operation > label { min-height: 36px; }
+.product-form .initial-entry-fields { grid-template-columns: minmax(0, 1fr); }
+.product-form .fixed-reason { display: none; }
+.procurement-status { overflow-wrap: normal; word-break: normal; white-space: normal; min-width: max-content; }
+.procurement-table td[data-label='Situação'] { min-width: 145px; }
+.procurement-table td[data-label='Telefone / e-mail'] small a { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.data-refresh { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--text-muted); font-size: 11px; }
+.data-refresh .text-button { min-height: 32px; }
+.route-failure { max-width: 720px; margin: 10vh auto; padding: 24px; color: var(--text-primary); }
+.route-failure p { color: var(--text-secondary); line-height: 1.6; }
+@media (max-width: 1100px) { .product-form .product-form-bottom { grid-template-columns: 1fr; } .product-form .commercial-section { border-left: 0; border-top: 1px solid var(--border); } }
+@media (max-width: 700px) {
+  .product-form .identification-grid { grid-template-columns: minmax(0, 1fr); }
+  .product-form .identification-grid > .product-name-field, .product-form .identification-grid > .form-field:has(#product-sku), .product-form .identification-grid > .form-field:has(#product-category), .product-form .identification-grid > .form-field:has(#product-unit), .product-form .barcode-field, .product-form .product-image-field { grid-column: auto; grid-row: auto; }
+  .product-form .product-image-field { padding-top: 0; }
+  .page-heading { flex-wrap: wrap; gap: 8px; }
+}
+.product-form .code-input { background: var(--background); }

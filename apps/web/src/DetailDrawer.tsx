@@ -4,17 +4,20 @@ import { X } from 'lucide-react';
 import { motionDelay } from './motion';
 import { lockPageScroll } from './scroll-lock';
 
-export function DetailDrawer({ title, close, children, busy = false }: { title: string; close: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode); busy?: boolean }) {
+export function DetailDrawer({ title, close, children, busy = false, guardClose = false }: { title: string; close: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode); busy?: boolean; guardClose?: boolean }) {
   const [host] = useState(() => document.createElement('div'));
   const panel = useRef<HTMLElement>(null);
   const closeRef = useRef(close);
   closeRef.current = close;
   const busyRef = useRef(busy);
   busyRef.current = busy;
+  const guarded = useRef(guardClose);
+  guarded.current = guardClose;
   const [closing, setClosing] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const requestClose = () => {
     if (busyRef.current || timer.current !== undefined) return;
+    if (guarded.current) { closeRef.current(); return; }
     setClosing(true);
     timer.current = window.setTimeout(() => closeRef.current(), motionDelay(160));
   };

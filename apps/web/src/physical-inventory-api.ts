@@ -14,6 +14,6 @@ export function useAcceptPhysicalInventory() {
   return (record: PhysicalInventoryRecord) => {
     client.setQueryData(['physical-inventory', record.id], record);
     void client.invalidateQueries({ queryKey: ['physical-inventories'] });
-    if (record.status === 'COMPLETED') void Promise.all(['products', 'product', 'movements', 'movement', 'dashboard'].map(key => client.invalidateQueries({ queryKey: [key] })));
+    if (record.status === 'COMPLETED') void Promise.all(['products', 'product', 'movements', 'movement', 'dashboard', 'global-search'].map(key => client.invalidateQueries({ queryKey: [key] })));
   };
 }

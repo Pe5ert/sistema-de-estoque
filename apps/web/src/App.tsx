@@ -1,3 +1,5 @@
+import { DataRefresh } from './DataRefresh';
+import { NotFound } from './RouteFailure';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
@@ -78,7 +80,7 @@ function Shell() {
       : location.pathname === '/purchases/new' ? { label: 'Novo pedido' }
       : /^\/purchases\/.+\/edit$/.test(location.pathname) ? { label: 'Editar rascunho' }
       : /^\/purchases\/.+/.test(location.pathname) ? { label: 'Pedido de compra' }
-      : navigation.find((item) => item.path === location.pathname || item.path !== '/' && location.pathname.startsWith(item.path + '/')) ?? navigation[0];
+      : navigation.find((item) => item.path === location.pathname || item.path !== '/' && location.pathname.startsWith(item.path + '/')) ?? { label: 'Página não encontrada' };
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
   useEffect(() => {
@@ -162,7 +164,7 @@ function Shell() {
         </header>
         <main className="main-content" id="main-content" tabIndex={-1}>
           <div className="page-heading">
-            <h1>{current.label}</h1>
+            <h1>{current.label}</h1><DataRefresh />
           </div>
           <div className="route-surface" key={location.pathname}><Outlet /></div>
         </main>
@@ -193,6 +195,7 @@ export function App() {
       <Route path="purchases/:id/edit" element={<PermissionRoute permission="purchase.manage"><PurchaseFormPage /></PermissionRoute>} />
       <Route path="purchases/:id" element={<PermissionRoute permission="purchase.read"><PurchaseDetail /></PermissionRoute>} />
       <Route path="backups" element={<PermissionRoute permission="backup.manage"><BackupsPage /></PermissionRoute>} />
+      <Route path="*" element={<NotFound />} />
     </Route></Route></Routes>
   );
 }
