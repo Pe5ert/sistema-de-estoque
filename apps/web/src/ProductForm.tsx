@@ -1,8 +1,9 @@
+import { StatefulButton, type ActionState } from './StatefulButton';
 import { hasPermission } from '@stock/shared';
 import { useAuth } from './auth/auth';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Barcode, ArrowRight, Save } from 'lucide-react';
+import { Barcode } from 'lucide-react';
 import { useFeedback, Alert, ConfirmDialog } from './feedback';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import { useCategories, useProduct, useInventoryMutation } from './inventory-api';
@@ -51,6 +52,8 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const [focusNextProduct, setFocusNextProduct] = useState(false);
   const nextFocus = useRef<'name' | 'barcode'>('name');
   const saving = useRef(false);
+  const [actionState, setActionState] = useState<ActionState>('idle');
+  const lastAction = useRef<'save' | 'another'>('save');
   const allowNavigation = useRef(false);
   const pointerFocusing = useRef(false);
   const { register, control, watch, handleSubmit, setError, clearErrors, reset, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<ProductFormValues>({ defaultValues: productFormDefaults(product) });
@@ -89,7 +92,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
     const resolvedImage = imageRef.current?.resolve();
     if (resolvedImage && !resolvedImage.valid) return;
     inactivationApproved.current = false;
-    saving.current = true; setSavingAction(action);
+    saving.current = true; lastAction.current = action; setActionState('loading'); setSavingAction(action);
     try {
       const data = validated.data;
       let savedImage = resolvedImage?.url ?? imageUrl;
@@ -109,6 +112,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
         minimumStock: normalizeDecimal(data.minimum, 3), description: data.description || null, imageUrl: savedImage || null, active: data.active,
         ...(!editing && data.initialMode === 'entry' ? { initialEntry: { quantity: normalizeDecimal(data.initialQuantity, 3) } } : {}),
       });
+      setActionState('success');
       notify({ tone: 'success', title: editing ? (data.active ? 'Produto atualizado com sucesso.' : 'Produto inativado.') : 'Produto criado com sucesso.', description: action === 'another' ? 'Pronto para cadastrar outro produto.' : data.name, key: 'product-save' });
       if (action === 'another') {
         nextFocus.current = data.barcode ? 'barcode' : 'name';
@@ -118,6 +122,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
         setFocusNextProduct(true);
       } else { allowNavigation.current = true; navigate('/products'); }
     } catch (error) {
+      setActionState('error');
       if (error instanceof ApiError && error.message.includes('A imagem enviada expirou')) uploadedImage.current = null;
       const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : null) : null;
       if (field) { setError(field, { message: (error as Error).message }); setFocus(field); }
@@ -128,7 +133,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const cancel = () => { if (dirty) setCancelRequested(true); else navigate('/products'); };
   const stay = () => { setCancelRequested(false); if (blocker.state === 'blocked') blocker.reset(); setFocus(editing ? 'name' : 'barcode'); };
   const discard = () => { allowNavigation.current = true; if (blocker.state === 'blocked') blocker.proceed(); else navigate('/products'); };
-  return <form className="product-form" aria-busy={busy} noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
+  return <form onChangeCapture={() => { if (!busy) setActionState('idle'); }} className="product-form" aria-busy={busy} noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
     pointerFocusing.current = false;
     const form = event.currentTarget;
     requestAnimationFrame(() => keepControlVisible(form, document.activeElement));
@@ -190,7 +195,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
       {confirmingLeave ? <ConfirmDialog title="Descartar o preenchimento?" description={busy ? 'Aguarde o produto ser salvo.' : 'As alterações não salvas serão perdidas.'} confirmLabel="Descartar e sair" cancel={stay} confirm={discard} busy={busy} /> : <>
         <button type="button" className="text-button cancel-button" onClick={cancel} disabled={busy}>Cancelar</button>
         <span className="session-note">Alterações gravadas ao salvar</span>
-        <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" aria-busy={busy && savingAction === 'another'} disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? imageProgress || 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" aria-busy={busy && savingAction === 'save'} disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? imageProgress || 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>
+        <div className="form-action-buttons">{!editing && <StatefulButton type="button" className="secondary-button" state={lastAction.current === 'another' ? actionState : 'idle'} disabled={busy} loadingLabel={imageProgress || 'Salvando…'} successLabel="Produto salvo · Criar outro" errorLabel="Tentar salvar e criar outro" onClick={() => void submit('another')()}>Salvar e criar outro</StatefulButton>}<StatefulButton type="submit" state={lastAction.current === 'save' ? actionState : 'idle'} disabled={busy} loadingLabel={imageProgress || 'Salvando…'} errorLabel="Tentar salvar produto">{editing ? 'Salvar alterações' : 'Salvar produto'}</StatefulButton></div>
       </>}
     </div>
   </form>;

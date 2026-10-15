@@ -1,3 +1,4 @@
+import { StatefulButton, type ActionState } from './StatefulButton';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useBlocker, useParams } from 'react-router-dom';
 import { canCompletePhysicalInventory, type PhysicalInventoryRecord, type PhysicalInventoryItemRecord } from '@stock/shared';
@@ -19,6 +20,7 @@ export function PhysicalInventoryDetailPage() {
 }
 
 function PhysicalInventoryEditor({ inventory, reload }: { inventory: PhysicalInventoryRecord; reload: () => Promise<PhysicalInventoryRecord | undefined> }) {
+  const [saveState, setSaveState] = useState<ActionState>('idle');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [progress, setProgress] = useState('');
@@ -59,6 +61,7 @@ function PhysicalInventoryEditor({ inventory, reload }: { inventory: PhysicalInv
   const rows = visible.slice((shownPage - 1) * 25, shownPage * 25);
   const edit = (item: PhysicalInventoryItemRecord, field: keyof Draft, value: string) => {
     if (running.current) return;
+    setSaveState('idle');
     if (baseRevision.current === null) baseRevision.current = inventory.revision;
     setDrafts(current => {
       const next = { ...current };
@@ -71,11 +74,13 @@ function PhysicalInventoryEditor({ inventory, reload }: { inventory: PhysicalInv
     });
     setErrors(current => { const next = { ...current }; delete next[item.productId]; return next; });
   };
-  const run = async (action: () => Promise<void>) => {
+  const run = async (action: () => Promise<void>, trackSave = false) => {
     if (running.current) return;
-    running.current = true; setBusy(true); setError('');
-    try { await action(); }
+    running.current = true; setBusy(true); setError(''); if (trackSave) setSaveState('loading');
+    try { await action(); if (trackSave) setSaveState('success'); }
     catch (failure) {
+      if (trackSave) setSaveState('error');
+      setConfirmation(null);
       setError(failure instanceof Error ? failure.message : 'Não foi possível concluir. Tente novamente.');
       if (failure instanceof ApiError && failure.status === 409) await reload().catch(() => undefined);
     } finally { running.current = false; setBusy(false); setProgress(''); }
@@ -118,13 +123,12 @@ function PhysicalInventoryEditor({ inventory, reload }: { inventory: PhysicalInv
       }
       baseRevision.current = null;
       notify({ tone: 'success', title: 'Contagem salva.', description: 'Os saldos ainda não foram alterados. Conclua o inventário após contar todos os produtos.', key: 'physical-save' });
-    });
+    }, true);
   };
   const action = (kind: 'complete' | 'refresh' | 'cancel') => {
-    setConfirmation(null);
     void run(async () => {
       const result = await apiClient<PhysicalInventoryRecord>('/physical-inventories/' + inventory.id + '/' + kind, { method: 'POST', body: JSON.stringify({ revision: inventory.revision }) });
-      accept(result);
+      accept(result); setConfirmation(null);
       notify({ tone: kind === 'cancel' ? 'info' : 'success', title: kind === 'complete' ? 'Inventário concluído.' : kind === 'refresh' ? 'Saldos atualizados. Reconte os produtos sinalizados.' : 'Inventário cancelado.', description: kind === 'complete' ? `${result.adjustmentCount} ajustes registrados no histórico.` : undefined, key: 'physical-result' });
     });
   };
@@ -156,7 +160,7 @@ function PhysicalInventoryEditor({ inventory, reload }: { inventory: PhysicalInv
       })}</tbody></table></div> : <div className="empty-state"><strong>Nenhum produto neste filtro.</strong><button type="button" className="text-button" onClick={() => { setFilter(''); setQuery(''); setPage(1); }}>Limpar filtros</button></div>}
       <Pagination data={{ page: shownPage, limit: 25, total: visible.length }} change={setPage} />
     </section>
-    {active && <div className="physical-actions"><div><strong>{dirty ? `${Object.keys(drafts).length} ${Object.keys(drafts).length === 1 ? 'produto com alterações não salvas' : 'produtos com alterações não salvas'}` : inventory.countedItems === 0 ? 'Nenhum produto contado' : 'Contagem salva'}</strong><p id="physical-next-step">{busy ? progress || 'Aguarde a operação terminar…' : nextStep}</p></div><div className="inline-actions"><button type="button" className={readyToComplete && allowed ? 'secondary-button' : 'primary-button'} aria-busy={busy && Boolean(progress)} disabled={busy || !dirty || revisionChanged} onClick={() => { void save(); }}>{busy && progress ? 'Salvando…' : 'Salvar contagem'}</button>{dirty && <button className="text-button" type="button" disabled={busy} onClick={() => setConfirmation('discard')}>Descartar preenchimento</button>}{allowed && <><button type="button" className={readyToComplete ? 'primary-button' : 'secondary-button'} disabled={busy || !readyToComplete} aria-describedby="physical-next-step" onClick={() => setConfirmation('complete')}>Concluir inventário</button><button type="button" className="text-button" disabled={busy || dirty} onClick={() => setConfirmation('cancel')}>Cancelar inventário</button></>}</div>{!allowed && <p className="detail-meta">Um administrador ou gerente precisa confirmar os ajustes após a contagem.</p>}</div>}
+    {active && <div className="physical-actions"><div><strong>{dirty ? `${Object.keys(drafts).length} ${Object.keys(drafts).length === 1 ? 'produto com alterações não salvas' : 'produtos com alterações não salvas'}` : inventory.countedItems === 0 ? 'Nenhum produto contado' : 'Contagem salva'}</strong><p id="physical-next-step">{busy ? progress || 'Aguarde a operação terminar…' : nextStep}</p></div><div className="inline-actions"><StatefulButton type="button" state={busy && !progress ? 'idle' : saveState} className={readyToComplete && allowed ? 'secondary-button' : 'primary-button'} disabled={busy || !dirty || revisionChanged} loadingLabel="Salvando…" successLabel="Contagem salva" errorLabel="Tentar salvar contagem" onClick={() => { void save(); }}>Salvar contagem</StatefulButton>{dirty && <button className="text-button" type="button" disabled={busy} onClick={() => setConfirmation('discard')}>Descartar preenchimento</button>}{allowed && <><button type="button" className={readyToComplete ? 'primary-button' : 'secondary-button'} disabled={busy || !readyToComplete} aria-describedby="physical-next-step" onClick={() => setConfirmation('complete')}>Concluir inventário</button><button type="button" className="text-button" disabled={busy || dirty} onClick={() => setConfirmation('cancel')}>Cancelar inventário</button></>}</div>{!allowed && <p className="detail-meta">Um administrador ou gerente precisa confirmar os ajustes após a contagem.</p>}</div>}
     {leaveDialog && <ConfirmDialog title="Descartar o preenchimento?" description={busy ? 'Aguarde a operação terminar antes de sair.' : 'As alterações ainda não salvas serão perdidas. As contagens já salvas serão preservadas.'} confirmLabel="Descartar preenchimento" cancel={stay} confirm={discard} busy={busy} />}
     {confirmation === 'complete' && <ConfirmDialog title="Concluir este inventário?" description={inventory.divergentItems > 0 ? `Todos os ${inventory.totalItems} produtos foram contados. ${inventory.divergentItems} produtos têm diferenças. Ao confirmar, o estoque será ajustado para as quantidades contadas e cada alteração ficará registrada no histórico com seu nome. Após a conclusão, a contagem não poderá ser editada.` : `Todos os ${inventory.totalItems} produtos foram contados e conferem com o estoque. A confirmação encerra o inventário sem gerar ajustes. Após a conclusão, a contagem não poderá ser editada.`} confirmLabel={inventory.divergentItems > 0 ? 'Aplicar ajustes e concluir' : 'Concluir sem ajustes'} cancelLabel="Voltar à contagem" cancel={() => setConfirmation(null)} confirm={() => action('complete')} busy={busy} />}
     {confirmation === 'cancel' && <ConfirmDialog title="Cancelar este inventário?" description="A contagem ficará arquivada como cancelada. Nenhum saldo será alterado e não será possível continuar esta contagem." confirmLabel="Cancelar inventário" cancelLabel="Continuar contagem" cancel={() => setConfirmation(null)} confirm={() => action('cancel')} busy={busy} />}

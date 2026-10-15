@@ -1,7 +1,8 @@
+import { StatefulButton } from './StatefulButton';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CircleCheck, Info, TriangleAlert, CircleAlert, X } from 'lucide-react';
 import { DetailDrawer } from './DetailDrawer';
-import { BusyIndicator, motionDelay } from './motion';
+import { motionDelay } from './motion';
 import { enqueueFeedback, feedbackDurations, visibleToastLimit, type FeedbackTone } from './feedback-model';
 import { FeedbackContext, type FeedbackMessage as Message, type FeedbackAction as Action } from './feedback-context';
 export { useFeedback } from './feedback-context';
@@ -90,5 +91,5 @@ export function FieldError({ id, children }: { id?: string; children: ReactNode 
 }
 
 export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Continuar preenchendo', confirm, cancel, busy = false, confirmVariant = 'destructive', tone }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; confirm: () => void; cancel: () => void; busy?: boolean; confirmVariant?: 'primary' | 'destructive'; tone?: 'primary' | 'danger' }) {
-  return <DetailDrawer title={title} close={cancel} busy={busy}>{requestClose => <><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" disabled={busy} onClick={requestClose}>{cancelLabel}</button><button type="button" className={(tone ? (tone === 'primary' ? 'primary' : 'destructive') : confirmVariant) + '-button'} disabled={busy} aria-busy={busy} onClick={confirm}>{busy && <BusyIndicator />}{busy ? 'Processando…' : confirmLabel}</button></div></>}</DetailDrawer>;
+  return <DetailDrawer title={title} close={cancel} busy={busy}>{requestClose => <><p>{description}</p><div className="inline-actions"><button type="button" className="secondary-button" disabled={busy} onClick={requestClose}>{cancelLabel}</button><StatefulButton state={busy ? 'loading' : 'idle'} loadingLabel="Processando…" type="button" className={(tone ? (tone === 'primary' ? 'primary' : 'destructive') : confirmVariant) + '-button'} disabled={busy} aria-busy={busy} onClick={confirm}>{confirmLabel}</StatefulButton></div></>}</DetailDrawer>;
 }
