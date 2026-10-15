@@ -1285,3 +1285,19 @@ button[aria-busy='true'] { cursor: wait; }
 .movement-columns { animation: chart-period-enter 220ms ease-out; }
 @keyframes chart-period-enter { from { opacity: .45; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .movement-columns { animation: none; } }
+
+/* Interactive movement area: targets stay native buttons for keyboard and touch. */
+.movement-area { position: relative; height: 250px; margin: 12px 0; }
+.movement-area svg { width: 100%; height: 100%; overflow: visible; }
+.area-entries, .entry-key { color: var(--accent); }
+.entry-key { background: var(--accent); }
+.area-exits { color: var(--danger); }
+.area-grid { stroke: var(--border); stroke-dasharray: 3 4; }
+.area-axis { fill: var(--text-muted); font-size: 10px; }
+.area-guide { stroke: var(--text-secondary); stroke-dasharray: 4 4; pointer-events: none; }
+.area-targets { position: absolute; inset: 0 1% 0 2%; display: flex; }
+.area-targets button { flex: 1; min-width: 0; position: relative; border: 0; background: transparent; color: var(--text-muted); padding: 0; }
+.area-targets button span { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 10px; white-space: nowrap; }
+.area-targets button:hover, .area-targets button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.area-targets button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (max-width: 600px) { .movement-area { height: 220px; } .area-targets button:nth-child(even) span { bottom: 14px; } }

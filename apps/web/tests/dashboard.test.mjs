@@ -33,7 +33,7 @@ test('zero-data dashboard charts retain useful links, recovery and a textual alt
   const render = component => renderToStaticMarkup(createElement(MemoryRouter, null, component));
   const movements = render(createElement(MovementChart, { summary, requested: 30, busy: false, error: true, change() {}, retry() {} }));
   assert(movements.includes('Falha ao atualizar')); assert(movements.includes('Tentar novamente'));
-  assert(movements.includes('Consultar dados em tabela')); assert(movements.includes('scaleY(0)'));
+  assert(movements.includes('Consultar dados em tabela')); assert(movements.includes('area-targets')); assert(movements.includes('Detalhar intervalo.'));
   assert(!movements.includes('NaN')); assert(!movements.includes('<table'));
   const empty = render(createElement(MovementChart, { summary, requested: 7, busy: false, error: false, change() {}, retry() {} }));
   assert(empty.includes('Nenhuma entrada ou saída neste período.'));
