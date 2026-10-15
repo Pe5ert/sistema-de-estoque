@@ -1325,3 +1325,10 @@ button[aria-busy='true'] { cursor: wait; }
 .sort-heading { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; color: inherit; font: inherit; letter-spacing: inherit; background: transparent; border: 0; padding: 8px 0; text-align: left; }
 .sort-heading span { color: var(--accent); font-size: 14px; }
 .sort-heading:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.period-selector { border: 0; padding: 0; margin: 0; min-width: 0; flex-basis: 100%; }
+.period-selector legend { color: var(--text-secondary); font-size: 12px; margin-bottom: 8px; }
+.period-selector legend small { margin-left: 8px; color: var(--text-muted); }
+.period-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.period-presets [aria-pressed="true"] { color: var(--accent); background: var(--surface-muted); box-shadow: inset 0 -2px var(--accent); }
+.period-selector .date-range { display: flex; flex-wrap: wrap; gap: 12px; }

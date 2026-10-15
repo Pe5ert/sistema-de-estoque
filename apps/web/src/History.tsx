@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy } from 'lucide-react';
 import { useMovement, useMovements, type Filters } from './inventory-api';
 import { dateLabel, isExit, presentProduct, reasonLabels, typeLabels, unitCodes } from './inventory-model';
@@ -8,7 +8,8 @@ import { DetailDrawer, openFromRow } from './DetailDrawer';
 import { movementTypes, type MovementReason, type MovementType } from '@stock/shared';
 import { calendarDate } from './dashboard-model';
 import { MovementWorkbench } from './MovementWorkbench';
-import { FieldError } from './feedback';
+import { PeriodSelector } from './PeriodSelector';
+import { invalidPeriod, operationalBoundary } from './period-model';
 import { useSearchParams } from 'react-router-dom';
 
 export function Movements() { return <div className="page-stack"><MovementWorkbench /><HistoryTable compact /></div>; }
@@ -24,11 +25,10 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
     setFilters({ page: Math.max(1, Number(params.get('page')) || 1), limit: 20, search: params.get('q') ?? '', reference: params.get('reference') ?? '', reason: params.get('reason') ?? '', type: movementTypes.includes(params.get('type') as MovementType) ? params.get('type')! : '' });
     setFrom(calendarDate(params.get('from'))); setTo(calendarDate(params.get('to')));
   }, [params, compact]);
-  const endDate = useRef<HTMLInputElement>(null);
-  const invalidRange = Boolean(from && to && from > to);
+  const invalidRange = invalidPeriod(from, to);
   const [selected, setSelected] = useState<string | null>(compact ? null : params.get('detail'));
   useEffect(() => { if (!compact) setSelected(params.get('detail')); }, [params, compact]);
-  const query = useMovements({ ...filters, productId: compact ? undefined : params.get('productId') ?? undefined, from: from ? new Date(from + 'T00:00:00-03:00').toISOString() : '', to: to ? new Date(to + 'T23:59:59.999-03:00').toISOString() : '' }, !invalidRange);
+  const query = useMovements({ ...filters, productId: compact ? undefined : params.get('productId') ?? undefined, from: from && !invalidRange ? operationalBoundary(from) : '', to: to && !invalidRange ? operationalBoundary(to, true) : '' }, !invalidRange);
   const hasFilters = Boolean(filters.type || filters.reason || filters.search || filters.reference || params.get('productId') || from || to);
   const update = (key: string, value: string) => {
     setFilters(current => ({ ...current, [key]: value, page: 1 }));
@@ -47,7 +47,7 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
       <div className="filter-bar history-filters"><label className="select-control"><span>Movimento</span><select value={filters.type ?? ''} onChange={event => update('type', event.target.value)}><option value="">Todos</option>{Object.entries(typeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="select-control"><span>Motivo</span><select value={filters.reason ?? ''} onChange={event => update('reason', event.target.value)}><option value="">Todos</option>{Object.entries(reasonLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="search-control"><span className="sr-only">Buscar produto no histórico</span><input type="search" placeholder="Produto, SKU ou código de barras" value={filters.search ?? ''} onChange={event => update('search', event.target.value)} /></label>
-        {!compact && <div className="date-range"><label className="select-control"><span>De</span><input type="date" value={from} onChange={event => { setFrom(event.target.value); update('from', event.target.value); }} onBlur={() => { if (invalidRange) endDate.current?.focus(); }} /></label><label className="select-control"><span>Até</span><input ref={endDate} type="date" value={to} aria-invalid={invalidRange} aria-describedby={invalidRange ? 'date-range-error' : undefined} onChange={event => { setTo(event.target.value); update('to', event.target.value); }} /></label>{invalidRange && <FieldError id="date-range-error">A data final deve ser igual ou posterior à inicial.</FieldError>}</div>}
+        {!compact && <PeriodSelector from={from} to={to} change={(start, end) => { setFrom(start); setTo(end); setFilters(current => ({ ...current, page: 1 })); setParams(previous => { const next = new URLSearchParams(previous); next.delete('page'); for (const [key, value] of [['from', start], ['to', end]]) { if (value) next.set(key, value); else next.delete(key); } return next; }, { replace: true }); }} />}
         {hasFilters && <button className="text-button" type="button" onClick={clear}>Limpar filtros</button>}
       </div>
       {invalidRange ? <div className="empty-state">Ajuste o período para consultar as movimentações.</div> : <DataState retainContentOnError={Boolean(query.data)} pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}><div className="table-frame"><table className="data-table history-table"><thead><tr><th>PRODUTO / SKU</th><th>DATA / HORA</th><th>MOVIMENTO</th><th>ANTES → DEPOIS</th><th>MOTIVO</th><th>RESPONSÁVEL</th><th><span className="sr-only">Detalhes</span></th></tr></thead><tbody>{query.data?.items.map(movement => <tr className={'history-entry clickable-row history-' + (isExit(movement.type) ? 'out' : movement.type === 'ENTRY' ? 'in' : 'adjust') + (selected === movement.id ? ' row-selected' : '')} key={movement.id} tabIndex={0} aria-selected={selected === movement.id} aria-label={'Detalhes do movimento de ' + movement.product.name} onClick={event => openFromRow(event, () => setSelected(movement.id))} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelected(movement.id); } }}>
