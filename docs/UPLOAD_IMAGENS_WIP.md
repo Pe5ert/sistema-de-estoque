@@ -1,6 +1,9 @@
 # Upload de imagens — entrega de 15/10/2026
 
-O snapshot de 08/10 foi concluído e validado em ambiente isolado. A migration compartilhada permanece pendente.
+**Implantação Neon — 15/10/2026:** com autorização explícita, aplicadas `20261007000000_physical_inventory`, `20261008000000_suppliers_purchases` e `20261008010000_product_images`. Backup PostgreSQL 18.6 em formato custom criado e catálogo verificado antes do deploy; cópia privada em `var/backups/image-migration-20261015/`, fora do Git. Contagens e fingerprints de todas as tabelas preexistentes permaneceram idênticos (1 usuário, 3 categorias, 4 produtos, 9 movimentos, nenhum ImportJob). Sem reset, seed ou fixtures no Neon. API iniciou com Cloudinary configurado; health confirmou banco disponível. Upload real e fluxo de fotos foram testados no ambiente isolado, sem anexar fotos de teste a produtos reais. As notas abaixo sobre migrations pendentes são históricas.
+
+
+O snapshot de 08/10 foi concluído e validado em ambiente isolado. As três migrations pendentes foram aplicadas ao Neon após backup verificado.
 
 Adicionar/Trocar imagem oferece prévia local e envio somente ao salvar. SKU duplicado mantém os dados e reutiliza o arquivo enviado na nova tentativa. Remover só altera o produto ao salvar. Links existentes permanecem suportados.
 

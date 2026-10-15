@@ -1,5 +1,8 @@
 # Retomar no outro notebook
 
+**Implantação Neon — 15/10/2026:** com autorização explícita, aplicadas `20261007000000_physical_inventory`, `20261008000000_suppliers_purchases` e `20261008010000_product_images`. Backup PostgreSQL 18.6 em formato custom criado e catálogo verificado antes do deploy; cópia privada em `var/backups/image-migration-20261015/`, fora do Git. Contagens e fingerprints de todas as tabelas preexistentes permaneceram idênticos (1 usuário, 3 categorias, 4 produtos, 9 movimentos, nenhum ImportJob). Sem reset, seed ou fixtures no Neon. API iniciou com Cloudinary configurado; health confirmou banco disponível. Upload real e fluxo de fotos foram testados no ambiente isolado, sem anexar fotos de teste a produtos reais. As notas abaixo sobre migrations pendentes são históricas.
+
+
 Atualizado em 08/10/2026. Branch: `sistema-de-estoque-v2`.
 
 **Compras V1 está na branch isolada `feat/suppliers-purchases`.** Para continuar essa entrega, preservar alterações locais, buscar o remoto e trocar para essa branch. Ler [COMPRAS_V1.md](COMPRAS_V1.md): existe uma nova migration testada localmente, ainda não aplicada ao Neon. Não iniciar a nova API contra a base compartilhada antes do procedimento de revisão/backup/deploy. A V2 é a base de integração, não contém automaticamente a feature.
