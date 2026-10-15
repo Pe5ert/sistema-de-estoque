@@ -54,8 +54,9 @@ export class InventoryService {
     if (query.stockStatus === 'LOW') where.stock = { gt: 0, lte: minimum };
     if (query.stockStatus === 'NORMAL') where.stock = { gt: minimum };
     if (query.stockStatus === 'ATTENTION') where.stock = { lte: minimum };
+    const sort: Prisma.ProductOrderByWithRelationInput = query.sortBy === 'category' ? { category: { name: query.sortDirection ?? 'asc' } } : { [query.sortBy ?? 'name']: query.sortDirection ?? 'asc' };
     const [items, total] = await this.db.$transaction([
-      this.db.product.findMany({ where, include: productInclude, orderBy: [{ name: 'asc' }, { id: 'asc' }], skip: (query.page - 1) * query.limit, take: query.limit }),
+      this.db.product.findMany({ where, include: productInclude, orderBy: [sort, { id: 'asc' }], skip: (query.page - 1) * query.limit, take: query.limit }),
       this.db.product.count({ where }),
     ]);
     return { items, total, page: query.page, limit: query.limit };

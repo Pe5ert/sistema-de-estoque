@@ -57,7 +57,7 @@ export class PurchasesService {
       where.OR = [{ supplierName: { contains: search, mode: 'insensitive' } }, { items: { some: { OR: [{ sku: { contains: search, mode: 'insensitive' } }, { productName: { contains: search, mode: 'insensitive' } }] } } }];
       if (Number.isSafeInteger(number) && number > 0 && number <= 2147483647) where.OR.push({ number });
     }
-    const [items, total] = await this.db.$transaction([this.db.purchaseOrder.findMany({ where, include: orderInclude, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (query.page - 1) * query.limit, take: query.limit }), this.db.purchaseOrder.count({ where })]);
+    const [items, total] = await this.db.$transaction([this.db.purchaseOrder.findMany({ where, include: orderInclude, orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDirection ?? 'desc' }, { id: 'asc' }], skip: (query.page - 1) * query.limit, take: query.limit }), this.db.purchaseOrder.count({ where })]);
     return { items, total, page: query.page, limit: query.limit };
   }
   async order(id: string) { const order = await this.db.purchaseOrder.findUnique({ where: { id }, include: orderInclude }); if (!order) throw new NotFoundException('Pedido não encontrado.'); return order; }

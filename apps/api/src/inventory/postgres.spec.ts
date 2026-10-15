@@ -154,6 +154,17 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     assert.equal((await request('/products/' + product.id + '/stock-history?days=999')).status, 400);
     assert.equal((await request('/products/' + randomUUID() + '/stock-history')).status, 404);
   });
+  test('product sorting applies before pagination and rejects unsupported keys', async () => {
+    const all = await (await request('/products?active=all&search=' + tag + '&sortBy=stock&sortDirection=desc&limit=100')).json() as { items: ProductRecord[] };
+    assert(all.items.length > 1);
+    for (let index = 1; index < all.items.length; index++) assert(new Prisma.Decimal(all.items[index - 1].stock).gte(all.items[index].stock));
+    for (let page = 1; page <= Math.min(all.items.length, 3); page++) {
+      const result = await (await request(`/products?active=all&search=${tag}&sortBy=stock&sortDirection=desc&limit=1&page=${page}`)).json() as { items: ProductRecord[] };
+      assert.equal(result.items[0].id, all.items[page - 1].id);
+    }
+    assert.equal((await request('/products?sortBy=unknown')).status, 400);
+    assert.equal((await request('/products?sortDirection=wrong')).status, 400);
+  });
   test('ten concurrent withdrawals exhaust stock exactly, with no audit for rejected requests', async () => {
     const response = await request('/products', { sku: tag + '-burst', name: 'Concurrent withdrawals', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '10' } });
     assert.equal(response.status, 201);

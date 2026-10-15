@@ -35,6 +35,8 @@ export class OrderInput {
 export class OrderUpdate extends OrderInput { @IsInt() @Min(1) revision!: number; }
 export class TransitionInput { @IsInt() @Min(1) revision!: number; }
 export class OrderQuery extends PageQuery {
+  @IsIn(['number', 'supplierName', 'status', 'createdAt', 'total']) sortBy: 'number' | 'supplierName' | 'status' | 'createdAt' | 'total' = 'createdAt';
+  @IsIn(['asc', 'desc']) sortDirection: 'asc' | 'desc' = 'desc';
   @IsOptional() @IsString() @MaxLength(200) search?: string;
   @IsOptional() @Transform(uuid) @IsUUID() supplierId?: string;
   @IsOptional() @IsIn(purchaseStatuses) status?: typeof purchaseStatuses[number];

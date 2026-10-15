@@ -38,6 +38,8 @@ export class ProductCreate extends ProductInput {
 }
 export class ProductPatch extends PartialType(ProductInput) {}
 export class ProductQuery extends PageQuery {
+  @IsIn(['name', 'sku', 'stock', 'minimumStock', 'category']) sortBy: 'name' | 'sku' | 'stock' | 'minimumStock' | 'category' = 'name';
+  @IsIn(['asc', 'desc']) sortDirection: 'asc' | 'desc' = 'asc';
   @IsOptional() @IsString() @MaxLength(200) search?: string;
   @IsOptional() @IsUUID() category?: string;
   @IsOptional() @IsIn(['OUT', 'LOW', 'NORMAL', 'ATTENTION']) stockStatus?: string;
