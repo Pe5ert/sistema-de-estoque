@@ -78,3 +78,12 @@ Uma falha de atualização com sessão/dados já conhecidos não deve desmontar 
 ## Acesso por perfil — 08/10/2026
 
 Consultar `hasPermission` da política shared para ações restritas; matriz em `docs/PERMISSOES.md`. OPERATOR mantém Novo produto e detalhes, mas não Editar produto, Categorias ou Importar planilha. Backups aparece apenas para ADMIN. Acesso direto a uma rota restrita mostra Alert com retorno ao catálogo e não monta o formulário. Não oferecer um botão que terminará em 403 para o perfil conhecido; a API continua autoritativa quando o perfil muda durante uma sessão.
+
+## Componentes operacionais — 15/10/2026
+
+- Área do Dashboard expressa registros de movimentos; preserva legenda, inspeção por ponteiro/teclado, alternativa em tabela e links contextuais. Não somar unidades incompatíveis.
+- Evolução por produto usa exclusivamente a série auditada da API. Nunca derivar uma curva das movimentações recentes paginadas. Quando a sequência não puder ser confirmada ou exceder o limite de segurança, mostrar aviso e acesso ao Histórico.
+- SearchCombobox consulta conjuntos grandes no servidor, identifica limites de resultados, preserva opção selecionada, navegação por teclado, Escape e erros. Seleção de produto retorna foco à quantidade; não submeter o pedido ao pressionar Enter no combobox.
+- TableSort/SortHeading mantêm ordenação global no servidor e URL com filtros/página. Mudanças consecutivas usam o estado pendente de parâmetros, sem apagar uma seleção anterior durante a transição.
+- PeriodSelector preserva as datas ativas e usa limites reais do dia de São Paulo, incluindo mudanças históricas de horário de verão. Um período inválido não deve gerar uma consulta enganosa.
+- StatefulButton recebe o estado real da ação. Loading bloqueia interação; sucesso exige resposta válida, erro mantém os campos, e a navegação não espera animação. ConfirmDialog, Toast, Alert, travas síncronas e idempotência do domínio continuam autoritativos.

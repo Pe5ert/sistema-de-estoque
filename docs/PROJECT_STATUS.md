@@ -1,5 +1,7 @@
 # Estado da V2 — 08/10/2026
 
+**Seis componentes — 15/10/2026:** Dashboard com área interativa, evolução auditada de saldo no produto, combobox em pedidos, ordenação global de Produtos/Compras, períodos no Histórico e StatefulButton integrado. Nenhuma dependência ou migration nova. Implementação em commits separados sobre `ff21b49`; validação em PostgreSQL local, navegador e build compilada. [Relatório, cobertura e limites](../artifacts/six-components-20261015/REVIEW.md), [galeria desktop/tablet/mobile](../artifacts/six-components-20261015/index.html). Histórico gráfico recusa sequências incompletas/ambíguas e mais de 5.000 movimentos; auditoria completa continua no Histórico. Sem alterações de QA no Neon e sem push remoto nesta etapa.
+
 **Implantação Neon — 15/10/2026:** com autorização explícita, aplicadas `20261007000000_physical_inventory`, `20261008000000_suppliers_purchases` e `20261008010000_product_images`. Backup PostgreSQL 18.6 em formato custom criado e catálogo verificado antes do deploy; cópia privada em `var/backups/image-migration-20261015/`, fora do Git. Contagens e fingerprints de todas as tabelas preexistentes permaneceram idênticos (1 usuário, 3 categorias, 4 produtos, 9 movimentos, nenhum ImportJob). Sem reset, seed ou fixtures no Neon. API iniciou com Cloudinary configurado; health confirmou banco disponível. Upload real e fluxo de fotos foram testados no ambiente isolado, sem anexar fotos de teste a produtos reais. As notas abaixo sobre migrations pendentes são históricas.
 
 
