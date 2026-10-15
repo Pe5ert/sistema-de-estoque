@@ -25,7 +25,8 @@ export class CloudinaryStorage {
     const result = await this.request('upload', body);
     const cloud = this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME');
     if (result.public_id !== publicId || result.resource_type !== 'image' || result.format !== 'webp' || typeof result.secure_url !== 'string') throw new ServiceUnavailableException('Não foi possível enviar a imagem. Tente novamente.');
-    const url = new URL(result.secure_url);
+    let url: URL;
+    try { url = new URL(result.secure_url); } catch { throw new ServiceUnavailableException('Não foi possível enviar a imagem. Tente novamente.'); }
     const expected = `/${cloud}/image/upload/`;
     if (url.origin !== 'https://res.cloudinary.com' || url.username || url.password || url.search || url.hash || !url.pathname.startsWith(expected) || !/^v\d+$/.test(url.pathname.slice(expected.length).split('/')[0]) || !url.pathname.endsWith(`/${publicId}.webp`)) throw new ServiceUnavailableException('Não foi possível enviar a imagem. Tente novamente.');
     return url.href;

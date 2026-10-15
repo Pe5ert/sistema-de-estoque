@@ -7,7 +7,7 @@ export function isManagedImage(url?: string | null) {
 
 // Same lock used by cleanup: a product can never claim an image being deleted.
 export async function claimImage(tx: Prisma.TransactionClient, url: string | null | undefined, ownerId: string | undefined, previousUrl?: string | null) {
-  if (!isManagedImage(url)) return;
+  if (url === previousUrl || !isManagedImage(url)) return;
   const rows = await tx.$queryRaw<{ id: string; ownerId: string; state: string; expiresAt: Date | null }[]>`SELECT "id", "ownerId", "state", "expiresAt" FROM "ProductImage" WHERE "url" = ${url} FOR UPDATE`;
   const asset = rows[0];
   if (!asset || asset.state !== 'READY' || (asset.expiresAt && asset.expiresAt <= new Date())) throw new BadRequestException('A imagem enviada expirou ou está indisponível. Selecione o arquivo novamente.');

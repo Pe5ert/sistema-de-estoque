@@ -35,6 +35,9 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const mutation = useInventoryMutation((body: Record<string, unknown>) => apiClient('/products' + (product ? '/' + product.id : ''), { method: product ? 'PATCH' : 'POST', body: JSON.stringify(body) }));
   const editing = Boolean(product);
   const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const uploadedImage = useRef<{ file: File; url: string } | null>(null);
+  const [imageProgress, setImageProgress] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(Boolean(product?.description));
   const [cancelRequested, setCancelRequested] = useState(false);
   const [savingAction, setSavingAction] = useState<'save' | 'another' | null>(null);
@@ -47,7 +50,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const { register, control, watch, handleSubmit, setError, clearErrors, reset, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<ProductFormValues>({ defaultValues: productFormDefaults(product) });
   const unit = watch('unit');
   const initialMode = watch('initialMode');
-  const dirty = isDirty || imageUrl !== (product?.imageUrl ?? '');
+  const dirty = isDirty || Boolean(imageFile) || imageUrl !== (product?.imageUrl ?? '');
   const busy = isSubmitting || savingAction !== null;
   const blocker = useBlocker(({ currentLocation, nextLocation }) => !allowNavigation.current && (dirty || saving.current) && currentLocation.pathname !== nextLocation.pathname);
   const confirmingLeave = cancelRequested || blocker.state === 'blocked';
@@ -81,24 +84,36 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
     saving.current = true; setSavingAction(action);
     try {
       const data = validated.data;
+      let savedImage = imageUrl;
+      if (imageFile) {
+        if (uploadedImage.current?.file === imageFile) savedImage = uploadedImage.current.url;
+        else {
+          setImageProgress('Enviando foto…');
+          const body = new FormData(); body.append('file', imageFile);
+          const uploaded = await apiClient<{ imageUrl: string }>('/product-images' + (product ? '/' + product.id : ''), { method: 'POST', body });
+          uploadedImage.current = { file: imageFile, url: uploaded.imageUrl }; savedImage = uploaded.imageUrl;
+        }
+      }
+      setImageProgress('Salvando produto…');
       await mutation.mutateAsync({
         sku: data.sku, barcode: data.barcode || null, name: data.name, categoryId: data.category, unit: apiUnit(data.unit),
         costPrice: data.cost.trim() ? normalizeDecimal(data.cost, 2) : null, salePrice: data.sale.trim() ? normalizeDecimal(data.sale, 2) : null,
-        minimumStock: normalizeDecimal(data.minimum, 3), description: data.description || null, imageUrl: imageUrl || null, active: data.active,
+        minimumStock: normalizeDecimal(data.minimum, 3), description: data.description || null, imageUrl: savedImage || null, active: data.active,
         ...(!editing && data.initialMode === 'entry' ? { initialEntry: { quantity: normalizeDecimal(data.initialQuantity, 3) } } : {}),
       });
       notify({ tone: 'success', title: editing ? (data.active ? 'Produto atualizado com sucesso.' : 'Produto inativado.') : 'Produto criado com sucesso.', description: action === 'another' ? 'Próxima leitura pronta.' : data.name, key: 'product-save' });
       if (action === 'another') {
         reset({ ...productFormDefaults(), category: data.category, unit: data.unit });
-        setImageUrl('');
+        setImageUrl(''); setImageFile(null); uploadedImage.current = null;
         setDetailsOpen(false);
         setFocusNextProduct(true);
       } else { allowNavigation.current = true; navigate('/products'); }
     } catch (error) {
+      if (error instanceof ApiError && error.message.includes('A imagem enviada expirou')) uploadedImage.current = null;
       const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : null) : null;
       if (field) { setError(field, { message: (error as Error).message }); setFocus(field); }
       else notify({ tone: 'error', title: 'Não foi possível salvar o produto.', description: (error instanceof Error ? error.message : 'Tente novamente.') + ' Seus dados continuam no formulário.', key: 'product-save' });
-    } finally { saving.current = false; setSavingAction(null); }
+    } finally { saving.current = false; setSavingAction(null); setImageProgress(''); }
   });
 
   const cancel = () => { if (dirty) setCancelRequested(true); else navigate('/products'); };
@@ -129,7 +144,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
             </Field>
             <Field id="product-category" label="Categoria" required error={errors.category?.message}><select id="product-category" {...register('category')} aria-required="true" {...fieldAccessibility('product-category', errors.category?.message)}><option value="">Selecione a categoria</option>{categories.filter(category => category.active || category.id === product?.categoryId).map(category => <option key={category.id} value={category.id}>{category.name}{!category.active ? ' (inativa)' : ''}</option>)}</select>{categories.filter(category => category.active).length === 0 && <span className="field-hint">Cadastre uma categoria no catálogo antes de salvar.</span>}</Field>
             <Field id="product-unit" label="Unidade" required error={errors.unit?.message}><select id="product-unit" {...register('unit')} aria-required="true" {...fieldAccessibility('product-unit', errors.unit?.message)}>{productUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-            <ProductImageField imageUrl={imageUrl} disabled={busy} onChange={setImageUrl} />
+            <ProductImageField imageUrl={imageUrl} disabled={busy} file={imageFile} onFileChange={file => { setImageFile(file); uploadedImage.current = null; }} onChange={setImageUrl} />
           </div>
         </section>
       </div>
@@ -165,7 +180,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
       {confirmingLeave ? <ConfirmDialog title="Descartar o preenchimento?" description={busy ? 'Aguarde o produto ser salvo.' : 'As alterações não salvas serão perdidas.'} confirmLabel="Descartar e sair" cancel={stay} confirm={discard} busy={busy} /> : <>
         <button type="button" className="text-button cancel-button" onClick={cancel} disabled={busy}>Cancelar</button>
         <span className="session-note">Alterações gravadas ao salvar</span>
-        <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" aria-busy={busy && savingAction === 'another'} disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" aria-busy={busy && savingAction === 'save'} disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>
+        <div className="form-action-buttons">{!editing && <button type="button" className="secondary-button" aria-busy={busy && savingAction === 'another'} disabled={busy} onClick={() => void submit('another')()}>{savingAction === 'another' ? imageProgress || 'Salvando…' : 'Salvar e criar outro'}<ArrowRight size={16} aria-hidden="true" /></button>}<button type="submit" className="primary-button" aria-busy={busy && savingAction === 'save'} disabled={busy}><Save size={16} aria-hidden="true" />{savingAction === 'save' ? imageProgress || 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar produto'}</button></div>
       </>}
     </div>
   </form>;

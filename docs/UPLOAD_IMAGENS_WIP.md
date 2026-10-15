@@ -1,15 +1,21 @@
-# Upload de imagens - trabalho em andamento, 08/10/2026
+# Upload de imagens — entrega de 15/10/2026
 
-Branch de retomada: `wip/product-image-upload`.
+O snapshot de 08/10 foi concluído e validado em ambiente isolado. A migration compartilhada permanece pendente.
 
-Este snapshot preserva o trabalho interrompido a pedido do usuário para fechar o computador. **Não é uma entrega funcional; não integrar ou implantar como pronta.**
+Adicionar/Trocar imagem oferece prévia local e envio somente ao salvar. SKU duplicado mantém os dados e reutiliza o arquivo enviado na nova tentativa. Remover só altera o produto ao salvar. Links existentes permanecem suportados.
 
-Preparado: dependência sharp, validação/normalização de JPG/PNG/WebP, cliente Cloudinary autenticado no servidor, registro ProductImage, migration aditiva e base da limpeza de arquivos. Typecheck da API passou. Não houve upload real, conta Cloudinary configurada ou migration aplicada ao banco compartilhado.
+Uma foto JPEG/PNG/WebP, até 5 MB e 20 MP, sem animação. A API remove metadados, corrige orientação e gera WebP até 1600 px. CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET ficam somente na API; nunca no Git ou em VITE_.
 
-Ainda faltam: integração do ciclo de anexação/liberação ao salvar produto e importações; ligação com formulário e prévia local; cache da tentativa para não reenviar após duplicidade; mensagens de erro; verificação de DI do ThrottlerGuard (exportar ThrottlerModule ou importar no módulo de imagens); testes HTTP/RBAC/CSRF/limites, testes reais em PostgreSQL isolado e QA do navegador. O módulo de imagens está incluído no AppModule neste snapshot, mas o bootstrap não foi validado. Também rever respostas inesperadas do provedor e concorrência entre limpeza e anexação antes de ativar.
+POST /api/product-images requer product.create; POST /api/product-images/:productId requer product.update. Exigem sessão, origem permitida e limite de requisições. Anexação exige propriedade e ocorre na transação do produto. Arquivos nunca anexados expiram em 24 horas. Fotos substituídas respeitam BACKUP_RETENTION_DAYS (365 padrão). Referências ativas são revalidadas sob bloqueio antes da limpeza; falhas do provedor permitem nova tentativa.
 
-Decisões: uma imagem principal, 5 MB, até 20 MP, sem animação; prévia ao selecionar e upload somente ao salvar; manter links existentes; manter foto anterior até confirmação do cadastro. A limpeza de fotos substituídas deve respeitar a retenção dos backups (a proposta inicial de 24 horas serve só para arquivos nunca anexados).
+## Implantação
 
-O usuário ainda não tem conta Cloudinary. Configurar CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET somente no ambiente local/servidor, nunca no Git ou VITE_.
+Migration aditiva: 20261008010000_product_images. Antes de db:deploy no Neon compartilhado: obter autorização para esse ambiente, criar e inspecionar backup com pg_restore --list, registrar contagens, aplicar sem reset/seed/fixtures, conferir migrações e contagens. Reiniciar API com as três variáveis e atualizar frontend. Publicar código não aplica a migration.
 
-Pilot visual publicado em `feat/suppliers-purchases`. O upload deve ser retomado nesta branch WIP e só integrar após validação. Não executar reset, seed ou deploy de migration no Neon para retomar.
+## Validação
+
+Lint, build completo e suíte de testes passaram. HTTP: sessão, origem, permissões OPERATOR/MANAGER, UUID e tamanho. PostgreSQL local: rollback por duplicidade, propriedade, retenção, trocas simultâneas sem deadlock e limpeza com referências ativas. Upload, download e remoção de um arquivo temporário real no Cloudinary passaram.
+
+Navegador em banco/conta locais isolados: prévia, SKU duplicado preservando formulário, correção/cadastro, reload mantendo sessão/foto, catálogo/detalhes e substituição da imagem passaram. Fixtures são quadrados de cor, sem dados reais. Evidência: artifacts/product-images-20261015/desktop.png. Mobile, arraste real, navegação completa por teclado e interrupção de rede não foram validados manualmente nesta entrega.
+
+Helpers src/images/image-qa.ts e cloudinary-live-smoke.ts recebem IMAGE_CREDENTIALS_FILE apontando ao .env local e leem somente chaves Cloudinary. image-qa e testes PostgreSQL exigem IMAGES_TEST_DATABASE_URL em loopback com nome terminado em _stock_test. API 3012 e origem http://127.0.0.1:5175. Argumento seed cria fixtures exclusivamente nesse banco dedicado; nunca usar em banco real.

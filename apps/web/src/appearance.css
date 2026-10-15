@@ -221,3 +221,7 @@ html::-webkit-scrollbar-button, .sidebar::-webkit-scrollbar-button { display: no
   details[open] > :not(summary), .procurement-search-results { animation: none; }
   @supports (appearance: base-select) { select::picker(select), select::picker-icon, select option { transition: none; } }
 }
+
+.image-dropzone.image-dragging { outline: 2px dashed var(--info); outline-offset: 4px; background: var(--accent-surface); }
+.image-link-option { min-height: 32px; font-size: 11px; padding: 4px; }
+.product-image-field > .field-hint { overflow-wrap: anywhere; max-width: 180px; }

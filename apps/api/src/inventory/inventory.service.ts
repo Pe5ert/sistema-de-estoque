@@ -1,4 +1,6 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { claimImage, isManagedImage, releaseImage } from '../images/image-lifecycle';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,7 +34,7 @@ export function databaseError(error: unknown): never {
 
 @Injectable()
 export class InventoryService {
-  constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly db: PrismaService, @Optional() @Inject(ConfigService) private readonly config?: ConfigService) {}
   categories() { return this.db.category.findMany({ orderBy: { name: 'asc' } }); }
   async createCategory(data: CategoryInput) {
     if (data.active === null) throw new BadRequestException('Situação não pode ser nula.');
@@ -75,6 +77,7 @@ export class InventoryService {
     try {
       return await this.db.$transaction(async tx => {
         await this.activeCategory(tx, data.categoryId);
+        await claimImage(tx, data.imageUrl, userId);
         const product = await tx.product.create({ data: { ...data, barcode: data.barcode || null, stock: 0 }, include: productInclude });
         if (initialEntry) {
           await this.moveInTransaction(tx, { productId: product.id, type: 'ENTRY', reason: 'INITIAL_STOCK', quantity: initialEntry.quantity }, userId);
@@ -92,6 +95,7 @@ export class InventoryService {
     await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "Category" WHERE "id" IN (${Prisma.join(categoryIds.map(id => Prisma.sql`${id}::uuid`))}) ORDER BY "id" FOR SHARE`);
     const active = await tx.category.count({ where: { id: { in: categoryIds }, active: true } });
     if (active !== categoryIds.length) throw new BadRequestException('Selecione uma categoria ativa.');
+    for (const url of [...new Set(inputs.map(input => input.imageUrl).filter(isManagedImage))].sort()) await claimImage(tx, url, userId);
     await tx.product.createMany({ data: prepared.map(item => ({ ...item.data, id: item.id, barcode: item.data.barcode || null, stock: 0 })) });
     const balances = prepared.flatMap(item => item.initialEntry ? [{ id: item.id, ...resultingStock(new Prisma.Decimal(0), item.initialEntry.quantity, 'ENTRY') }] : []);
     if (balances.length) {
@@ -100,7 +104,7 @@ export class InventoryService {
     }
     return { products: prepared.length, movements: balances.length };
   }
-  async patchProduct(id: string, data: ProductPatch) {
+  async patchProduct(id: string, data: ProductPatch, userId?: string) {
     for (const key of ['sku', 'name', 'categoryId', 'unit', 'minimumStock', 'active'] as const) {
       if (data[key] === null) throw new BadRequestException('Campos obrigatórios não podem ser nulos.');
     }
@@ -110,7 +114,12 @@ export class InventoryService {
         const current = await tx.product.findUnique({ where: { id } });
         if (!current) throw new NotFoundException('Produto não encontrado.');
         if (data.categoryId && data.categoryId !== current.categoryId) await this.activeCategory(tx, data.categoryId);
-        return tx.product.update({ where: { id }, data: { ...data, ...(data.barcode === '' ? { barcode: null } : {}) }, include: productInclude });
+        const urls = [...new Set([current.imageUrl, data.imageUrl].filter((url): url is string => Boolean(url && isManagedImage(url))))].sort();
+        if (urls.length) await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "ProductImage" WHERE "url" IN (${Prisma.join(urls)}) ORDER BY "id" FOR UPDATE`);
+        await claimImage(tx, data.imageUrl, userId, current.imageUrl);
+        const product = await tx.product.update({ where: { id }, data: { ...data, ...(data.barcode === '' ? { barcode: null } : {}) }, include: productInclude });
+        await releaseImage(tx, current.imageUrl, data.imageUrl, this.config?.get<number>('BACKUP_RETENTION_DAYS') ?? 365);
+        return product;
       });
     } catch (error) { databaseError(error); }
   }

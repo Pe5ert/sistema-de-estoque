@@ -25,6 +25,6 @@ import { PermissionsGuard } from './permissions.guard';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard, RolesGuard, PermissionsGuard, { provide: APP_GUARD, useClass: OriginGuard }],
-  exports: [AuthService, JwtAuthGuard, RolesGuard, PermissionsGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, PermissionsGuard, ThrottlerModule],
 })
 export class AuthModule {}

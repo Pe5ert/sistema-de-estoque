@@ -34,10 +34,10 @@ export async function apiClient<T>(path: string, options: RequestInit = {}): Pro
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     }
     const body = await response.json().catch(() => null);
-    const known = ['Este SKU já está em uso.', 'Este código de barras já está em uso.', 'Este nome já está em uso.', 'Quantidade indisponível em estoque.', 'Selecione uma categoria ativa.', 'Produto inativo não pode ser movimentado.', 'Já existe um backup em andamento.'];
+    const known = ['A imagem enviada expirou ou está indisponível. Selecione o arquivo novamente.', 'A imagem enviada pertence a outro usuário.', 'Este SKU já está em uso.', 'Este código de barras já está em uso.', 'Este nome já está em uso.', 'Quantidade indisponível em estoque.', 'Selecione uma categoria ativa.', 'Produto inativo não pode ser movimentado.', 'Já existe um backup em andamento.'];
     const procurementMessages = ['Este CPF/CNPJ já está em uso.', 'Fornecedor não encontrado.', 'Selecione um fornecedor ativo.', 'Selecione somente produtos ativos.', 'Não repita o mesmo produto ou item na operação.', 'Somente rascunhos podem ser editados.', 'Somente rascunhos podem ser enviados.', 'O pedido foi atualizado por outra pessoa. Recarregue antes de continuar.', 'Este pedido não pode ser cancelado.', 'Identificador de recebimento já usado com outros dados.', 'Este pedido não está disponível para recebimento.', 'Quantidade superior ao saldo pendente do pedido.', 'Item não pertence a este pedido.', 'A unidade de um produto mudou. Revise o pedido antes de continuar.', 'Valor do item excede o limite.', 'Valor do pedido excede o limite.'];
-    const operationalMessage = (path.startsWith('/imports') || path.startsWith('/physical-inventories'))
-      && [400, 409, 413].includes(response.status) && typeof body?.message === 'string';
+    const operationalMessage = (path.startsWith('/imports') || path.startsWith('/physical-inventories') || path.startsWith('/product-images'))
+      && [400, 409, 413, 503].includes(response.status) && typeof body?.message === 'string';
     throw new ApiError(response.status, known.includes(body?.message) || procurementMessages.includes(body?.message) || operationalMessage ? body.message : undefined);
   }
   if (response.status === 204) return undefined as T;
