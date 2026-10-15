@@ -9,6 +9,7 @@ import { CategoryManager } from './CategoryManager';
 import { ProductIdentity, ProductThumbnail, Status, StockMeter } from './inventory-ui';
 import { canImportProducts, hasPermission } from '@stock/shared';
 import { useAuth } from './auth/auth';
+import { TableSort, SortHeading } from './TableSort';
 import { ProductStockChart } from './ProductStockChart';
 import { Alert } from './feedback';
 
@@ -29,7 +30,10 @@ export function Products() {
   const [replenish, setReplenish] = useState<string[]>([]);
   const selectForPurchase = statusFilter === 'attention' && hasPermission(currentUser?.role, 'purchase.manage');
   const page = Math.max(1, Number(params.get('page')) || 1);
-  const query = useProducts({ page, limit: 20, search, category, stockStatus: ({ success: 'NORMAL', danger: 'OUT', warning: 'LOW', attention: 'ATTENTION' } as Record<string, string>)[statusFilter], active: params.get('active') ?? 'true' });
+  const sortBy = ['name', 'sku', 'stock', 'minimumStock', 'category'].includes(params.get('sortBy') ?? '') ? params.get('sortBy')! : 'name';
+  const direction = params.get('sortDirection') === 'desc' ? 'desc' : 'asc';
+  const sort = (field: string, order: string) => { const next = new URLSearchParams(params); next.set('sortBy', field); next.set('sortDirection', order); next.delete('page'); setParams(next, { replace: true }); };
+  const query = useProducts({ sortBy, sortDirection: direction, page, limit: 20, search, category, stockStatus: ({ success: 'NORMAL', danger: 'OUT', warning: 'LOW', attention: 'ATTENTION' } as Record<string, string>)[statusFilter], active: params.get('active') ?? 'true' });
   const filtered = query.data?.items ?? [];
   const hasFilters = Boolean(search || category || statusFilter || (params.get('active') && params.get('active') !== 'true'));
   const updateFilter = (key: string, value: string) => {
@@ -52,12 +56,13 @@ export function Products() {
           {hasFilters && <button type="button" className="text-button" onClick={() => setParams({})}>Limpar filtros</button>}
           <label className="select-control"><span>Cadastro</span><select aria-label="Situação do cadastro" value={params.get('active') ?? 'true'} onChange={event => updateFilter('active', event.target.value)}><option value="true">Ativos</option><option value="false">Inativos</option><option value="all">Todos</option></select></label>
         </div>
+        <TableSort label="Ordenar produtos por" fields={[{ value: 'name', label: 'Produto' }, { value: 'sku', label: 'SKU' }, { value: 'stock', label: 'Saldo' }, { value: 'minimumStock', label: 'Estoque mínimo' }, { value: 'category', label: 'Categoria' }]} sortBy={sortBy} direction={direction} change={sort} />
         {categoriesQuery.error && <Alert tone="error" title="Não foi possível carregar categorias." action={{ label: 'Tentar novamente', run: () => { void categoriesQuery.refetch(); } }} />}
         {selectForPurchase && <div className="procurement-replenish"><span>Selecione até 100 produtos para revisar uma compra. Quantidades e custos serão preenchidos no pedido.</span>{replenish.length > 0 && <><Link className="primary-button" to={'/purchases/new?products=' + replenish.join(',')}>Preparar pedido ({replenish.length})</Link><button type="button" className="text-button" onClick={() => setReplenish([])}>Limpar seleção</button></>}</div>}
         <DataState retainContentOnError={Boolean(query.data)} pending={query.isPending} error={query.error} retry={query.refetch} updating={query.isFetching} previousResults={query.isPlaceholderData}>
         <div className="table-frame">
           <table className="data-table product-table">
-            <thead><tr><th scope="col">PRODUTO / SKU</th><th scope="col">DISPONÍVEL</th><th scope="col">MÍNIMO</th><th scope="col">PREÇO</th><th scope="col">SITUAÇÃO</th><th scope="col"><span className="sr-only">Detalhes</span></th></tr></thead>
+            <thead><tr><SortHeading field="name" label="PRODUTO / SKU" sortBy={sortBy} direction={direction} change={sort} /><SortHeading field="stock" label="DISPONÍVEL" sortBy={sortBy} direction={direction} change={sort} /><SortHeading field="minimumStock" label="MÍNIMO" sortBy={sortBy} direction={direction} change={sort} /><th scope="col">PREÇO</th><th scope="col">SITUAÇÃO</th><th scope="col"><span className="sr-only">Detalhes</span></th></tr></thead>
             <tbody>{filtered.map((product) => {
               const status = stockStatus(product.stock, product.minimum);
               return <tr key={product.id} tabIndex={0} aria-selected={selectedId === product.id} aria-label={'Detalhes de ' + product.name} className={'product-row clickable-row row-' + status.tone + (selectedId === product.id ? ' row-selected' : '')} onClick={event => openFromRow(event, () => setSelectedId(product.id))} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelectedId(product.id); } }}>
