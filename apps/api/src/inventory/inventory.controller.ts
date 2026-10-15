@@ -24,6 +24,7 @@ export class ProductsController {
   constructor(@Inject(InventoryService) private readonly service: InventoryService) {}
   @Get() @RequirePermission('product.read') list(@Query(input(ProductQuery)) query: ProductQuery) { return this.service.products(query); }
   @Get('lookup') @RequirePermission('product.read') lookup(@Query(input(LookupQuery)) query: LookupQuery) { return this.service.lookup(query.code); }
+  @Get(':id/stock-history') @RequirePermission('stock.read') history(@Param('id', ParseUUIDPipe) id: string, @Query(input(DashboardQuery)) query: DashboardQuery) { return this.service.stockHistory(id, query.days); }
   @Get(':id') @RequirePermission('product.read') get(@Param('id', ParseUUIDPipe) id: string) { return this.service.product(id); }
   @Post() @RequirePermission('product.create') create(@Body(input(ProductCreate)) data: ProductCreate, @CurrentUser() user: UserResponseDto) { return this.service.createProduct(data, user.id); }
   @Patch(':id') @RequirePermission('product.update') update(@Param('id', ParseUUIDPipe) id: string, @Body(input(ProductPatch)) data: ProductPatch, @CurrentUser() user: UserResponseDto) { return this.service.patchProduct(id, data, user.id); }

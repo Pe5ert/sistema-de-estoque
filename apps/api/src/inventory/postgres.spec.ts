@@ -143,6 +143,17 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     const login = await request('/auth/login', { email: tag + '@example.test', password }); assert.equal(login.status, 200); cookie = login.headers.get('set-cookie')!.split(';')[0];
     assert.equal((await (await request('/products/' + product.id)).json() as ProductRecord).stock, '80');
   });
+  test('stock history endpoint returns complete audited steps and rejects invalid periods', async () => {
+    const response = await request('/products', { sku: tag + '-history', name: 'History fixture', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '100' } });
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    assert.equal((await request('/stock-movements', { productId: product.id, type: 'EXIT', reason: 'SALE', quantity: '10' })).status, 201);
+    const responseHistory = await request('/products/' + product.id + '/stock-history?days=7'); assert.equal(responseHistory.status, 200);
+    const history = await responseHistory.json() as import('@stock/shared').ProductStockHistory;
+    assert.equal(history.complete, true); assert.equal(history.events.length, 2); assert.equal(history.openingStock, '0'); assert.equal(history.closingStock, '90');
+    assert.equal((await request('/products/' + product.id + '/stock-history?days=999')).status, 400);
+    assert.equal((await request('/products/' + randomUUID() + '/stock-history')).status, 404);
+  });
   test('ten concurrent withdrawals exhaust stock exactly, with no audit for rejected requests', async () => {
     const response = await request('/products', { sku: tag + '-burst', name: 'Concurrent withdrawals', categoryId, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '10' } });
     assert.equal(response.status, 201);

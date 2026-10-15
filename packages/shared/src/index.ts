@@ -61,3 +61,9 @@ export * from './permissions';
 export * from './purchases';
 
 export * from './physical-inventories';
+
+export interface ProductStockHistory {
+  from: string; to: string; timezone: string; openingStock: string; closingStock: string;
+  complete: boolean; message?: string; total: number;
+  events: { id: string; createdAt: string; type: MovementType; reason: MovementReason; quantity: string; previousStock: string; resultingStock: string }[];
+}

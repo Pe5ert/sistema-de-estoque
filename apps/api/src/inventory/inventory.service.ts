@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { auditedStockHistory } from './stock-history';
 import { ConfigService } from '@nestjs/config';
 import { claimImage, isManagedImage, releaseImage } from '../images/image-lifecycle';
 import { randomUUID } from 'node:crypto';
@@ -63,6 +64,19 @@ export class InventoryService {
     const product = await this.db.product.findUnique({ where: { id }, include: productInclude });
     if (!product) throw new NotFoundException('Produto não encontrado.');
     return product;
+  }
+  async stockHistory(id: string, days: number) {
+    return this.db.$transaction(async tx => {
+      const product = await tx.product.findUnique({ where: { id } });
+      if (!product) throw new NotFoundException('Produto não encontrado.');
+      const [range] = await tx.$queryRaw<Array<{ from: Date; to: Date }>>`
+        SELECT (((CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo')::date - ${days - 1}::int)::timestamp AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'UTC' AS "from",
+          (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::timestamp AS "to"`;
+      // A bounded complete audit, never a paginated fragment presented as history.
+      const events = await tx.stockMovement.findMany({ where: { productId: id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: 5001,
+        select: { id: true, createdAt: true, type: true, reason: true, quantity: true, previousStock: true, resultingStock: true } });
+      return auditedStockHistory(product.stock, events, range.from, range.to);
+    }, { isolationLevel: 'RepeatableRead' });
   }
   lookup(code: string) {
     return this.db.product.findMany({ where: { active: true, OR: [{ sku: { equals: code, mode: 'insensitive' } }, { barcode: code }] }, include: productInclude });
