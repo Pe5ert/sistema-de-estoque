@@ -1,6 +1,7 @@
+import { useListParams } from './useListParams';
 import { useEffect, useState } from 'react';
 import { ChevronRight, Pencil, Plus, Search } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, } from 'react-router-dom';
 import { stockStatus, dateLabel, reasonLabels, typeLabels } from './inventory-model';
 import { useCategories, useProducts, useProduct, useMovements } from './inventory-api';
 import { DataState, Pagination } from './data-controls';
@@ -19,7 +20,7 @@ export function Products() {
   const { currentUser } = useAuth();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useListParams();
   const search = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   const statusFilter = params.get('stock') ?? '';
@@ -32,15 +33,15 @@ export function Products() {
   const page = Math.max(1, Number(params.get('page')) || 1);
   const sortBy = ['name', 'sku', 'stock', 'minimumStock', 'category'].includes(params.get('sortBy') ?? '') ? params.get('sortBy')! : 'name';
   const direction = params.get('sortDirection') === 'desc' ? 'desc' : 'asc';
-  const sort = (field: string, order: string) => { const next = new URLSearchParams(params); next.set('sortBy', field); next.set('sortDirection', order); next.delete('page'); setParams(next, { replace: true }); };
+  const sort = (field: string, order: string) => { setParams(previous => { const next = new URLSearchParams(previous); next.set('sortBy', field); next.set('sortDirection', order); next.delete('page'); return next; }, { replace: true }); };
   const query = useProducts({ sortBy, sortDirection: direction, page, limit: 20, search, category, stockStatus: ({ success: 'NORMAL', danger: 'OUT', warning: 'LOW', attention: 'ATTENTION' } as Record<string, string>)[statusFilter], active: params.get('active') ?? 'true' });
   const filtered = query.data?.items ?? [];
   const hasFilters = Boolean(search || category || statusFilter || (params.get('active') && params.get('active') !== 'true'));
   const updateFilter = (key: string, value: string) => {
-    const next = new URLSearchParams(params);
+    setParams(previous => { const next = new URLSearchParams(previous);
     if (key !== 'page') next.delete('page');
     if (value) next.set(key, value); else next.delete(key);
-    setParams(next, { replace: true });
+    return next; }, { replace: true });
   };
 
 

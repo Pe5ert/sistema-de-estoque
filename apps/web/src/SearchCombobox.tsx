@@ -1,9 +1,9 @@
 import * as React from 'react';
 export type SearchOption = { value: string; label: string; detail?: string; disabled?: boolean; exact?: boolean };
-export function SearchCombobox({ id, label, placeholder, options, selected, search, changeSearch, choose, busy, error, retry, clear, exactEnter }: {
+export function SearchCombobox({ id, label, placeholder, options, selected, search, changeSearch, choose, busy, error, retry, clear, exactEnter, total }: {
   id: string; label: string; placeholder: string; options: SearchOption[]; selected?: SearchOption;
   search: string; changeSearch: (value: string) => void; choose: (value: string) => void;
-  busy: boolean; error?: boolean; retry: () => unknown; clear?: () => void; exactEnter?: () => unknown;
+  total?: number; busy: boolean; error?: boolean; retry: () => unknown; clear?: () => void; exactEnter?: () => unknown;
 }) {
   const [open, setOpen] = React.useState(false), [highlight, setHighlight] = React.useState<string>();
   const usable = options.filter(option => !option.disabled);
@@ -19,6 +19,6 @@ export function SearchCombobox({ id, label, placeholder, options, selected, sear
     }} />{selected && clear && <button type="button" className="text-button" aria-label={'Limpar ' + label.toLowerCase()} onClick={() => { clear(); changeSearch(''); document.getElementById(id)?.focus(); }}>×</button>}</div>
     {open && <div className="combobox-popup"><div id={id + '-list'} role="listbox" aria-label={label} aria-busy={busy}>
       {busy ? <p role="status">Buscando…</p> : error ? <p role="status">Não foi possível buscar.</p> : !options.length ? <p role="status">Nenhum resultado encontrado.</p> : options.map(option => <button type="button" role="option" tabIndex={-1} id={id + '-option-' + option.value} key={option.value} aria-selected={selected?.value === option.value} aria-disabled={option.disabled} className={active?.value === option.value ? 'is-active' : ''} onMouseDown={event => event.preventDefault()} onClick={() => { if (!option.disabled) select(option.value); }}><strong>{option.label}{selected?.value === option.value ? ' ✓' : ''}</strong>{option.detail && <small>{option.detail}</small>}</button>)}
-    </div>{error && <button type="button" className="text-button" onClick={() => { retry(); }}>Tentar novamente</button>}</div>}
+    </div>{!busy && !error && total !== undefined && total > options.length && <p>Mostrando {options.length} de {total}. Refine a busca.</p>}{error && <button type="button" className="text-button" onClick={() => { retry(); }}>Tentar novamente</button>}</div>}
   </div>;
 }

@@ -1,3 +1,4 @@
+import { useListParams } from './useListParams';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy } from 'lucide-react';
 import { useMovement, useMovements, type Filters } from './inventory-api';
@@ -10,13 +11,12 @@ import { calendarDate } from './dashboard-model';
 import { MovementWorkbench } from './MovementWorkbench';
 import { PeriodSelector } from './PeriodSelector';
 import { invalidPeriod, operationalBoundary } from './period-model';
-import { useSearchParams } from 'react-router-dom';
 
 export function Movements() { return <div className="page-stack"><MovementWorkbench /><HistoryTable compact /></div>; }
 export function HistoryPage() { return <HistoryTable />; }
 
 function HistoryTable({ compact = false }: { compact?: boolean }) {
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useListParams();
   const [filters, setFilters] = useState<Filters>({ page: 1, limit: 20, search: compact ? '' : params.get('q') ?? '', reason: compact ? '' : params.get('reason') ?? '', reference: compact ? '' : params.get('reference') ?? '', type: !compact && movementTypes.includes(params.get('type') as MovementType) ? params.get('type')! : '' });
   const [from, setFrom] = useState(compact ? '' : calendarDate(params.get('from')));
   const [to, setTo] = useState(compact ? '' : calendarDate(params.get('to')));
