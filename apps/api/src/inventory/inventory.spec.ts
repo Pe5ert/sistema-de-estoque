@@ -102,6 +102,6 @@ describe('operational HTTP boundaries without PostgreSQL', () => {
   test('server pagination and stock filters are typed, defaults applied', async () => {
     const response = await request('/products?page=2&limit=10&stockStatus=LOW&active=all');
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { page: 2, limit: 10, stockStatus: 'LOW', active: 'all' });
+    assert.deepEqual(await response.json(), { page: 2, limit: 10, sortBy: 'name', sortDirection: 'asc', stockStatus: 'LOW', active: 'all' });
   });
 });

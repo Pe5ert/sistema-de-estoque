@@ -83,6 +83,17 @@ describe('real PostgreSQL purchase integrity and simultaneous receipts', { skip:
     const linked = await (await send('/stock-movements?reference=' + body.receiptId)).json() as { total: number }; assert.equal(linked.total, 1);
     assert.equal((await send('/purchase-orders/' + draft.id + '/cancel', { revision: 4 })).status, 409);
   });
+  test('purchase sorting orders the complete filtered dataset before paging', async () => {
+    const item = await product(); await order(item.id, '3'); await order(item.id, '9'); await order(item.id, '1');
+    const result = await send(`/purchase-orders?supplierId=${supplierId}&sortBy=total&sortDirection=asc&limit=100`);
+    assert.equal(result.status, 200); const all = await result.json() as { items: PurchaseRecord[] };
+    for (let index = 1; index < all.items.length; index++) assert(new Prisma.Decimal(all.items[index - 1].total).lte(all.items[index].total));
+    for (let page = 1; page <= 3; page++) {
+      const result = await (await send(`/purchase-orders?supplierId=${supplierId}&sortBy=total&sortDirection=asc&limit=1&page=${page}`)).json() as { items: PurchaseRecord[] };
+      assert.equal(result.items[0].id, all.items[page - 1].id);
+    }
+    assert.equal((await send('/purchase-orders?sortBy=unsupported')).status, 400);
+  });
   test('simultaneous same receipt ID increments stock exactly once', async () => {
     const item = await product(), record = await sent(item.id), body = { receiptId: randomUUID(), items: [{ orderItemId: record.items[0].id, quantity: '60' }] };
     const responses = await competing(record.id, [body, body]); assert.deepEqual(responses.map(r => r.status), [201, 201]);
