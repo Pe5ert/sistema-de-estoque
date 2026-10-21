@@ -62,9 +62,10 @@ export class InventoryService {
     return { items, total, page: query.page, limit: query.limit };
   }
   async product(id: string) {
-    const product = await this.db.product.findUnique({ where: { id }, include: productInclude });
+    const product = await this.db.product.findUnique({ where: { id }, include: { ...productInclude, _count: { select: { stockMovements: true } } } });
     if (!product) throw new NotFoundException('Produto não encontrado.');
-    return product;
+    const { _count, ...record } = product;
+    return { ...record, unitLocked: _count.stockMovements > 0 || !product.stock.isZero() };
   }
   async stockHistory(id: string, days: number) {
     return this.db.$transaction(async tx => {
@@ -128,6 +129,10 @@ export class InventoryService {
         await tx.$queryRaw`SELECT "id" FROM "Product" WHERE "id" = ${id}::uuid FOR UPDATE`;
         const current = await tx.product.findUnique({ where: { id } });
         if (!current) throw new NotFoundException('Produto não encontrado.');
+        // The same product lock serializes this check with every stock movement.
+        if (data.unit && data.unit !== current.unit && (!current.stock.isZero() || await tx.stockMovement.findFirst({ where: { productId: id }, select: { id: true } }))) {
+          throw new ConflictException('A unidade não pode ser alterada após movimentações ou com saldo em estoque. Para usar outra unidade, cadastre outro produto.');
+        }
         if (data.categoryId && data.categoryId !== current.categoryId) await this.activeCategory(tx, data.categoryId);
         const urls = [...new Set([current.imageUrl, data.imageUrl].filter((url): url is string => Boolean(url && isManagedImage(url))))].sort();
         if (urls.length) await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "ProductImage" WHERE "url" IN (${Prisma.join(urls)}) ORDER BY "id" FOR UPDATE`);

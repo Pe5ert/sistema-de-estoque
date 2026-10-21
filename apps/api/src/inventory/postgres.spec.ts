@@ -254,4 +254,59 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
       assert.equal((await request('/products/' + product.id, { name: 'Stale session edit' }, 'PATCH')).status, 403);
     } finally { await db.user.update({ where: { id: userId }, data: { role: 'MANAGER' } }); }
   });
+  test('unit changes preserve balances and audit, including products that returned to zero', async () => {
+    const response = await request('/products', { sku: tag + '-unit', name: 'Unit protection', categoryId, unit: 'KG', minimumStock: '0' });
+    assert.equal(response.status, 201);
+    const product = await response.json() as ProductRecord; productIds.push(product.id);
+    assert.equal((await (await request('/products/' + product.id)).json() as ProductRecord).unitLocked, false);
+    assert.equal((await request('/products/' + product.id, { unit: 'BOX' }, 'PATCH')).status, 200, 'unused products can change unit');
+    assert.equal((await request('/stock-movements', { productId: product.id, type: 'ENTRY', reason: 'OTHER', quantity: '10' })).status, 201);
+    const before = await db.stockMovement.findMany({ where: { productId: product.id } });
+    assert.equal((await request('/products/' + product.id, { unit: 'KG', name: 'Must roll back' }, 'PATCH')).status, 409);
+    assert.equal((await db.product.findUniqueOrThrow({ where: { id: product.id } })).name, 'Unit protection');
+    assert.equal((await request('/products/' + product.id, { unit: 'BOX', name: 'Allowed edit' }, 'PATCH')).status, 200);
+    assert.equal((await request('/stock-movements', { productId: product.id, type: 'EXIT', reason: 'OTHER', quantity: '10' })).status, 201);
+    assert.equal((await request('/products/' + product.id, { unit: 'KG' }, 'PATCH')).status, 409, 'zero stock does not erase history');
+    const reloaded = await (await request('/products/' + product.id)).json() as ProductRecord;
+    assert.equal(reloaded.unit, 'BOX'); assert.equal(reloaded.stock, '0'); assert.equal(reloaded.unitLocked, true);
+    const after = await db.stockMovement.findMany({ where: { productId: product.id }, orderBy: { createdAt: 'asc' } });
+    assert.equal(after.length, 2); assert.deepEqual(after.find(item => item.id === before[0].id), before[0]);
+    const history = await (await request('/stock-movements/' + before[0].id)).json() as MovementRecord;
+    assert.equal(history.product.unit, 'BOX'); assert.equal(history.quantity, '10');
+    const initial = await request('/products', { sku: tag + '-initial-unit', name: 'Initial stock unit', categoryId, unit: 'KG', minimumStock: '0', initialEntry: { quantity: '1' } });
+    assert.equal(initial.status, 201); const initialProduct = await initial.json() as ProductRecord; productIds.push(initialProduct.id);
+    assert.equal((await request('/products/' + initialProduct.id, { unit: 'BOX' }, 'PATCH')).status, 409);
+  });
+  test('unit change and first entry serialize on the same product lock', async () => {
+    for (const entryFirst of [true, false]) {
+      const response = await request('/products', { sku: tag + '-unit-race-' + entryFirst, name: 'Unit race', categoryId, unit: 'KG', minimumStock: '0' });
+      assert.equal(response.status, 201); const product = await response.json() as ProductRecord; productIds.push(product.id);
+      const blocker = new Client({ connectionString: testUrl }); await blocker.connect();
+      let entry!: Promise<Response>, patch!: Promise<Response>;
+      async function waitForLocks(count: number) {
+        const deadline = Date.now() + 5000;
+        while (Date.now() < deadline) {
+          const [{ waiting }] = await db.$queryRaw<{ waiting: bigint }[]>`SELECT COUNT(*) AS waiting FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE '%FOR UPDATE%'`;
+          if (Number(waiting) >= count) return;
+          await delay(10);
+        }
+        assert.fail('Expected requests waiting for the product lock');
+      }
+      try {
+        await blocker.query('BEGIN'); await blocker.query('SELECT "id" FROM "Product" WHERE "id"=$1::uuid FOR UPDATE', [product.id]);
+        const startEntry = () => request('/stock-movements', { productId: product.id, type: 'ENTRY', reason: 'OTHER', quantity: '1' });
+        const startPatch = () => request('/products/' + product.id, { unit: 'BOX' }, 'PATCH');
+        if (entryFirst) entry = startEntry(); else patch = startPatch();
+        await waitForLocks(1);
+        if (entryFirst) patch = startPatch(); else entry = startEntry();
+        await waitForLocks(2);
+      } finally { await blocker.query('ROLLBACK'); await blocker.end(); }
+      assert.equal((await entry).status, 201);
+      assert.equal((await patch).status, entryFirst ? 409 : 200);
+      const record = await db.product.findUniqueOrThrow({ where: { id: product.id } });
+      assert.equal(record.stock.toString(), '1'); assert.equal(record.unit, entryFirst ? 'KG' : 'BOX');
+      assert.equal(await db.stockMovement.count({ where: { productId: product.id } }), 1);
+      assert.equal((await request('/products/' + product.id, { unit: entryFirst ? 'BOX' : 'KG' }, 'PATCH')).status, 409);
+    }
+  });
 });

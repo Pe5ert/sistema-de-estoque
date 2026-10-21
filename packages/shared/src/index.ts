@@ -37,6 +37,8 @@ export type MovementReason = (typeof movementReasons)[number];
 // Decimal values travel as strings; API never rounds money through binary floats.
 export interface CategoryRecord { id: string; name: string; description: string | null; active: boolean; }
 export interface ProductRecord {
+  /** Detail-only advisory state; PATCH always rechecks under the product lock. */
+  unitLocked?: boolean;
   id: string; sku: string; barcode: string | null; name: string; description: string | null;
   imageUrl: string | null; categoryId: string; category: CategoryRecord; unit: ProductUnit;
   costPrice: string | null; salePrice: string | null; stock: string; minimumStock: string;

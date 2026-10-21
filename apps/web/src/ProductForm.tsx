@@ -58,6 +58,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   const pointerFocusing = useRef(false);
   const { register, control, watch, handleSubmit, setError, clearErrors, reset, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<ProductFormValues>({ defaultValues: productFormDefaults(product) });
   const unit = watch('unit');
+  const unitLocked = Boolean(product && (product.record.unitLocked || product.stock !== 0));
   const initialMode = watch('initialMode');
   const dirty = imageDraftDirty || isDirty || Boolean(imageFile) || imageUrl !== (product?.imageUrl ?? '');
   const busy = isSubmitting || savingAction !== null;
@@ -124,7 +125,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
     } catch (error) {
       setActionState('error');
       if (error instanceof ApiError && error.message.includes('A imagem enviada expirou')) uploadedImage.current = null;
-      const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : null) : null;
+      const field = error instanceof ApiError && error.status === 409 ? (error.message.includes('SKU') ? 'sku' : error.message.includes('barras') ? 'barcode' : error.message.startsWith('A unidade não pode') ? 'unit' : null) : null;
       if (field) { setError(field, { message: (error as Error).message }); setFocus(field); }
       else notify({ tone: 'error', title: 'Não foi possível salvar o produto.', description: (error instanceof Error ? error.message : 'Tente novamente.') + ' Seus dados continuam no formulário.', key: 'product-save' });
     } finally { saving.current = false; setSavingAction(null); setImageProgress(''); }
@@ -155,7 +156,7 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
               <input id="product-sku" {...register('sku')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); setFocus('category'); } }} maxLength={80} autoComplete="off" placeholder="Ex.: CANETA-AZUL" {...fieldAccessibility('product-sku', errors.sku?.message, true)} aria-required="true" />
             </Field>
             <Field id="product-category" label="Categoria" required error={errors.category?.message}><select id="product-category" {...register('category')} aria-required="true" {...fieldAccessibility('product-category', errors.category?.message)}><option value="">Selecione a categoria</option>{categories.filter(category => category.active || category.id === product?.categoryId).map(category => <option key={category.id} value={category.id}>{category.name}{!category.active ? ' (inativa)' : ''}</option>)}</select>{categories.filter(category => category.active).length === 0 && <span className="field-hint">{hasPermission(currentUser?.role, 'category.manage') ? 'Cadastre uma categoria em Produtos → Categorias antes de salvar.' : 'Peça a um administrador ou gerente para cadastrar uma categoria antes de continuar.'}</span>}</Field>
-            <Field id="product-unit" label="Unidade de medida" required hint="Como este produto é contado no estoque." error={errors.unit?.message}><select id="product-unit" {...register('unit')} aria-required="true" {...fieldAccessibility('product-unit', errors.unit?.message)}>{productUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+            <Field id="product-unit" label="Unidade de medida" required hint={unitLocked ? 'Unidade bloqueada para preservar o saldo e o histórico. Para usar outra unidade, cadastre outro produto.' : 'Como este produto é contado no estoque.'} error={errors.unit?.message}><select id="product-unit" {...register('unit')} disabled={unitLocked} aria-required="true" {...fieldAccessibility('product-unit', errors.unit?.message, true)}>{productUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
             <div className="barcode-field"><Field id="product-barcode" label="Código de barras" hint="Opcional. Use o código da embalagem, com leitor ou teclado." error={errors.barcode?.message}>
               <div className="code-input"><Barcode size={19} aria-hidden="true" /><input id="product-barcode" {...register('barcode')} onKeyDown={scannerEnter} maxLength={80} autoComplete="off" placeholder="Digite ou leia o código da embalagem" {...fieldAccessibility('product-barcode', errors.barcode?.message, true)} /><span className="scanner-input-hint" aria-hidden="true">LEITURA POR TECLADO</span></div>
             </Field></div>
