@@ -19,7 +19,7 @@ export function MovementChart({ summary, requested, change, busy, error, retry }
   const [selected, setSelected] = React.useState<string | null>(null);
   const [tableOpen, setTableOpen] = React.useState(false);
   const active = groups.find(group => group.from === selected);
-  const max = Math.max(1, ...groups.flatMap(group => [group.entries, group.exits]));
+  const max = Math.max(2, Math.ceil(Math.max(0, ...groups.flatMap(group => [group.entries, group.exits])) / 2) * 2);
   const entries = groups.reduce((sum, group) => sum + group.entries, 0);
   const exits = groups.reduce((sum, group) => sum + group.exits, 0);
   const x = (index: number) => 24 + (index + .5) * 952 / Math.max(1, groups.length);

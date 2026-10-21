@@ -12,7 +12,7 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
       <Alert tone="error" title="Servidor indisponível." action={{ label: 'Tentar novamente', run: auth.retry }}>Verifique a conexão com o servidor e tente novamente.</Alert>
     </main>
   );
-  return <>{auth.error && <Alert tone="warning" title="Não foi possível atualizar sua sessão." action={{ label: 'Tentar novamente', run: auth.retry }}>Verifique a conexão. O preenchimento permanece aberto.</Alert>}{children}</>;
+  return <>{children}</>;
 }
 
 export function ProtectedRoute() {

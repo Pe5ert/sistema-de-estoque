@@ -1,4 +1,6 @@
 import { DataRefresh } from './DataRefresh';
+import { Alert } from './feedback';
+import { useQueryClient } from '@tanstack/react-query';
 import { NotFound } from './RouteFailure';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
@@ -40,7 +42,8 @@ const navigation = [
 ] as const;
 
 function Shell() {
-  const { currentUser } = useAuth();
+  const { currentUser, error: sessionError, retry: retrySession } = useAuth();
+  const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 900px)').matches);
   const mobileMenuOpen = mobile && menuOpen;
@@ -166,6 +169,7 @@ function Shell() {
           <div className="page-heading">
             <h1>{current.label}</h1><DataRefresh />
           </div>
+          {sessionError && <div className="session-connection-notice"><Alert tone="warning" title="Conexão interrompida" action={{ label: 'Reconectar', run: () => { retrySession(); void queryClient.refetchQueries({ type: 'active', predicate: query => query.queryKey[0] !== 'auth' }); } }}>Não conseguimos confirmar sua sessão agora. Seu preenchimento continua aberto. Tente reconectar antes de salvar.</Alert></div>}
           <div className="route-surface" key={location.pathname}><Outlet /></div>
         </main>
       </div>

@@ -21,7 +21,7 @@ export function Products() {
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
   const [params, setParams] = useListParams();
-  const search = params.get('q') ?? '';
+  const search = (params.get('q') ?? '').slice(0, 200);
   const category = params.get('category') ?? '';
   const statusFilter = params.get('stock') ?? '';
   const requestedDetail = params.get('detail');
@@ -51,7 +51,7 @@ export function Products() {
       <section className="list-section" aria-labelledby="catalog-title">
         <div className="list-heading catalog-heading"><h2 id="catalog-title" className="sr-only">Produtos</h2><span aria-live="polite">{query.data?.total ?? '…'} produtos</span></div>
         <div className="filter-bar">
-          <label className="search-control"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar produto, SKU ou código de barras</span><input type="search" value={search} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Buscar produto, SKU ou código de barras" /></label>
+          <label className="search-control"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar produto, SKU ou código de barras</span><input type="search" maxLength={200} title="Busque com até 200 caracteres" value={search} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Buscar produto, SKU ou código de barras" /></label>
           <label className="select-control"><span>Categoria</span><select aria-label="Categoria" value={category} onChange={(event) => updateFilter('category', event.target.value)}><option value="">Todas</option>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
           <label className="select-control"><span>Estoque</span><select aria-label="Estoque" value={statusFilter} onChange={(event) => updateFilter('stock', event.target.value)}><option value="">Todos</option><option value="success">Em estoque</option><option value="attention">Requer atenção</option><option value="warning">Estoque baixo</option><option value="danger">Sem estoque</option></select></label>
           {hasFilters && <button type="button" className="text-button" onClick={() => setParams({})}>Limpar filtros</button>}

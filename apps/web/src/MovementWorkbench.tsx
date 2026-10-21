@@ -34,10 +34,14 @@ export function MovementWorkbench() {
   const liveProduct = productQuery.data ?? selected;
   const [matches, setMatches] = useState<readonly ProductPresentation[]>([]);
   const [lookupState, setLookupState] = useState<'waiting' | 'found' | 'missing' | 'ambiguous'>('waiting');
-  const { register, control, handleSubmit, watch, setFocus, reset, setError, clearErrors, formState: { errors } } = useForm<PreviewFields>({ defaultValues: { quantity: '1', type: 'Entrada', reason: '' } });
+  const { register, control, handleSubmit, watch, setValue, setFocus, reset, setError, clearErrors, formState: { errors } } = useForm<PreviewFields>({ defaultValues: { quantity: '1', type: 'Entrada', reason: '' } });
   const type = watch('type');
   const reason = watch('reason');
   const quantityText = watch('quantity');
+  const availableReasons = (Object.keys(reasonLabels) as MovementReason[]).filter(key => key !== 'INITIAL_STOCK' && (key !== 'INVENTORY_ADJUSTMENT' || hasPermission(currentUser?.role, 'stock.adjust')) && (type === 'Entrada' ? !['SALE', 'INTERNAL_USE', 'LOSS'].includes(key) : key !== 'PURCHASE'));
+  useEffect(() => {
+    if (reason && !availableReasons.includes(reason as MovementReason)) setValue('reason', '');
+  }, [type, reason, currentUser?.role, setValue]);
   const quantity = parseDecimal(quantityText, 3);
   const preview = liveProduct && quantity !== null && quantity > 0 && !result ? { before: liveProduct.stock, after: Math.round((liveProduct.stock + (type === 'Saída' ? -quantity : quantity)) * 1000) / 1000, quantity, type } : null;
   useEffect(() => {
@@ -86,6 +90,7 @@ export function MovementWorkbench() {
       return;
     }
     const data = validated.data;
+    if (!availableReasons.includes(data.reason as MovementReason)) { setError('reason', { message: 'Selecione um motivo compatível com o tipo de movimento.' }); setFocus('reason'); return; }
     const quantity = parseDecimal(data.quantity, 3)!;
     const after = Math.round((liveProduct.stock + (data.type === 'Saída' ? -quantity : quantity)) * 1000) / 1000;
     if (after < 0) { setError('quantity', { message: 'Saldo insuficiente para esta saída.' }); setFocus('quantity'); return; }
@@ -131,7 +136,7 @@ export function MovementWorkbench() {
         <legend className="sr-only">Registrar movimentação</legend>
         <Field id="movement-quantity" label="Quantidade" error={errors.quantity?.message}><Controller name="quantity" control={control} render={({ field }) => <QuantityInput id="movement-quantity" value={field.value} inputRef={field.ref} onChange={(value) => { field.onChange(value); resetPreview(); }} onBlur={field.onBlur} unit={selected?.unit ?? 'un'} error={errors.quantity?.message} disabled={!selected} />} /></Field>
         <div className="operation-field"><span className="field-label" id="movement-type-label">TIPO DE MOVIMENTO</span><div className="type-selector" role="radiogroup" aria-labelledby="movement-type-label">{(['Entrada', 'Saída'] as const).map((item) => <label key={item} className={'type-option type-' + (item === 'Entrada' ? 'in' : 'out') + (type === item ? ' type-selected' : '')}><input type="radio" value={item} {...register('type')} />{item === 'Entrada' ? <Plus size={15} aria-hidden="true" /> : <Minus size={15} aria-hidden="true" />}{item}</label>)}</div></div>
-        <div className="reason-field"><Field id="movement-reason" label="Motivo" error={errors.reason?.message}><select id="movement-reason" {...register('reason')} {...fieldAccessibility('movement-reason', errors.reason?.message)}><option value="">Selecione o motivo</option>{(Object.keys(reasonLabels) as MovementReason[]).filter(key => key !== 'INITIAL_STOCK' && (key !== 'INVENTORY_ADJUSTMENT' || hasPermission(currentUser?.role, 'stock.adjust'))).map(key => <option value={key} key={key}>{reasonLabels[key]}</option>)}</select></Field></div>
+        <div className="reason-field"><Field id="movement-reason" label="Motivo" error={errors.reason?.message}><select id="movement-reason" {...register('reason')} {...fieldAccessibility('movement-reason', errors.reason?.message)}><option value="">Selecione o motivo</option>{availableReasons.map(key => <option value={key} key={key}>{reasonLabels[key]}</option>)}</select></Field></div>
         <button type="submit" className="primary-button preview-button" disabled={mutation.isPending || Boolean(preview && preview.after < 0)} aria-busy={mutation.isPending}>{mutation.isPending ? 'Registrando…' : type === 'Saída' ? 'Confirmar saída' : 'Confirmar entrada'}<ArrowRight size={17} aria-hidden="true" /></button>
       </fieldset>
       {preview && <div className={'operation-feedback' + (preview.after < 0 ? ' operation-feedback-error' : '')} role="status">

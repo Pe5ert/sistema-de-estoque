@@ -1349,3 +1349,45 @@ button[aria-busy='true'] { cursor: wait; }
   .movement-area svg { animation: chart-period-enter 180ms ease-out; }
 }
 @media (prefers-reduced-motion: reduce) { .stateful-spinner { animation: none; } }
+.active-filter-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-muted);
+}
+.active-filter-note > span { flex: 1 1 240px; }
+.active-filter-note strong { color: var(--text-primary); }
+.active-filter-note .inline-actions { flex-wrap: wrap; }
+
+.session-connection-notice { margin-bottom: 20px; }
+.data-state > .inline-alert { margin-bottom: 20px; }
+.inline-alert { min-width: 0; }
+.inline-alert .feedback-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+  row-gap: 6px;
+  align-items: center;
+}
+.inline-alert .feedback-copy > strong { grid-column: 1; }
+.inline-alert .feedback-description { grid-column: 1; margin: 0; line-height: 1.6; }
+.inline-alert .feedback-copy > .text-button { grid-column: 2; grid-row: 1 / span 2; margin: 0; align-self: center; border: 1px solid var(--border-strong); padding: 10px 14px; white-space: nowrap; }
+@media (max-width: 600px) {
+  .inline-alert .feedback-copy { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .inline-alert .feedback-copy > .text-button { grid-column: 1; grid-row: auto; justify-self: start; white-space: normal; }
+}
+
+/* Keep help clear of the scanner focus ring, including its initial empty state. */
+.scan-main .scan-feedback:empty ~ .scan-hint { margin-top: 12px; }
+.procurement-page .filter-bar { gap: 12px; padding: 16px 18px; }
+.procurement-page .table-sort { gap: 12px; padding: 16px 18px; }
+@media (max-width: 600px) {
+  .procurement-page .filter-bar,
+  .procurement-page .table-sort { padding: 12px; }
+}

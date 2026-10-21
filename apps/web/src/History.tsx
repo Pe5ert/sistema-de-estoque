@@ -1,7 +1,7 @@
 import { useListParams } from './useListParams';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy } from 'lucide-react';
-import { useMovement, useMovements, type Filters } from './inventory-api';
+import { useMovement, useMovements, useProduct, type Filters } from './inventory-api';
 import { dateLabel, isExit, presentProduct, reasonLabels, typeLabels, unitCodes } from './inventory-model';
 import { ProductIdentity, MovementAmount } from './inventory-ui';
 import { DataState, Pagination } from './data-controls';
@@ -26,6 +26,8 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
     setFrom(calendarDate(params.get('from'))); setTo(calendarDate(params.get('to')));
   }, [params, compact]);
   const invalidRange = invalidPeriod(from, to);
+  const productId = compact ? null : params.get('productId');
+  const filteredProduct = useProduct(productId);
   const [selected, setSelected] = useState<string | null>(compact ? null : params.get('detail'));
   useEffect(() => { if (!compact) setSelected(params.get('detail')); }, [params, compact]);
   const query = useMovements({ ...filters, productId: compact ? undefined : params.get('productId') ?? undefined, from: from && !invalidRange ? operationalBoundary(from) : '', to: to && !invalidRange ? operationalBoundary(to, true) : '' }, !invalidRange);
@@ -44,6 +46,7 @@ function HistoryTable({ compact = false }: { compact?: boolean }) {
   return <div className="page-stack">
     <section className="history-section" aria-label="Histórico de movimentações"><div className="list-heading"><h2 className={compact ? undefined : 'sr-only'}>{compact ? 'Movimentações recentes' : 'Histórico de movimentações'}</h2><span>Mais recentes primeiro</span></div>
       {filters.reference && <p className="table-note">Movimentos deste recebimento. Limpe os filtros para consultar todas as entradas e saídas.</p>}
+      {productId && <div className="active-filter-note"><span>Histórico de <strong>{filteredProduct.data?.name ?? 'um produto específico'}</strong>. A busca abaixo fica restrita a este produto.</span><button className="text-button" type="button" onClick={() => setParams(previous => { const next = new URLSearchParams(previous); next.delete('productId'); next.delete('page'); return next; }, { replace: true })}>Remover filtro de produto</button></div>}
       <div className="filter-bar history-filters"><label className="select-control"><span>Movimento</span><select value={filters.type ?? ''} onChange={event => update('type', event.target.value)}><option value="">Todos</option>{Object.entries(typeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="select-control"><span>Motivo</span><select value={filters.reason ?? ''} onChange={event => update('reason', event.target.value)}><option value="">Todos</option>{Object.entries(reasonLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label className="search-control"><span className="sr-only">Buscar produto no histórico</span><input type="search" placeholder="Produto, SKU ou código de barras" value={filters.search ?? ''} onChange={event => update('search', event.target.value)} /></label>
