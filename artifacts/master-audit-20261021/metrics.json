@@ -1,0 +1,47 @@
+[
+  {
+    "endpoint": "/purchase-orders?limit=20&page=1",
+    "samples_ms": [
+      1924.0,
+      1935.8,
+      1965.4,
+      2002.8,
+      1947.2
+    ],
+    "median_ms": 1947.2,
+    "bytes": 25014,
+    "records": 6,
+    "total": 6,
+    "receipt_arrays_in_list": 2
+  },
+  {
+    "endpoint": "/products?limit=20&page=1",
+    "samples_ms": [
+      669.8,
+      707.6,
+      684.2,
+      691.5,
+      686.7
+    ],
+    "median_ms": 686.7,
+    "bytes": 14429,
+    "records": 20,
+    "total": 31,
+    "receipt_arrays_in_list": 0
+  },
+  {
+    "endpoint": "/physical-inventories?limit=20&page=1",
+    "samples_ms": [
+      1131.1,
+      1156.4,
+      1122.2,
+      1142.9,
+      1131.8
+    ],
+    "median_ms": 1131.8,
+    "bytes": 2065,
+    "records": 3,
+    "total": 3,
+    "receipt_arrays_in_list": 0
+  }
+]

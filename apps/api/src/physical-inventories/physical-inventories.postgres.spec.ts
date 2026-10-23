@@ -121,7 +121,7 @@ test('real PostgreSQL physical counting, atomic adjustments and concurrency', { 
       const { category } = await fixtures(['10']); let session = await create(category.id); session = await save(session, ['10']);
       const item = session.items[0];
       await movements.move({ productId: item.productId, type: 'ENTRY', reason: 'PURCHASE', quantity: '1' }, operator.id);
-      await movements.move({ productId: item.productId, type: 'EXIT', reason: 'SALE', quantity: '1' }, operator.id);
+      await movements.move({ productId: item.productId, type: 'EXIT', reason: 'SALE', buyerIdentification: 'ANONYMOUS', requestId: randomUUID(), quantity: '1' }, operator.id);
       // Explicitly reproduce the timestamp-precision edge case on this fixture.
       await db.$executeRaw`UPDATE "Product" SET "updatedAt" = ${new Date(item.snapshotUpdatedAt)} WHERE "id" = ${item.productId}::uuid`;
       const latest = await service.get(session.id); assert.equal(latest.items[0].currentStock, item.snapshotStock); assert.equal(latest.items[0].currentUpdatedAt, item.snapshotUpdatedAt); assert.equal(latest.conflictedItems, 1);

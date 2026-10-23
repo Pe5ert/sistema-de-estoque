@@ -45,10 +45,15 @@ export interface ProductRecord {
   active: boolean; createdAt: string; updatedAt: string;
 }
 export interface MovementRecord {
+  customerId?: string | null;
+  buyerIdentification?: 'IDENTIFIED' | 'ANONYMOUS' | null;
+  customerNameSnapshot?: string | null;
+  customerCodeSnapshot?: string | null;
   id: string; productId: string; product: ProductRecord; type: MovementType; quantity: string;
   previousStock: string; resultingStock: string; reason: MovementReason; reference: string | null;
   notes: string | null; createdAt: string; user: { id: string; name: string };
 }
+export interface CustomerRecord { id: string; code: string; name: string; active: boolean; createdAt: string; updatedAt: string; }
 export interface Page<T> { items: T[]; total: number; page: number; limit: number; }
 export interface DashboardSummary {
   periodDays: number; from: string; to: string;

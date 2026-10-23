@@ -1,0 +1,30 @@
+GAVYO Estoque — capturas desktop da versão atual. 15/10/2026. Dados fictícios de ambiente isolado. Tema escuro, viewport 1440 × 1000; capturas completas incluem áreas abaixo da dobra. Não é uma auditoria de funcionamento. O cabeçalho do PDF identifica cada tela; imagens originais estão no ZIP.
+
+Abra index.html para navegar pelas imagens.
+
+01. Login — 26-login.jpg
+02. Visão geral — 01-dashboard.jpg
+03. Produtos — 02-produtos.jpg
+04. Novo produto — 03-novo-produto.jpg
+05. Editar produto — 04-editar-produto.jpg
+06. Importação de produtos — 05-importacao.jpg
+07. Movimentações — 06-movimentacoes.jpg
+08. Histórico — 07-historico.jpg
+09. Fornecedores — 08-fornecedores.jpg
+10. Novo fornecedor — 09-novo-fornecedor.jpg
+11. Editar fornecedor — 10-editar-fornecedor.jpg
+12. Compras — 11-compras.jpg
+13. Novo pedido — 12-novo-pedido.jpg
+14. Editar pedido — 13-editar-pedido.jpg
+15. Detalhes do pedido — 14-pedido.jpg
+16. Pedido parcialmente recebido — 15-pedido-parcial.jpg
+17. Inventário físico — 16-inventarios.jpg
+18. Contagem de inventário — 17-contagem.jpg
+19. Backups e agendamento — 18-backups.jpg
+20. Página não encontrada — 19-pagina-inexistente.jpg
+21. Detalhes do produto — 20-detalhe-produto.jpg
+22. Categorias — 21-categorias.jpg
+23. Detalhes do fornecedor — 22-detalhe-fornecedor.jpg
+24. Detalhes da movimentação — 23-detalhe-movimento.jpg
+25. Movimentação com produto identificado — 24-movimentacao-produto.jpg
+26. Pesquisa de produtos e funções — 25-busca-global.jpg

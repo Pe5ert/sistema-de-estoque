@@ -66,6 +66,7 @@ describe('real PostgreSQL operational flow and concurrent exits', { skip: !testU
     } finally { await app?.close(); await db?.$disconnect(); }
   });
   function request(path: string, body?: unknown, method = body ? 'POST' : 'GET', session = cookie) {
+    if (path === '/stock-movements' && method === 'POST' && body && typeof body === 'object') body = { requestId: randomUUID(), ...((body as { reason?: string }).reason === 'SALE' ? { buyerIdentification: 'ANONYMOUS' } : {}), ...body };
     return fetch(base + path, { method, headers: { Origin: origin, 'Content-Type': 'application/json', ...(session ? { Cookie: session } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   }
   async function concurrentExits(productId: string, quantity: string, count: number) {

@@ -12,9 +12,10 @@ import { apiClient, ApiError } from './lib/api';
 import { DataState } from './data-controls';
 import { Field, fieldAccessibility, QuantityInput } from './form-controls';
 import { ProductImageField, type ProductImageHandle } from './ProductImageField';
+import { ProductIdentity, Status } from './inventory-ui';
 import { formatQuantity, normalizeDecimal, productFormDefaults, productUnits, validateProductForm, type ProductFormValues } from './product-form-model';
 
-const fieldOrder: (keyof ProductFormValues)[] = ['barcode', 'name', 'sku', 'category', 'unit', 'cost', 'sale', 'minimum', 'initialQuantity', 'description'];
+const fieldOrder: (keyof ProductFormValues)[] = ['name', 'sku', 'category', 'unit', 'barcode', 'initialQuantity', 'minimum', 'cost', 'sale', 'description'];
 
 function keepControlVisible(form: HTMLFormElement, target: EventTarget | null) {
   if (!form.isConnected || !(target instanceof HTMLElement) || !form.contains(target) || target.closest('.form-actions') || target.matches('input[type="file"]')) return;
@@ -132,9 +133,9 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   });
 
   const cancel = () => { if (dirty) setCancelRequested(true); else navigate('/products'); };
-  const stay = () => { setCancelRequested(false); if (blocker.state === 'blocked') blocker.reset(); setFocus(editing ? 'name' : 'barcode'); };
+  const stay = () => { setCancelRequested(false); if (blocker.state === 'blocked') blocker.reset(); requestAnimationFrame(() => setFocus('name')); };
   const discard = () => { allowNavigation.current = true; if (blocker.state === 'blocked') blocker.proceed(); else navigate('/products'); };
-  return <form onChangeCapture={() => { if (!busy) setActionState('idle'); }} className="product-form" aria-busy={busy} noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
+  return <form onChangeCapture={() => { if (!busy) setActionState('idle'); }} className="product-form product-form-b" aria-busy={busy} noValidate onSubmit={submit('save')} onPointerDownCapture={() => { pointerFocusing.current = true; }} onPointerCancelCapture={() => { pointerFocusing.current = false; }} onPointerUpCapture={(event) => {
     pointerFocusing.current = false;
     const form = event.currentTarget;
     requestAnimationFrame(() => keepControlVisible(form, document.activeElement));
@@ -145,9 +146,15 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
   }} onChange={() => { setCancelRequested(false); }}>
     {confirmInactive && <ConfirmDialog title="Inativar este produto?" description="O produto deixará de aparecer no catálogo ativo e não poderá receber movimentações. O histórico será preservado." cancelLabel="Continuar editando" confirmLabel="Inativar e salvar" cancel={() => setConfirmInactive(false)} confirm={() => { setConfirmInactive(false); inactivationApproved.current = true; void submit('save')(); }} />}
     <p className="product-form-intro">{editing ? 'Atualize os dados do produto. Para alterar a quantidade, use Movimentações.' : 'Comece pelo nome, código interno e categoria. Depois informe o que já existe no estoque.'}</p>
-    <div className="form-context"><span>{editing ? `Editando ${product?.sku}` : 'Cadastro de produto'}</span><span><b>*</b> Obrigatório · demais campos opcionais</span></div>
-    <fieldset className="product-form-surface" disabled={busy} style={{ margin: 0, padding: 0, minWidth: 0 }}><legend className="sr-only">Dados do produto</legend>
-      <div className="product-form-top">
+    {product && <section className="product-edit-context" aria-label="Produto em edição">
+      <ProductIdentity product={product} />
+      <Status label={product.active ? 'Ativo' : 'Inativo'} tone={product.active ? 'success' : 'info'} />
+      <div className="product-edit-stock"><span>Saldo atual</span><strong>{formatQuantity(product.stock)} <small>{product.unit}</small></strong><span>Mínimo: {formatQuantity(product.minimum)} {product.unit}</span></div>
+    </section>}
+    <div className="form-context"><span>{editing ? 'Dados do produto' : 'Cadastro de produto'}</span><span><b>*</b> Obrigatório · demais campos opcionais</span></div>
+    <fieldset className="product-form-surface" disabled={busy}><legend className="sr-only">Dados do produto</legend>
+      <div className="product-form-columns">
+        <div className="product-form-main">
         <section className="identification-section" aria-labelledby="identification-title">
           <div className="form-section-heading"><h2 id="identification-title">1. Identificação do produto</h2></div>
           <div className="identification-grid">
@@ -160,11 +167,8 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
             <div className="barcode-field"><Field id="product-barcode" label="Código de barras" hint="Opcional. Use o código da embalagem, com leitor ou teclado." error={errors.barcode?.message}>
               <div className="code-input"><Barcode size={19} aria-hidden="true" /><input id="product-barcode" {...register('barcode')} onKeyDown={scannerEnter} maxLength={80} autoComplete="off" placeholder="Digite ou leia o código da embalagem" {...fieldAccessibility('product-barcode', errors.barcode?.message, true)} /><span className="scanner-input-hint" aria-hidden="true">LEITURA POR TECLADO</span></div>
             </Field></div>
-            <ProductImageField key={focusNextProduct ? 'next' : 'current'} imageRef={imageRef} onDraftChange={setImageDraftDirty} imageUrl={imageUrl} disabled={busy} file={imageFile} onFileChange={file => { setImageFile(file); uploadedImage.current = null; }} onChange={setImageUrl} />
           </div>
         </section>
-      </div>
-      <div className="product-form-bottom">
         <section className="stock-control-section" aria-labelledby="inventory-title">
           <div className="form-section-heading"><h2 id="inventory-title">2. Estoque</h2><span>{editing ? 'Saldo preservado' : 'Quantidade e reposição'}</span></div>
           <div className="inventory-control-grid">
@@ -188,8 +192,15 @@ function ProductForm({ product }: { product?: ProductPresentation }) {
           </Field>)}</div>
           <p className="field-hint">Preços opcionais. Deixe em branco se ainda não souber.</p>
         </section>
+        </div>
+        <aside className="product-form-secondary" aria-label="Foto e detalhes do produto">
+          <section className="product-photo-section" aria-labelledby="product-photo-title">
+            <div className="form-section-heading"><h2 id="product-photo-title">Foto do produto</h2><span>Opcional</span></div>
+            <ProductImageField key={focusNextProduct ? 'next' : 'current'} imageRef={imageRef} onDraftChange={setImageDraftDirty} imageUrl={imageUrl} disabled={busy} file={imageFile} onFileChange={file => { setImageFile(file); uploadedImage.current = null; }} onChange={setImageUrl} />
+          </section>
+          <details className="product-extra-details" open={detailsOpen} onToggle={(event) => setDetailsOpen(event.currentTarget.open)}><summary>Detalhes opcionais <span>Descrição e situação</span></summary><Field id="product-description" label="Descrição" error={errors.description?.message}><textarea id="product-description" rows={4} maxLength={10000} {...register('description')} placeholder="Detalhes úteis para identificar ou manusear o produto" {...fieldAccessibility('product-description', errors.description?.message)} /></Field><label className="product-active-field"><input type="checkbox" {...register('active')} />Produto ativo no catálogo</label></details>
+        </aside>
       </div>
-      <details className="product-extra-details" open={detailsOpen} onToggle={(event) => setDetailsOpen(event.currentTarget.open)}><summary>Detalhes opcionais <span>Descrição e situação</span></summary><Field id="product-description" label="Descrição" error={errors.description?.message}><textarea id="product-description" rows={2} maxLength={10000} {...register('description')} placeholder="Detalhes úteis para identificar ou manusear o produto" /></Field><label className="product-active-field"><input type="checkbox" {...register('active')} />Produto ativo no catálogo</label></details>
     </fieldset>
     {errors.root && <Alert tone="error" title="Não foi possível salvar o produto.">{errors.root.message} Seus dados continuam no formulário.</Alert>}
     <div className="form-actions">

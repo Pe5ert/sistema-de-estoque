@@ -1,0 +1,132 @@
+[
+  {
+    "file": "01-dashboard.jpg",
+    "title": "Visão geral",
+    "path": "/"
+  },
+  {
+    "file": "02-produtos.jpg",
+    "title": "Produtos",
+    "path": "/products"
+  },
+  {
+    "file": "03-novo-produto.jpg",
+    "title": "Novo produto",
+    "path": "/products/new"
+  },
+  {
+    "file": "04-editar-produto.jpg",
+    "title": "Editar produto",
+    "path": "/products/6cbe9376-ca16-4d1d-8951-0921417322eb/edit"
+  },
+  {
+    "file": "05-importacao.jpg",
+    "title": "Importação de produtos",
+    "path": "/products/import"
+  },
+  {
+    "file": "06-movimentacoes.jpg",
+    "title": "Movimentações",
+    "path": "/movements"
+  },
+  {
+    "file": "07-historico.jpg",
+    "title": "Histórico",
+    "path": "/history"
+  },
+  {
+    "file": "08-fornecedores.jpg",
+    "title": "Fornecedores",
+    "path": "/suppliers"
+  },
+  {
+    "file": "09-novo-fornecedor.jpg",
+    "title": "Novo fornecedor",
+    "path": "/suppliers/new"
+  },
+  {
+    "file": "10-editar-fornecedor.jpg",
+    "title": "Editar fornecedor",
+    "path": "/suppliers/032d1f2d-4bf4-4dc0-8864-2ce08666c259/edit"
+  },
+  {
+    "file": "11-compras.jpg",
+    "title": "Compras",
+    "path": "/purchases"
+  },
+  {
+    "file": "12-novo-pedido.jpg",
+    "title": "Novo pedido",
+    "path": "/purchases/new"
+  },
+  {
+    "file": "13-editar-pedido.jpg",
+    "title": "Editar pedido",
+    "path": "/purchases/a879fc02-3bec-40db-b087-5f8a5e0c5421/edit"
+  },
+  {
+    "file": "14-pedido.jpg",
+    "title": "Detalhes do pedido",
+    "path": "/purchases/a879fc02-3bec-40db-b087-5f8a5e0c5421"
+  },
+  {
+    "file": "15-pedido-parcial.jpg",
+    "title": "Pedido parcialmente recebido",
+    "path": "/purchases/e7855bb3-f6c5-44e9-8053-104089d81927"
+  },
+  {
+    "file": "16-inventarios.jpg",
+    "title": "Inventário físico",
+    "path": "/physical-inventories"
+  },
+  {
+    "file": "17-contagem.jpg",
+    "title": "Contagem de inventário",
+    "path": "/physical-inventories/a78992b4-a909-4b5f-8cf4-bf0d0a136415"
+  },
+  {
+    "file": "18-backups.jpg",
+    "title": "Backups e agendamento",
+    "path": "/backups"
+  },
+  {
+    "file": "19-pagina-inexistente.jpg",
+    "title": "Página não encontrada",
+    "path": "/pagina-inexistente-captura"
+  },
+  {
+    "file": "20-detalhe-produto.jpg",
+    "title": "Detalhes do produto",
+    "path": "http://127.0.0.1:5175/products"
+  },
+  {
+    "file": "21-categorias.jpg",
+    "title": "Categorias",
+    "path": "http://127.0.0.1:5175/products"
+  },
+  {
+    "file": "22-detalhe-fornecedor.jpg",
+    "title": "Detalhes do fornecedor",
+    "path": "http://127.0.0.1:5175/suppliers"
+  },
+  {
+    "file": "23-detalhe-movimento.jpg",
+    "title": "Detalhes da movimentação",
+    "path": "http://127.0.0.1:5175/history"
+  },
+  {
+    "file": "24-movimentacao-produto.jpg",
+    "title": "Movimentação com produto identificado",
+    "path": "http://127.0.0.1:5175/movements"
+  },
+  {
+    "file": "25-busca-global.jpg",
+    "title": "Pesquisa de produtos e funções",
+    "path": "http://127.0.0.1:5175/products"
+  },
+  {
+    "file": "26-login.jpg",
+    "title": "Login",
+    "path": "http://127.0.0.1:5175/login"
+  }
+]

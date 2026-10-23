@@ -1,0 +1,32 @@
+[
+  {
+    "overflow": false,
+    "page": "sale",
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "page": "scan",
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "page": "backup",
+    "width": 1024
+  },
+  {
+    "overflow": false,
+    "page": "sale",
+    "width": 390
+  },
+  {
+    "overflow": false,
+    "page": "scan",
+    "width": 390
+  },
+  {
+    "overflow": false,
+    "page": "backup",
+    "width": 390
+  }
+]

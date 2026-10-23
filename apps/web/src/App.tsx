@@ -29,6 +29,7 @@ import { PermissionRoute } from './auth/PermissionRoute';
 import { Suppliers, SupplierFormPage } from './Suppliers';
 import { Purchases, PurchaseDetail } from './Purchases';
 import { PurchaseFormPage } from './PurchaseForm';
+import { CustomersPage } from './Customers';
 
 const navigation = [
   { path: '/', label: 'Visão geral', icon: LayoutDashboard },
@@ -39,6 +40,7 @@ const navigation = [
   { path: '/backups', label: 'Backups', icon: HardDrive },
   { path: '/suppliers', label: 'Fornecedores', icon: Boxes },
   { path: '/purchases', label: 'Compras', icon: Package },
+  { path: '/customers', label: 'Clientes', icon: Boxes },
 ] as const;
 
 function Shell() {
@@ -146,8 +148,8 @@ function Shell() {
         <div className="sidebar-rule" />
         <nav aria-label="Navegação principal">
           <div className="nav-group"><span className="nav-group-label">PAINEL</span>{navItem(navigation[0])}</div>
-          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{navigation.slice(1, 5).map(navItem)}</div>
-          <div className="nav-group"><span className="nav-group-label">COMPRAS</span>{navigation.slice(6).map(navItem)}</div>
+          <div className="nav-group"><span className="nav-group-label">OPERAÇÃO</span>{[...navigation.slice(1, 5), navigation[8]].map(navItem)}</div>
+          <div className="nav-group"><span className="nav-group-label">COMPRAS</span>{navigation.slice(6, 8).map(navItem)}</div>
           {hasPermission(currentUser?.role, 'backup.manage') && <div className="nav-group"><span className="nav-group-label">ADMINISTRAÇÃO</span>{navItem(navigation[5])}</div>}
         </nav>
         <UserSession />
@@ -189,6 +191,7 @@ export function App() {
       <Route path="products/:id/edit" element={<PermissionRoute permission="product.update"><ProductFormPage /></PermissionRoute>} />
       <Route path="movements" element={<Movements />} />
       <Route path="history" element={<HistoryPage />} />
+      <Route path="customers" element={<PermissionRoute permission="customer.read"><CustomersPage /></PermissionRoute>} />
       <Route path="physical-inventories" element={<PhysicalInventoriesPage />} />
       <Route path="physical-inventories/:id" element={<PhysicalInventoryDetailPage />} />
       <Route path="suppliers" element={<PermissionRoute permission="supplier.read"><Suppliers /></PermissionRoute>} />

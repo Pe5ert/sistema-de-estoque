@@ -1,0 +1,19 @@
+.customer-editor fieldset,.customer-picker { border: 0; padding: 0; margin: 0; min-width: 0; }
+.customer-editor input:not([type=checkbox]) { width: 100%; }
+.customer-editor .inline-actions { margin-top: 24px; }
+.customer-active { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 18px 0; font-size: 13px; }
+.customer-code { overflow-wrap: anywhere; white-space: normal; }
+.movement-customer-section { border-top: 1px solid var(--border); padding: 22px 0; background: var(--surface); }
+.movement-customer-section h3 { font-size: 15px; margin: 0 0 14px; }
+.buyer-options { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 18px; }
+.buyer-options label { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13px; cursor: pointer; }
+.buyer-options input { accent-color: var(--accent); }
+.customer-picker { max-width: 680px; }
+.movement-form .customer-picker { display: block; }
+.customer-picker > .text-button { margin-top: 12px; }
+.buyer-history { display: block; font-size: 11px; color: var(--text-muted); margin-top: 6px; overflow-wrap: anywhere; }
+.movement-customer-section .field-error { margin-top: 10px; font-size: 12px; }
+@media(max-width:700px) { .movement-customer-section { padding: 18px 0; } .buyer-options { display: grid; gap: 4px; } .buyer-options label { min-height: 44px; } }
+
+.customer-row-actions { display: flex; align-items: center; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+@media(max-width:700px) { .customers-table td:not(:first-child) { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; } .customer-row-actions a { display: inline-flex; align-items: center; min-height: 44px; } }

@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import { auditedStockHistory } from './stock-history';
 import { ConfigService } from '@nestjs/config';
 import { claimImage, isManagedImage, releaseImage } from '../images/image-lifecycle';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CategoryInput, CategoryPatch, MovementInput, MovementQuery, ProductCreate, ProductPatch, ProductQuery } from './inventory.dto';
@@ -143,26 +143,49 @@ export class InventoryService {
       });
     } catch (error) { databaseError(error); }
   }
-  async moveInTransaction(tx: Prisma.TransactionClient, data: MovementInput, userId: string) {
+  async moveInTransaction(tx: Prisma.TransactionClient, data: MovementInput, userId: string, requestHash?: string) {
+    let buyer = {};
+    if (data.buyerIdentification === 'IDENTIFIED' && data.customerId) {
+      await tx.$queryRaw`SELECT "id" FROM "Customer" WHERE "id" = ${data.customerId}::uuid FOR SHARE`;
+      const customer = await tx.customer.findUnique({ where: { id: data.customerId } });
+      if (!customer?.active) throw new BadRequestException('Cliente inativo ou indisponível. Selecione outro cliente ou escolha Sem identificação.');
+      buyer = { customerNameSnapshot: customer.name, customerCodeSnapshot: customer.code };
+    }
     // PostgreSQL row lock serializes stock writes for this product only. Read after lock.
     await tx.$queryRaw`SELECT "id" FROM "Product" WHERE "id" = ${data.productId}::uuid FOR UPDATE`;
     const product = await tx.product.findUnique({ where: { id: data.productId } });
     if (!product) throw new NotFoundException('Produto não encontrado.');
     if (!product.active) throw new BadRequestException('Produto inativo não pode ser movimentado.');
     const { amount, next } = resultingStock(product.stock, data.quantity, data.type);
-    const movement = await tx.stockMovement.create({ data: { ...data, quantity: amount, userId, previousStock: product.stock, resultingStock: next } });
+    const movement = await tx.stockMovement.create({ data: { ...data, ...buyer, requestHash, quantity: amount, userId, previousStock: product.stock, resultingStock: next } });
     await tx.product.update({ where: { id: product.id }, data: { stock: next } });
     return tx.stockMovement.findUniqueOrThrow({ where: { id: movement.id }, include: movementInclude });
   }
   async move(data: MovementInput, userId: string) {
     if (data.reason === 'INITIAL_STOCK') throw new BadRequestException('Estoque inicial é registrado somente no cadastro do produto.');
-    try { return await this.db.$transaction(tx => this.moveInTransaction(tx, data, userId)); } catch (error) { databaseError(error); }
+    const sale = data.type === 'EXIT' && data.reason === 'SALE';
+    if ((data.reason === 'SALE' && !sale) || (data.type === 'ENTRY' && ['INTERNAL_USE', 'LOSS'].includes(data.reason)) || (data.type === 'EXIT' && data.reason === 'PURCHASE')) throw new BadRequestException('Selecione um motivo compatível com o tipo de movimento.');
+    if (sale) {
+      if (!['IDENTIFIED', 'ANONYMOUS'].includes(data.buyerIdentification ?? '') || (data.buyerIdentification === 'IDENTIFIED' ? !data.customerId : Boolean(data.customerId))) throw new BadRequestException('Selecione um cliente ou escolha explicitamente Sem identificação.');
+    } else if (data.customerId || data.buyerIdentification) throw new BadRequestException('O comprador só pode ser informado em uma saída por venda.');
+    const requestHash = data.requestId ? createHash('sha256').update(JSON.stringify([data.productId, data.type, data.reason, new Prisma.Decimal(data.quantity).toFixed(), data.reference || null, data.notes || null, data.customerId || null, data.buyerIdentification || null])).digest('hex') : undefined;
+    try { return await this.db.$transaction(async tx => {
+      if (data.requestId) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId + ':' + data.requestId}, 0))`;
+        const previous = await tx.stockMovement.findUnique({ where: { userId_requestId: { userId, requestId: data.requestId } }, include: movementInclude });
+        if (previous) {
+          if (previous.requestHash !== requestHash) throw new ConflictException('Esta confirmação já foi usada com outros dados. Confira o Histórico antes de iniciar outra operação.');
+          return previous;
+        }
+      }
+      return this.moveInTransaction(tx, data, userId, requestHash);
+    }); } catch (error) { databaseError(error); }
   }
   async movements(query: MovementQuery) {
     const from = query.from ? new Date(query.from) : undefined;
     const to = query.to ? new Date(query.to) : undefined;
     if ((from && !Number.isFinite(from.getTime())) || (to && !Number.isFinite(to.getTime())) || (from && to && from > to)) throw new BadRequestException('Período inválido.');
-    const where: Prisma.StockMovementWhereInput = { productId: query.productId, reference: query.reference, type: query.type, reason: query.reason, createdAt: { gte: from, lte: to } };
+    const where: Prisma.StockMovementWhereInput = { customerId: query.customerId, productId: query.productId, reference: query.reference, type: query.type, reason: query.reason, createdAt: { gte: from, lte: to } };
     if (query.search?.trim()) where.product = { OR: ['name', 'sku', 'barcode'].map(field => ({ [field]: { contains: query.search!.trim(), mode: 'insensitive' } })) };
     const [items, total] = await this.db.$transaction([
       this.db.stockMovement.findMany({ where, include: movementInclude, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (query.page - 1) * query.limit, take: query.limit }),

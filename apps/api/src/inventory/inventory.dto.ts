@@ -49,6 +49,9 @@ export class LookupQuery {
   @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(80) code!: string;
 }
 export class MovementInput {
+  @IsUUID() requestId?: string;
+  @IsOptional() @IsUUID() customerId?: string | null;
+  @IsOptional() @IsIn(['IDENTIFIED', 'ANONYMOUS']) buyerIdentification?: 'IDENTIFIED' | 'ANONYMOUS';
   @IsUUID() productId!: string;
   @IsIn(movementTypes) type!: typeof movementTypes[number];
   @IsString() @Matches(/^\d{1,15}(?:\.\d{1,3})?$/) quantity!: string;
@@ -57,6 +60,7 @@ export class MovementInput {
   @IsOptional() @Transform(trim) @IsString() @MaxLength(10000) notes?: string | null;
 }
 export class MovementQuery extends PageQuery {
+  @IsOptional() @IsUUID() customerId?: string;
   @IsOptional() @IsString() @MaxLength(120) reference?: string;
   @IsOptional() @IsString() @MaxLength(200) search?: string;
   @IsOptional() @IsUUID() productId?: string;

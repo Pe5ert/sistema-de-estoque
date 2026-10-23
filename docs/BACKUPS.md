@@ -1,5 +1,9 @@
 # Backups completos — 05/10/2026
 
+**Execução automática — 23/10/2026:** a tentativa automática de recuperação de pendência iniciada às 15:56 concluiu às 15:57 e ficou Disponível na interface. Uma nova cópia manual, anterior à migration de clientes, também foi validada por checksum. Agenda existente preservada; isso não substitui cópia externa nem recuperação dos assets de imagem.
+
+**Validação operacional — 23/10/2026:** corrigidos os caminhos locais de `pg_dump`/`pg_restore` 18.6 e reiniciada a API. Cópia manual criada pela interface, download com SHA-256 conferido e restauração do arquivo baixado em PostgreSQL 18.6 isolado. As 14 tabelas/186 registros e constraints conferiram; origem sem alterações. ACL Windows da pasta de backups restringida ao usuário atual, SYSTEM e Administradores. Cópia externa e recuperação dos arquivos do Cloudinary continuam pendentes; não confundir esta validação do banco com recuperação completa da instalação. Evidências e limites em `artifacts/backup-recovery-20261023/REVIEW.md`. Caminhos dos executáveis e segredos permanecem apenas na configuração local; conferir versões/permissões ao migrar de máquina.
+
 Em **Administração → Backups**, somente ADMIN pode criar e baixar cópias, ou salvar o agendamento. Operador e gerente recebem 403 mesmo chamando a API diretamente. Os endpoints usam a sessão HttpOnly existente; POST/PATCH também exigem a origem autorizada.
 
 Cada empresa administra as cópias do banco de dados configurado em sua instalação licenciada. O administrador da empresa cria, baixa e guarda os backups; a recuperação é feita pelo administrador do banco de dados da própria empresa.

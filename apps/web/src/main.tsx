@@ -9,6 +9,8 @@ import { FeedbackProvider } from './feedback';
 import './styles.css';
 import { ThemeProvider } from './Theme';
 import './appearance.css';
+import './product-form.css';
+import './customers.css';
 
 const queryClient = new QueryClient();
 const router = createBrowserRouter([{ path: '*', errorElement: <RouteFailure />, element: <FeedbackProvider><AuthProvider><App /></AuthProvider></FeedbackProvider> }]);

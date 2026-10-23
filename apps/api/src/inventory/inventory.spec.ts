@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -68,7 +68,7 @@ describe('operational HTTP boundaries without PostgreSQL', () => {
     return fetch(base + path, { method, headers: { Origin: requestOrigin, 'Content-Type': 'application/json', ...(session ? { Cookie: cookie } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   }
   const product = { sku: 'A-001', name: 'Cable', categoryId: id, unit: 'UNIT', minimumStock: '2.5', costPrice: null, salePrice: null };
-  const movement = { productId: id, type: 'EXIT', reason: 'SALE', quantity: '8' };
+  const movement = { requestId: randomUUID(), buyerIdentification: 'ANONYMOUS', productId: id, type: 'EXIT', reason: 'SALE', quantity: '8' };
   test('all operational endpoint groups require an authenticated session', async () => {
     for (const path of ['/categories', '/products', '/stock-movements', '/dashboard/summary']) assert.equal((await request(path, undefined, 'GET', false)).status, 401);
   });

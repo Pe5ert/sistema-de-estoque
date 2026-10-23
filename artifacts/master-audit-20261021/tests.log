@@ -1,0 +1,775 @@
+$ pnpm -r --if-present test && pnpm --filter @stock/api exec tsx --test ../web/tests/*.test.mjs
+Scope: 3 of 4 workspace projects
+apps/api test$ tsc -p tsconfig.test.json && tsx --tsconfig tsconfig.test.json --test src/config/env.spec.ts src/auth/*.spec.ts src/inventory/*.spec.ts src/backups/*.spec.ts src/imports/*.spec.ts src/purchases/*.spec.ts src/physical-inventories/*.spec.ts src/images/*.spec.ts
+apps/api test: TAP version 13
+apps/api test: # Subtest: cookie authentication HTTP integration
+apps/api test:     # Subtest: Argon2id verifies passwords and does not store plaintext
+apps/api test:     ok 1 - Argon2id verifies passwords and does not store plaintext
+apps/api test:       ---
+apps/api test:       duration_ms: 787.6627
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: valid normalized login returns only public fields and creates an 8h HttpOnly cookie
+apps/api test:     ok 2 - valid normalized login returns only public fields and creates an 8h HttpOnly cookie
+apps/api test:       ---
+apps/api test:       duration_ms: 333.2247
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: wrong password, absent email and inactive account have identical generic errors
+apps/api test:     ok 3 - wrong password, absent email and inactive account have identical generic errors
+apps/api test:       ---
+apps/api test:       duration_ms: 587.0787
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: malformed and oversized input is rejected by DTO validation
+apps/api test:     ok 4 - malformed and oversized input is rejected by DTO validation
+apps/api test:       ---
+apps/api test:       duration_ms: 24.5225
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: /me restores a valid session without exposing hashes or tokens
+apps/api test:     ok 5 - /me restores a valid session without exposing hashes or tokens
+apps/api test:       ---
+apps/api test:       duration_ms: 8.7698
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: /me rejects missing, invalid, expired and deleted-user sessions
+apps/api test:     ok 6 - /me rejects missing, invalid, expired and deleted-user sessions
+apps/api test:       ---
+apps/api test:       duration_ms: 41.4736
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: disabling an account revokes existing access; database role overrides stale JWT
+apps/api test:     ok 7 - disabling an account revokes existing access; database role overrides stale JWT
+apps/api test:       ---
+apps/api test:       duration_ms: 27.4636
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: RBAC grants ADMIN and rejects MANAGER/OPERATOR with 403
+apps/api test:     ok 8 - RBAC grants ADMIN and rejects MANAGER/OPERATOR with 403
+apps/api test:       ---
+apps/api test:       duration_ms: 18.4669
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: logout clears the cookie with matching attributes and is idempotent
+apps/api test:     ok 9 - logout clears the cookie with matching attributes and is idempotent
+apps/api test:       ---
+apps/api test:       duration_ms: 11.4946
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: production cookie is Secure; development cookie works on local HTTP
+apps/api test:     ok 10 - production cookie is Secure; development cookie works on local HTTP
+apps/api test:       ---
+apps/api test:       duration_ms: 0.9065
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: write requests reject untrusted or missing Origin before setting cookies
+apps/api test:     ok 11 - write requests reject untrusted or missing Origin before setting cookies
+apps/api test:       ---
+apps/api test:       duration_ms: 29.6298
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: Swagger exposes safe user DTO and login body plus cookie security
+apps/api test:     ok 12 - Swagger exposes safe user DTO and login body plus cookie security
+apps/api test:       ---
+apps/api test:       duration_ms: 25.9908
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: login is limited to 8 attempts/minute/IP without locking the account
+apps/api test:     ok 13 - login is limited to 8 attempts/minute/IP without locking the account
+apps/api test:       ---
+apps/api test:       duration_ms: 164.5929
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..13
+apps/api test: ok 1 - cookie authentication HTTP integration
+apps/api test:   ---
+apps/api test:   duration_ms: 8411.967
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: product permission matrix through real HTTP guards
+apps/api test:     # Subtest: ADMIN permissions cover reads, writes, adjustments, import and backups
+apps/api test:     ok 1 - ADMIN permissions cover reads, writes, adjustments, import and backups
+apps/api test:       ---
+apps/api test:       duration_ms: 229.6098
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: MANAGER permissions cover reads, writes, adjustments, import and backups
+apps/api test:     ok 2 - MANAGER permissions cover reads, writes, adjustments, import and backups
+apps/api test:       ---
+apps/api test:       duration_ms: 76.9977
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: OPERATOR permissions cover reads, writes, adjustments, import and backups
+apps/api test:     ok 3 - OPERATOR permissions cover reads, writes, adjustments, import and backups
+apps/api test:       ---
+apps/api test:       duration_ms: 70.2042
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: unauthenticated and disabled users cannot reach any operational service
+apps/api test:     ok 4 - unauthenticated and disabled users cannot reach any operational service
+apps/api test:       ---
+apps/api test:       duration_ms: 54.942
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: unknown and missing roles fail closed in the shared policy
+apps/api test:     ok 5 - unknown and missing roles fail closed in the shared policy
+apps/api test:       ---
+apps/api test:       duration_ms: 0.2611
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..5
+apps/api test: ok 2 - product permission matrix through real HTTP guards
+apps/api test:   ---
+apps/api test:   duration_ms: 793.4486
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: real PostgreSQL: ADMIN HTTP backup, complete restore, integrity, schedule and retention
+apps/api test: ok 3 - real PostgreSQL: ADMIN HTTP backup, complete restore, integrity, schedule and retention # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 2.0245
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: archive sync uses a Windows-compatible handle without truncating the dump
+apps/api test: ok 4 - archive sync uses a Windows-compatible handle without truncating the dump
+apps/api test:   ---
+apps/api test:   duration_ms: 50.1888
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: credentials remain out of arguments, process secrets and errors
+apps/api test: ok 5 - credentials remain out of arguments, process secrets and errors
+apps/api test:   ---
+apps/api test:   duration_ms: 4.0773
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: transient Windows rename denial preserves old metadata until atomic replacement
+apps/api test: ok 6 - transient Windows rename denial preserves old metadata until atomic replacement
+apps/api test:   ---
+apps/api test:   duration_ms: 184.2716
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: monthly/weekly scheduling respects Fortaleza time, rollover and missed runs
+apps/api test: ok 7 - monthly/weekly scheduling respects Fortaleza time, rollover and missed runs
+apps/api test:   ---
+apps/api test:   duration_ms: 3.7348
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: hung tool is terminated without exposing its arguments or stderr
+apps/api test: ok 8 - hung tool is terminated without exposing its arguments or stderr
+apps/api test:   ---
+apps/api test:   duration_ms: 74.0431
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: failed dump never becomes downloadable and refuses overlapping jobs
+apps/api test: ok 9 - failed dump never becomes downloadable and refuses overlapping jobs
+apps/api test:   ---
+apps/api test:   duration_ms: 124.2706
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: administrator schedule persists across service restart
+apps/api test: ok 10 - administrator schedule persists across service restart
+apps/api test:   ---
+apps/api test:   duration_ms: 25.0359
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: failed automatic period waits an hour before retrying
+apps/api test: ok 11 - failed automatic period waits an hour before retrying
+apps/api test:   ---
+apps/api test:   duration_ms: 80.8525
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: crashed worker is marked failed and its partial file is removed on restart
+apps/api test: ok 12 - crashed worker is marked failed and its partial file is removed on restart
+apps/api test:   ---
+apps/api test:   duration_ms: 40.7189
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: accepts the required local configuration
+apps/api test: ok 13 - accepts the required local configuration
+apps/api test:   ---
+apps/api test:   duration_ms: 15.7266
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects an invalid API port
+apps/api test: ok 14 - rejects an invalid API port
+apps/api test:   ---
+apps/api test:   duration_ms: 2.7113
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects a missing or short JWT secret
+apps/api test: ok 15 - rejects a missing or short JWT secret
+apps/api test:   ---
+apps/api test:   duration_ms: 0.7663
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects a missing or short JWT secret
+apps/api test: ok 16 - rejects a missing or short JWT secret
+apps/api test:   ---
+apps/api test:   duration_ms: 0.3191
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects a missing or short JWT secret
+apps/api test: ok 17 - rejects a missing or short JWT secret
+apps/api test:   ---
+apps/api test:   duration_ms: 0.4161
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects a missing or short JWT secret
+apps/api test: ok 18 - rejects a missing or short JWT secret
+apps/api test:   ---
+apps/api test:   duration_ms: 0.4658
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: rejects wildcard and non-origin WEB_ORIGIN values
+apps/api test: ok 19 - rejects wildcard and non-origin WEB_ORIGIN values
+apps/api test:   ---
+apps/api test:   duration_ms: 1.1467
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: backup settings have safe monthly defaults and reject invalid schedules
+apps/api test: ok 20 - backup settings have safe monthly defaults and reject invalid schedules
+apps/api test:   ---
+apps/api test:   duration_ms: 28.4942
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: image HTTP permissions, CSRF and multipart limits
+apps/api test:     # Subtest: requires session and allowed origin before accepting an upload
+apps/api test:     ok 1 - requires session and allowed origin before accepting an upload
+apps/api test:       ---
+apps/api test:       duration_ms: 173.8904
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: operator can prepare a creation image but cannot upload for editing a product
+apps/api test:     ok 2 - operator can prepare a creation image but cannot upload for editing a product
+apps/api test:       ---
+apps/api test:       duration_ms: 48.5643
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: manager can upload an edit; invalid IDs and oversized multipart fail
+apps/api test:     ok 3 - manager can upload an edit; invalid IDs and oversized multipart fail
+apps/api test:       ---
+apps/api test:       duration_ms: 124.2486
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..3
+apps/api test: ok 21 - image HTTP permissions, CSRF and multipart limits
+apps/api test:   ---
+apps/api test:   duration_ms: 914.9242
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: managed image lifecycle in isolated PostgreSQL
+apps/api test: ok 22 - managed image lifecycle in isolated PostgreSQL # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 0.9602
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: image validation rejects empty, oversized, forged MIME and unsupported files
+apps/api test: ok 23 - image validation rejects empty, oversized, forged MIME and unsupported files
+apps/api test:   ---
+apps/api test:   duration_ms: 20.9522
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: real decoding normalizes orientation/metadata and limits output dimensions
+apps/api test: ok 24 - real decoding normalizes orientation/metadata and limits output dimensions
+apps/api test:   ---
+apps/api test:   duration_ms: 12.3479
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: claim protects ownership, expiry and deletion, while unchanged legacy URLs remain valid
+apps/api test: ok 25 - claim protects ownership, expiry and deletion, while unchanged legacy URLs remain valid
+apps/api test:   ---
+apps/api test:   duration_ms: 1.2264
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: replaced photos retain backup lifetime and shared URLs are not scheduled for deletion
+apps/api test: ok 26 - replaced photos retain backup lifetime and shared URLs are not scheduled for deletion
+apps/api test:   ---
+apps/api test:   duration_ms: 0.4776
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: PostgreSQL: atomic import, concurrency, revalidation, audit and authenticated HTTP
+apps/api test: ok 27 - PostgreSQL: atomic import, concurrency, revalidation, audit and authenticated HTTP # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 1.0408
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: parse and validate 10 rows without numeric conversion
+apps/api test: ok 28 - parse and validate 10 rows without numeric conversion
+apps/api test:   ---
+apps/api test:   duration_ms: 24.8077
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: parse and validate 100 rows without numeric conversion
+apps/api test: ok 29 - parse and validate 100 rows without numeric conversion
+apps/api test:   ---
+apps/api test:   duration_ms: 74.9193
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: parse and validate 1000 rows without numeric conversion
+apps/api test: ok 30 - parse and validate 1000 rows without numeric conversion
+apps/api test:   ---
+apps/api test:   duration_ms: 212.5862
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: parse and validate 2000 rows without numeric conversion
+apps/api test: ok 31 - parse and validate 2000 rows without numeric conversion
+apps/api test:   ---
+apps/api test:   duration_ms: 194.512
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: row/byte/column limits, invalid encoding, file type and empty file are explicit errors
+apps/api test: ok 32 - row/byte/column limits, invalid encoding, file type and empty file are explicit errors
+apps/api test:   ---
+apps/api test:   duration_ms: 38.9297
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: CSV comma/tab, quoted delimiter, blank records and logical source lines
+apps/api test: ok 33 - CSV comma/tab, quoted delimiter, blank records and logical source lines
+apps/api test:   ---
+apps/api test:   duration_ms: 1.521
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: CSV rejects physical-line overflow with CR-only and mixed newline formats
+apps/api test: ok 34 - CSV rejects physical-line overflow with CR-only and mixed newline formats
+apps/api test:   ---
+apps/api test:   duration_ms: 15.3161
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: CSV ignored-row totals include trailing blank lines without counting the final newline
+apps/api test: ok 35 - CSV ignored-row totals include trailing blank lines without counting the final newline
+apps/api test:   ---
+apps/api test:   duration_ms: 2.3234
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: CSV error locations use the start of quoted multiline records
+apps/api test: ok 36 - CSV error locations use the start of quoted multiline records
+apps/api test:   ---
+apps/api test:   duration_ms: 5.0891
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: XLSX shared external formulas remain errors even when cached results exist
+apps/api test: ok 37 - XLSX shared external formulas remain errors even when cached results exist
+apps/api test:   ---
+apps/api test:   duration_ms: 183.6399
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: XLSX text codes, numeric codes, cached and unresolved formulas, long codes
+apps/api test: ok 38 - XLSX text codes, numeric codes, cached and unresolved formulas, long codes
+apps/api test:   ---
+apps/api test:   duration_ms: 74.0742
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: all duplicate rows, existing inactive codes and invalid stock/unit/prices block preview
+apps/api test: ok 39 - all duplicate rows, existing inactive codes and invalid stock/unit/prices block preview
+apps/api test:   ---
+apps/api test:   duration_ms: 4.0042
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: unrecognized prototype-like headers remain unmapped and the suggested preview can be saved
+apps/api test: ok 40 - unrecognized prototype-like headers remain unmapped and the suggested preview can be saved
+apps/api test:   ---
+apps/api test:   duration_ms: 7.1787
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: category choices are explicit, grouped by case, and inactive targets are rejected
+apps/api test: ok 41 - category choices are explicit, grouped by case, and inactive targets are rejected
+apps/api test:   ---
+apps/api test:   duration_ms: 4.9849
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: concurrent confirmation and refresh return one result, exact stock and initial audit
+apps/api test: ok 42 - concurrent confirmation and refresh return one result, exact stock and initial audit
+apps/api test:   ---
+apps/api test:   duration_ms: 18.323
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: failure after product/movement writes rolls back entire batch and records failure once
+apps/api test: ok 43 - failure after product/movement writes rolls back entire batch and records failure once
+apps/api test:   ---
+apps/api test:   duration_ms: 16.7808
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: confirmation revalidates duplicates, categories, revision and permissions
+apps/api test: ok 44 - confirmation revalidates duplicates, categories, revision and permissions
+apps/api test:   ---
+apps/api test:   duration_ms: 5.2455
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: Decimal inventory arithmetic
+apps/api test:     # Subtest: fractional entries, exits and both adjustment directions stay exact
+apps/api test:     ok 1 - fractional entries, exits and both adjustment directions stay exact
+apps/api test:       ---
+apps/api test:       duration_ms: 4.3635
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: zero, negative, insufficient and overflowing stock are rejected
+apps/api test:     ok 2 - zero, negative, insufficient and overflowing stock are rejected
+apps/api test:       ---
+apps/api test:       duration_ms: 2.1222
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: database uniqueness conflicts identify SKU and barcode, other failures propagate
+apps/api test:     ok 3 - database uniqueness conflicts identify SKU and barcode, other failures propagate
+apps/api test:       ---
+apps/api test:       duration_ms: 2.142
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..3
+apps/api test: ok 45 - Decimal inventory arithmetic
+apps/api test:   ---
+apps/api test:   duration_ms: 15.3962
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: operational HTTP boundaries without PostgreSQL
+apps/api test:     # Subtest: all operational endpoint groups require an authenticated session
+apps/api test:     ok 1 - all operational endpoint groups require an authenticated session
+apps/api test:       ---
+apps/api test:       duration_ms: 146.7189
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: write requests preserve existing origin protection
+apps/api test:     ok 2 - write requests preserve existing origin protection
+apps/api test:       ---
+apps/api test:       duration_ms: 611.6427
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: create accepts nullable optional prices and uses session author
+apps/api test:     ok 3 - create accepts nullable optional prices and uses session author
+apps/api test:       ---
+apps/api test:       duration_ms: 28.0787
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: stock/userId cannot be smuggled through PATCH or POST
+apps/api test:     ok 4 - stock/userId cannot be smuggled through PATCH or POST
+apps/api test:       ---
+apps/api test:       duration_ms: 34.2991
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: movement author is taken exclusively from the existing session
+apps/api test:     ok 5 - movement author is taken exclusively from the existing session
+apps/api test:       ---
+apps/api test:       duration_ms: 10.8863
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: invalid decimals, nested quantities, URL schemes and pagination fail before service calls
+apps/api test:     ok 6 - invalid decimals, nested quantities, URL schemes and pagination fail before service calls
+apps/api test:       ---
+apps/api test:       duration_ms: 75.8848
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: server pagination and stock filters are typed, defaults applied
+apps/api test:     ok 7 - server pagination and stock filters are typed, defaults applied
+apps/api test:       ---
+apps/api test:       duration_ms: 7.7991
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..7
+apps/api test: ok 46 - operational HTTP boundaries without PostgreSQL
+apps/api test:   ---
+apps/api test:   duration_ms: 7146.6747
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: real PostgreSQL operational flow and concurrent exits
+apps/api test: ok 47 - real PostgreSQL operational flow and concurrent exits # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 0.8043
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: history uses audited opening balance, exact decimals and complete chronological events
+apps/api test: ok 48 - history uses audited opening balance, exact decimals and complete chronological events
+apps/api test:   ---
+apps/api test:   duration_ms: 5.8382
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: partial, inconsistent, excessive and ambiguous chronological histories never become a chart
+apps/api test: ok 49 - partial, inconsistent, excessive and ambiguous chronological histories never become a chart
+apps/api test:   ---
+apps/api test:   duration_ms: 0.6936
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: real PostgreSQL physical counting, atomic adjustments and concurrency
+apps/api test: ok 50 - real PostgreSQL physical counting, atomic adjustments and concurrency # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 1.586
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: physical inventory HTTP authorization and validation
+apps/api test:     # Subtest: every route requires a session, including read and draft operations
+apps/api test:     ok 1 - every route requires a session, including read and draft operations
+apps/api test:       ---
+apps/api test:       duration_ms: 189.8497
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: operator can count zero and fractional quantities; authenticated author cannot be forged
+apps/api test:     ok 2 - operator can count zero and fractional quantities; authenticated author cannot be forged
+apps/api test:       ---
+apps/api test:       duration_ms: 102.0237
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: finalization and cancellation use the current database role, not a stale token role
+apps/api test:     ok 3 - finalization and cancellation use the current database role, not a stale token role
+apps/api test:       ---
+apps/api test:       duration_ms: 44.3092
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: cross-origin writes fail before reaching counting or finalization
+apps/api test:     ok 4 - cross-origin writes fail before reaching counting or finalization
+apps/api test:       ---
+apps/api test:       duration_ms: 10.0472
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: invalid, omitted, negative, numeric, precision and nested fields fail before service calls
+apps/api test:     ok 5 - invalid, omitted, negative, numeric, precision and nested fields fail before service calls
+apps/api test:       ---
+apps/api test:       duration_ms: 104.195
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: creation, pagination, UUIDs and revisions reject malformed input
+apps/api test:     ok 6 - creation, pagination, UUIDs and revisions reject malformed input
+apps/api test:       ---
+apps/api test:       duration_ms: 100.459
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..6
+apps/api test: ok 51 - physical inventory HTTP authorization and validation
+apps/api test:   ---
+apps/api test:   duration_ms: 1745.9313
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: real PostgreSQL purchase integrity and simultaneous receipts
+apps/api test: ok 52 - real PostgreSQL purchase integrity and simultaneous receipts # SKIP
+apps/api test:   ---
+apps/api test:   duration_ms: 1.3229
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: # Subtest: receipt fingerprint ignores item ordering and equivalent decimal formatting
+apps/api test: ok 53 - receipt fingerprint ignores item ordering and equivalent decimal formatting
+apps/api test:   ---
+apps/api test:   duration_ms: 2.697
+apps/api test:   type: 'test'
+apps/api test:   ...
+apps/api test: # Subtest: suppliers and purchases permissions through HTTP
+apps/api test:     # Subtest: ADMIN respects all purchase and supplier routes
+apps/api test:     ok 1 - ADMIN respects all purchase and supplier routes
+apps/api test:       ---
+apps/api test:       duration_ms: 126.3398
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: MANAGER respects all purchase and supplier routes
+apps/api test:     ok 2 - MANAGER respects all purchase and supplier routes
+apps/api test:       ---
+apps/api test:       duration_ms: 33.0723
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: OPERATOR respects all purchase and supplier routes
+apps/api test:     ok 3 - OPERATOR respects all purchase and supplier routes
+apps/api test:       ---
+apps/api test:       duration_ms: 24.2143
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     # Subtest: no session, disabled account, malformed decimals and author smuggling fail before service
+apps/api test:     ok 4 - no session, disabled account, malformed decimals and author smuggling fail before service
+apps/api test:       ---
+apps/api test:       duration_ms: 25.2368
+apps/api test:       type: 'test'
+apps/api test:       ...
+apps/api test:     1..4
+apps/api test: ok 54 - suppliers and purchases permissions through HTTP
+apps/api test:   ---
+apps/api test:   duration_ms: 670.1993
+apps/api test:   type: 'suite'
+apps/api test:   ...
+apps/api test: 1..54
+apps/api test: # tests 85
+apps/api test: # suites 10
+apps/api test: # pass 82
+apps/api test: # fail 0
+apps/api test: # cancelled 0
+apps/api test: # skipped 3
+apps/api test: # todo 0
+apps/api test: # duration_ms 46982.4905
+apps/api test: Done
+TAP version 13
+# Subtest: 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+ok 1 - 30/90 day grouping preserves records, dates and zero intervals without summing incompatible units
+  ---
+  duration_ms: 4.2973
+  type: 'test'
+  ...
+# Subtest: drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+ok 2 - drill-down encodes interval, type and SKU; malformed calendar dates do not reach History
+  ---
+  duration_ms: 0.7447
+  type: 'test'
+  ...
+# Subtest: zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+ok 3 - zero-data dashboard charts retain useful links, recovery and a textual alternative without invalid scale
+  ---
+  duration_ms: 39.3048
+  type: 'test'
+  ...
+# Subtest: feedback queue preserves errors and waits for a visible slot instead of dropping results
+ok 4 - feedback queue preserves errors and waits for a visible slot instead of dropping results
+  ---
+  duration_ms: 3.4392
+  type: 'test'
+  ...
+# Subtest: keyed updates replace only their own result while unrelated messages survive
+ok 5 - keyed updates replace only their own result while unrelated messages survive
+  ---
+  duration_ms: 0.4779
+  type: 'test'
+  ...
+# Subtest: refetch failure retains cached results with an explicit stale-data warning; first-load failure does not expose content
+ok 6 - refetch failure retains cached results with an explicit stale-data warning; first-load failure does not expose content
+  ---
+  duration_ms: 15.8905
+  type: 'test'
+  ...
+# Subtest: one-page result uses singular and omits dead navigation while multiple pages preserve controls
+ok 7 - one-page result uses singular and omits dead navigation while multiple pages preserve controls
+  ---
+  duration_ms: 1.9925
+  type: 'test'
+  ...
+# Subtest: supplier documents are formatted only for display and malformed values remain visible
+ok 8 - supplier documents are formatted only for display and malformed values remain visible
+  ---
+  duration_ms: 0.441
+  type: 'test'
+  ...
+# Subtest: global search matches Portuguese labels, operation aliases and multiple words
+ok 9 - global search matches Portuguese labels, operation aliases and multiple words
+  ---
+  duration_ms: 4.3747
+  type: 'test'
+  ...
+# Subtest: function shortcuts follow the role matrix and anonymous users get none
+ok 10 - function shortcuts follow the role matrix and anonymous users get none
+  ---
+  duration_ms: 0.6254
+  type: 'test'
+  ...
+# Subtest: product selection preserves exact SKU and record identity in the destination
+ok 11 - product selection preserves exact SKU and record identity in the destination
+  ---
+  duration_ms: 0.808
+  type: 'test'
+  ...
+# Subtest: error report preserves every diagnostic, Portuguese labels and original physical lines
+ok 12 - error report preserves every diagnostic, Portuguese labels and original physical lines
+  ---
+  duration_ms: 17.682
+  type: 'test'
+  ...
+# Subtest: CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+ok 13 - CSV diagnostics round-trip quotes, semicolons and embedded newlines without splitting records
+  ---
+  duration_ms: 7.4372
+  type: 'test'
+  ...
+# Subtest: spreadsheet formula prefixes remain inert text, including leading whitespace
+ok 14 - spreadsheet formula prefixes remain inert text, including leading whitespace
+  ---
+  duration_ms: 1.4968
+  type: 'test'
+  ...
+# Subtest: file correction labels distinguish the header from product lines and name initial stock
+ok 15 - file correction labels distinguish the header from product lines and name initial stock
+  ---
+  duration_ms: 1.4856
+  type: 'test'
+  ...
+# Subtest: operational periods use Sao Paulo days across UTC midnight and month/leap-year boundaries
+ok 16 - operational periods use Sao Paulo days across UTC midnight and month/leap-year boundaries
+  ---
+  duration_ms: 4.5899
+  type: 'test'
+  ...
+# Subtest: custom calendar boundaries include historical DST and the complete final day
+ok 17 - custom calendar boundaries include historical DST and the complete final day
+  ---
+  duration_ms: 2.6509
+  type: 'test'
+  ...
+# Subtest: physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+ok 18 - physical count distinguishes uncounted, zero, invalid and exact decimal quantities
+  ---
+  duration_ms: 2.7523
+  type: 'test'
+  ...
+# Subtest: physical divergence remains exact across fractions and the full Decimal(18,3) range
+ok 19 - physical divergence remains exact across fractions and the full Decimal(18,3) range
+  ---
+  duration_ms: 0.9438
+  type: 'test'
+  ...
+# Subtest: Portuguese labels show exact values, signs and three decimal places when needed
+ok 20 - Portuguese labels show exact values, signs and three decimal places when needed
+  ---
+  duration_ms: 0.7539
+  type: 'test'
+  ...
+# Subtest: count batches respect row and HTTP byte limits without losing notes or order
+ok 21 - count batches respect row and HTTP byte limits without losing notes or order
+  ---
+  duration_ms: 350.0121
+  type: 'test'
+  ...
+# Subtest: Brazilian prices and fractional quantities serialize as exact decimal strings
+ok 22 - Brazilian prices and fractional quantities serialize as exact decimal strings
+  ---
+  duration_ms: 2.2325
+  type: 'test'
+  ...
+# Subtest: ambiguous, excessive, negative and nondecimal input is rejected
+ok 23 - ambiguous, excessive, negative and nondecimal input is rejected
+  ---
+  duration_ms: 0.499
+  type: 'test'
+  ...
+# Subtest: unknown price stays empty/null-capable and barcode leading zeros survive validation
+ok 24 - unknown price stays empty/null-capable and barcode leading zeros survive validation
+  ---
+  duration_ms: 12.5728
+  type: 'test'
+  ...
+# Subtest: initial entry must be positive and only affects creation
+ok 25 - initial entry must be positive and only affects creation
+  ---
+  duration_ms: 7.1004
+  type: 'test'
+  ...
+# Subtest: editing uses exact persisted price/minimum strings, including zero and null
+ok 26 - editing uses exact persisted price/minimum strings, including zero and null
+  ---
+  duration_ms: 0.3666
+  type: 'test'
+  ...
+# Subtest: photo selection accepts supported images at the size boundary and rejects empty/oversized/unsupported files
+ok 27 - photo selection accepts supported images at the size boundary and rejects empty/oversized/unsupported files
+  ---
+  duration_ms: 2.07
+  type: 'test'
+  ...
+# Subtest: purchase subtotal uses half-up cents and preserves PostgreSQL precision
+ok 28 - purchase subtotal uses half-up cents and preserves PostgreSQL precision
+  ---
+  duration_ms: 2.6401
+  type: 'test'
+  ...
+# Subtest: overlapping menu/dialog locks restore scrolling only after both release
+ok 29 - overlapping menu/dialog locks restore scrolling only after both release
+  ---
+  duration_ms: 1.4914
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3524.8032

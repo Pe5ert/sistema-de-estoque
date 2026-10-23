@@ -1,5 +1,7 @@
 # Permissões por perfil — 08/10/2026
 
+**Clientes — 23/10/2026:** customer.read/customer.create para ADMIN, MANAGER e OPERATOR; customer.manage (editar/inativar) somente ADMIN/MANAGER. Venda anônima permitida mediante escolha explícita, sem alterar autoria/permissões de estoque. HTTP dos três perfis e UI de operador conferidos; ver `docs/CLIENTES_V1.md`.
+
 Matriz fechada com o usuário nesta rodada. OPERATOR também pode cadastrar produtos, conforme correção explícita do usuário. Custos e preços continuam visíveis aos três perfis.
 
 | Ação | ADMIN | MANAGER | OPERATOR |

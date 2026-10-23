@@ -8,3 +8,4 @@ apps/api/src/generated/
 *.tsbuildinfo
 .DS_Store
 /var/backups/
+/tmp/

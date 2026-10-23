@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -6,7 +7,9 @@ import { ArrowRight, Barcode, Minus, Plus } from 'lucide-react';
 import { stockStatus, reasonLabels, presentProduct, type ProductPresentation } from './inventory-model';
 import { useInventoryMutation, useProduct } from './inventory-api';
 import { apiClient, ApiError } from './lib/api';
-import { hasPermission, type MovementRecord, type ProductRecord, type MovementReason } from '@stock/shared';
+import { hasPermission, type CustomerRecord, type MovementRecord, type ProductRecord, type MovementReason } from '@stock/shared';
+import { CustomerPicker } from './Customers';
+import { useUnsavedForm } from './UnsavedForm';
 import { useAuth } from './auth/auth';
 import { Field, fieldAccessibility, QuantityInput } from './form-controls';
 import { formatQuantity, normalizeDecimal, parseDecimal } from './product-form-model';
@@ -19,9 +22,15 @@ type PreviewFields = { quantity: string; type: 'Entrada' | 'Saída'; reason: str
 export function MovementWorkbench() {
   const { currentUser } = useAuth();
   const { notify } = useFeedback();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const mutation = useInventoryMutation((body: Record<string, unknown>) => apiClient<MovementRecord>('/stock-movements', { method: 'POST', body: JSON.stringify(body) }));
   const saving = useRef(false);
+  const requestId = useRef(crypto.randomUUID());
+  const attemptedPayload = useRef<string | null>(null);
+  const [buyerMode, setBuyerMode] = useState<'' | 'IDENTIFIED' | 'ANONYMOUS'>('');
+  const [customer, setCustomer] = useState<CustomerRecord | null>(null);
+  const [buyerError, setBuyerError] = useState('');
   const lookupVersion = useRef(0);
   const [lookupBusy, setLookupBusy] = useState(false);
   const [lookupError, setLookupError] = useState('');
@@ -37,6 +46,8 @@ export function MovementWorkbench() {
   const { register, control, handleSubmit, watch, setValue, setFocus, reset, setError, clearErrors, formState: { errors } } = useForm<PreviewFields>({ defaultValues: { quantity: '1', type: 'Entrada', reason: '' } });
   const type = watch('type');
   const reason = watch('reason');
+  const isSale = type === 'Saída' && reason === 'SALE';
+  const leave = useUnsavedForm(Boolean(selected && !result), mutation.isPending);
   const quantityText = watch('quantity');
   const availableReasons = (Object.keys(reasonLabels) as MovementReason[]).filter(key => key !== 'INITIAL_STOCK' && (key !== 'INVENTORY_ADJUSTMENT' || hasPermission(currentUser?.role, 'stock.adjust')) && (type === 'Entrada' ? !['SALE', 'INTERNAL_USE', 'LOSS'].includes(key) : key !== 'PURCHASE'));
   useEffect(() => {
@@ -53,12 +64,16 @@ export function MovementWorkbench() {
   }, [focusCode, mutation.isPending]);
   const resetPreview = () => { setResult(null); clearErrors(); mutation.reset(); };
   const prepareNext = () => {
+    requestId.current = crypto.randomUUID(); attemptedPayload.current = null;
+    setBuyerMode(''); setCustomer(null); setBuyerError('');
     lookupVersion.current++;
     setLookupBusy(false); setLookupError(''); setMatches([]);
     setCode(''); setSelected(null); setLookupState('waiting');
     reset({ quantity: '1', type, reason: '' }); setFocusCode(true);
   };
   const chooseProduct = (product: ProductPresentation) => {
+    requestId.current = crypto.randomUUID(); attemptedPayload.current = null;
+    setBuyerMode(''); setCustomer(null); setBuyerError('');
     setSelected(product); setMatches([]); setLookupState('found');
     reset({ quantity: '1', type, reason: '' }); resetPreview(); setFocusCode(true);
   };
@@ -93,14 +108,31 @@ export function MovementWorkbench() {
     if (!availableReasons.includes(data.reason as MovementReason)) { setError('reason', { message: 'Selecione um motivo compatível com o tipo de movimento.' }); setFocus('reason'); return; }
     const quantity = parseDecimal(data.quantity, 3)!;
     const after = Math.round((liveProduct.stock + (data.type === 'Saída' ? -quantity : quantity)) * 1000) / 1000;
-    if (after < 0) { setError('quantity', { message: 'Saldo insuficiente para esta saída.' }); setFocus('quantity'); return; }
+    if (isSale && (!buyerMode || (buyerMode === 'IDENTIFIED' && !customer))) {
+      setBuyerError('Selecione um cliente ou escolha Sem identificação.');
+      document.getElementById(buyerMode === 'IDENTIFIED' ? 'movement-customer' : 'buyer-identified')?.focus(); return;
+    }
+    const payload = { productId: liveProduct.id, type: data.type === 'Entrada' ? 'ENTRY' : 'EXIT', quantity: normalizeDecimal(data.quantity, 3), reason: data.reason, requestId: requestId.current,
+      ...(isSale ? { buyerIdentification: buyerMode, ...(buyerMode === 'IDENTIFIED' ? { customerId: customer!.id } : {}) } : {}) };
+    const signature = JSON.stringify(payload);
+    if (attemptedPayload.current && attemptedPayload.current !== signature) {
+      notify({ tone: 'error', title: 'Confira a tentativa anterior no Histórico.', description: 'Os dados foram alterados após uma tentativa. Confira se ela foi registrada antes de usar Próximo produto para iniciar outra operação.', key: 'movement' }); return;
+    }
+    if (after < 0 && !attemptedPayload.current) { setError('quantity', { message: 'Saldo insuficiente para esta saída.' }); setFocus('quantity'); return; }
     if (saving.current || result) return;
     saving.current = true;
+    attemptedPayload.current = signature;
     try {
-      const movement = await mutation.mutateAsync({ productId: liveProduct.id, type: data.type === 'Entrada' ? 'ENTRY' : 'EXIT', quantity: normalizeDecimal(data.quantity, 3), reason: data.reason });
+      const movement = await mutation.mutateAsync(payload);
       setResult(movement); prepareNext();
       notify({ tone: 'success', title: data.type + ' registrada com sucesso.', description: liveProduct.name + ' · saldo: ' + movement.resultingStock + ' ' + liveProduct.unit, action: { label: 'Ver no Histórico', run: () => navigate('/history') }, key: 'movement' });
     } catch (error) {
+      if (error instanceof ApiError && ([400, 403, 404, 422].includes(error.status) || error.message === 'Quantidade indisponível em estoque.')) attemptedPayload.current = null;
+      if (error instanceof ApiError && error.status === 400 && error.message.startsWith('Cliente inativo')) {
+        setCustomer(null); setBuyerError(error.message); void queryClient.invalidateQueries({ queryKey: ['customers'] });
+        requestAnimationFrame(() => document.getElementById('movement-customer')?.focus());
+        return;
+      }
       if (error instanceof ApiError && error.message === 'Quantidade indisponível em estoque.') { setError('quantity', { message: 'Saldo insuficiente para esta saída.' }); setFocus('quantity'); void productQuery.refetch(); }
       else notify({ tone: 'error', title: 'Não foi possível registrar a movimentação.', description: 'Confira o Histórico e o saldo antes de tentar novamente. ' + (error instanceof Error ? error.message : ''), key: 'movement' });
     }
@@ -108,6 +140,7 @@ export function MovementWorkbench() {
   };
 
   return <section className={'operation-workbench' + (selected ? ' operation-ready' : '')} aria-labelledby="scan-title">
+    {leave.dialog}
     <div className="scan-stage">
       <div className="scan-main">
 
@@ -137,13 +170,19 @@ export function MovementWorkbench() {
         <Field id="movement-quantity" label="Quantidade" error={errors.quantity?.message}><Controller name="quantity" control={control} render={({ field }) => <QuantityInput id="movement-quantity" value={field.value} inputRef={field.ref} onChange={(value) => { field.onChange(value); resetPreview(); }} onBlur={field.onBlur} unit={selected?.unit ?? 'un'} error={errors.quantity?.message} disabled={!selected} />} /></Field>
         <div className="operation-field"><span className="field-label" id="movement-type-label">TIPO DE MOVIMENTO</span><div className="type-selector" role="radiogroup" aria-labelledby="movement-type-label">{(['Entrada', 'Saída'] as const).map((item) => <label key={item} className={'type-option type-' + (item === 'Entrada' ? 'in' : 'out') + (type === item ? ' type-selected' : '')}><input type="radio" value={item} {...register('type')} />{item === 'Entrada' ? <Plus size={15} aria-hidden="true" /> : <Minus size={15} aria-hidden="true" />}{item}</label>)}</div></div>
         <div className="reason-field"><Field id="movement-reason" label="Motivo" error={errors.reason?.message}><select id="movement-reason" {...register('reason')} {...fieldAccessibility('movement-reason', errors.reason?.message)}><option value="">Selecione o motivo</option>{availableReasons.map(key => <option value={key} key={key}>{reasonLabels[key]}</option>)}</select></Field></div>
-        <button type="submit" className="primary-button preview-button" disabled={mutation.isPending || Boolean(preview && preview.after < 0)} aria-busy={mutation.isPending}>{mutation.isPending ? 'Registrando…' : type === 'Saída' ? 'Confirmar saída' : 'Confirmar entrada'}<ArrowRight size={17} aria-hidden="true" /></button>
+        {!isSale && <button type="submit" className="primary-button preview-button" disabled={mutation.isPending || Boolean(preview && preview.after < 0 && !attemptedPayload.current)} aria-busy={mutation.isPending}>{mutation.isPending ? 'Registrando…' : type === 'Saída' ? 'Confirmar saída' : 'Confirmar entrada'}<ArrowRight size={17} aria-hidden="true" /></button>}
       </fieldset>
+      {isSale && <section className="movement-customer-section" aria-labelledby="buyer-title"><h3 id="buyer-title">Comprador</h3><div className="buyer-options">
+        <label><input id="buyer-identified" type="radio" name="buyerMode" checked={buyerMode === 'IDENTIFIED'} disabled={mutation.isPending} onChange={() => { setBuyerMode('IDENTIFIED'); setBuyerError(''); }} />Identificar cliente</label>
+        <label><input type="radio" name="buyerMode" checked={buyerMode === 'ANONYMOUS'} disabled={mutation.isPending} onChange={() => { setBuyerMode('ANONYMOUS'); setBuyerError(''); }} />Sem identificação</label>
+      </div>{buyerMode === 'IDENTIFIED' && <CustomerPicker selected={customer} choose={item => { setCustomer(item); setBuyerError(''); }} disabled={mutation.isPending} error={buyerError} />}
+      {buyerMode !== 'IDENTIFIED' && buyerError && <p className="field-error" role="alert">{buyerError}</p>}</section>}
       {preview && <div className={'operation-feedback' + (preview.after < 0 ? ' operation-feedback-error' : '')} role="status">
-        <div><strong>{preview.after < 0 ? 'Saldo insuficiente para esta saída' : `${preview.type} de ${formatQuantity(preview.quantity)} ${selected?.unit} · ${selected?.name}`}</strong><small>{reasonLabels[reason as MovementReason]}</small></div>
+        <div><strong>{preview.after < 0 ? 'Saldo insuficiente para esta saída' : `${preview.type} de ${formatQuantity(preview.quantity)} ${selected?.unit} · ${selected?.name}`}</strong><small>{reasonLabels[reason as MovementReason]}{isSale ? ' · Comprador: ' + (buyerMode === 'ANONYMOUS' ? 'Sem identificação' : customer ? customer.name + ' · ' + customer.code : 'Selecione um cliente') : ''}</small></div>
         <span className="preview-balance">{formatQuantity(preview.before)}<ArrowRight size={18} aria-hidden="true" /><strong>{preview.after < 0 ? 'Insuficiente' : formatQuantity(preview.after)}</strong></span>
         <small>Saldo previsto · confirmado ao registrar</small>
       </div>}
+      {isSale && <div className="inline-actions"><button id="sale-confirm" type="submit" className="primary-button" disabled={!selected || mutation.isPending || productQuery.isPending || productQuery.isError || Boolean(result) || Boolean(preview && preview.after < 0 && !attemptedPayload.current)}>{mutation.isPending ? 'Registrando…' : 'Confirmar venda'}<ArrowRight size={17} aria-hidden="true" /></button></div>}
       {productQuery.error && <Alert tone="error" title="Saldo indisponível." action={{ label: 'Tentar novamente', run: () => { void productQuery.refetch(); } }}>{productQuery.error.message}</Alert>}
       {result && <div className="operation-feedback" role="status"><strong>Movimentação registrada · {result.product.name} · {result.quantity} {presentProduct(result.product).unit}</strong><span className="preview-balance">{result.previousStock}<ArrowRight size={18} aria-hidden="true" /><strong>{result.resultingStock}</strong></span></div>}
       {(selected || result) && <button type="button" className="text-button" disabled={mutation.isPending} onClick={() => { resetPreview(); prepareNext(); }}>Próximo produto</button>}

@@ -9,6 +9,7 @@ import { Test } from '@nestjs/testing';
 import { hasPermission, type Permission, type UserRole } from '@stock/shared';
 import { InventoryModule } from '../inventory/inventory.module';
 import { InventoryService } from '../inventory/inventory.service';
+import { CustomersService } from '../inventory/customers';
 import { DashboardService } from '../inventory/dashboard.service';
 import { ImportsModule } from '../imports/imports.module';
 import { ImportsService } from '../imports/imports.service';
@@ -26,8 +27,12 @@ describe('product permission matrix through real HTTP guards', { concurrency: fa
   let app: INestApplication, base: string, cookie: string;
   const hit = async () => { calls++; return { id }; };
   const product = { sku: 'RBAC-001', name: 'Permission fixture', categoryId: id, unit: 'UNIT', minimumStock: '0', initialEntry: { quantity: '10' } };
-  const movement = { productId: id, type: 'EXIT', reason: 'SALE', quantity: '1' };
+  const movement = { requestId: randomUUID(), buyerIdentification: 'ANONYMOUS', productId: id, type: 'EXIT', reason: 'SALE', quantity: '1' };
   const cases: { path: string; method: string; body?: unknown; allowed: readonly UserRole[]; status: number }[] = [
+    { path: '/customers', method: 'GET', allowed: ['ADMIN', 'MANAGER', 'OPERATOR'], status: 200 },
+    { path: '/customers/' + id, method: 'GET', allowed: ['ADMIN', 'MANAGER', 'OPERATOR'], status: 200 },
+    { path: '/customers', method: 'POST', body: { name: 'Cliente' }, allowed: ['ADMIN', 'MANAGER', 'OPERATOR'], status: 201 },
+    { path: '/customers/' + id, method: 'PATCH', body: { active: false }, allowed: ['ADMIN', 'MANAGER'], status: 200 },
     { path: '/categories', method: 'GET', allowed: ['ADMIN', 'MANAGER', 'OPERATOR'], status: 200 },
     { path: '/categories', method: 'POST', body: { name: 'Permission fixture' }, allowed: ['ADMIN', 'MANAGER'], status: 201 },
     { path: '/categories/' + id, method: 'PATCH', body: { active: false }, allowed: ['ADMIN', 'MANAGER'], status: 200 },
@@ -59,6 +64,7 @@ describe('product permission matrix through real HTTP guards', { concurrency: fa
       .overrideProvider(PrismaService).useValue({ user: { findUnique: async () => ({ id: actor, name: 'Permission fixture', email: 'permission@example.test', role, active }) } })
       .overrideProvider(InventoryService).useValue(Object.fromEntries(['categories', 'createCategory', 'patchCategory', 'products', 'lookup', 'product', 'createProduct', 'patchProduct', 'movements', 'movement', 'move'].map(name => [name, hit])))
       .overrideProvider(DashboardService).useValue({ summary: hit })
+      .overrideProvider(CustomersService).useValue({ list: hit, get: hit, create: hit, patch: hit })
       .overrideProvider(ImportsService).useValue({ list: hit, upload: hit, get: hit, setup: hit, confirm: hit, template: async () => { calls++; return Buffer.from('name,sku'); } })
       .overrideProvider(BackupsService).useValue({ list: hit, create: hit, updateSchedule: hit, download: hit }).compile();
     app = module.createNestApplication({ logger: false }); app.setGlobalPrefix('api');
