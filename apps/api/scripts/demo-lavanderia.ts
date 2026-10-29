@@ -87,6 +87,15 @@ async function main() {
     throw new Error('Dados de demo já existem. Recrie o banco (docker compose down -v) para gerar de novo.');
   }
 
+  // Produtos genéricos do seed base: fora do catálogo e da atividade recente da demo.
+  const seedSkus = ['CAB-USB-C-1M', 'CX-ORG-M', 'FITA-EMB-48'];
+  const seedAt = new Date(now.getTime() - DAYS * 86400000);
+  seedAt.setUTCHours(10, 0, 0, 0); // 07:00 em Brasília, sem consumir o RNG da demo
+  await prisma.$transaction([
+    prisma.product.updateMany({ where: { sku: { in: seedSkus } }, data: { active: false } }),
+    prisma.stockMovement.updateMany({ where: { reference: { in: seedSkus.map((sku) => `seed:${sku}`) } }, data: { createdAt: seedAt } }),
+  ]);
+
   const cats = new Map<string, string>();
   for (const name of new Set(items.map((i) => i.category))) {
     const c = await prisma.category.upsert({ where: { name }, update: {}, create: { name } });

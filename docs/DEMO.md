@@ -1,6 +1,6 @@
 # Demo GAVYO Estoque – Lavanderia de EPI
 
-Demonstração presencial, rodando no notebook. Dados fictícios de uma lavanderia industrial que vende e aluga EPI: 19 produtos, 6 clientes, 2 fornecedores, ~60 dias de movimentações e pedidos de compra. O seed base (`pnpm db:seed`) também cria 3 produtos genéricos (cabo USB-C, caixa organizadora, fita para embalagem); eles aparecem no total de produtos e na atividade recente.
+Demonstração presencial, rodando no notebook. Dados fictícios de uma lavanderia industrial que vende e aluga EPI: 19 produtos, 6 clientes, 2 fornecedores, ~60 dias de movimentações e pedidos de compra. Os 3 produtos genéricos do seed base (cabo USB-C, caixa organizadora, fita para embalagem) ficam inativos e com o movimento inicial 60 dias atrás, fora do total e da atividade recente.
 
 ## 1. Preparar (uma vez, na véspera)
 
@@ -58,7 +58,7 @@ A ordem conta uma história: "como está o estoque → o que está acabando → 
    - Clicar numa saída "Outro" para mostrar a observação "Saída para aluguel – cliente" e a referência `ALG-…`.
    - Fala: "Toda peça que sai e volta fica registrada, com quem fez e quando."
 6. **Compras** (`/purchases`). Abrir o pedido **Enviado** (o mais recente, "Reposição urgente", itens críticos) e um pedido **Recebido** antigo.
-   - Se der tempo, usar **Receber mercadorias** no pedido enviado para registrar uma entrega parcial e ver o saldo subir.
+   - Se der tempo, registrar uma entrega parcial: em **Receber mercadorias**, informar 5 em "Receber agora" da bota PVC nº 42, **Revisar recebimento** → **Confirmar recebimento**. O saldo da bota sobe de 3 para 8 e o pedido passa a **Parcialmente recebido**.
 7. **Clientes** (`/customers`). Na linha do Hospital São Lucas, clicar em **Saídas por venda** (coluna Consulta) para ver as vendas dele no histórico. Clicar na linha abre o cadastro.
 8. **Fornecedores** (`/suppliers`). Nordeste EPI e Química Limpa.
 9. **Fechamento**: inventário físico (`/physical-inventories`), importação por planilha (`/products/import`) e backups como recursos de segurança/implantação.
