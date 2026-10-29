@@ -16,7 +16,9 @@
     "test": "pnpm -r --if-present test && pnpm --filter @stock/api exec tsx --test ../web/tests/*.test.mjs",
     "db:migrate": "pnpm --filter @stock/api db:migrate",
     "db:seed": "pnpm --filter @stock/api db:seed",
-    "db:generate": "pnpm --filter @stock/api db:generate"
+    "db:generate": "pnpm --filter @stock/api db:generate",
+    "demo:reset": "docker compose down -v && docker compose up -d --wait && pnpm --filter @stock/api db:deploy && pnpm db:seed && pnpm --filter @stock/api db:demo",
+    "demo:start": "pnpm build && concurrently -n api,web -c cyan,yellow \"pnpm --filter @stock/api start\" \"pnpm --filter @stock/web preview --port 5173 --strictPort\""
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

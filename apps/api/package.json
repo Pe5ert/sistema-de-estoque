@@ -11,7 +11,8 @@
     "db:deploy": "prisma migrate deploy && prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev && prisma generate",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:demo": "tsx scripts/demo-lavanderia.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.7",
