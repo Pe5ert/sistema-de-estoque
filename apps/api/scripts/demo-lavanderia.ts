@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 import { resolve } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Prisma, PrismaClient, type MovementReason, type MovementType, type ProductUnit } from '../src/generated/prisma/client';
+import { Prisma, PrismaClient, type Customer, type MovementReason, type MovementType, type ProductUnit, type Supplier } from '../src/generated/prisma/client';
 
 dotenv.config({ path: resolve(process.cwd(), '../../.env') });
 
@@ -29,10 +29,10 @@ const pick = <T>(arr: readonly T[]) => arr[int(0, arr.length - 1)];
 
 const DAYS = 60;
 const now = new Date();
+// Horário comercial em Brasília (UTC-3, como a interface), independente do fuso da máquina.
 function at(daysAgo: number, hour = int(7, 17)) {
-  const d = new Date(now);
-  d.setDate(d.getDate() - daysAgo);
-  d.setHours(hour, int(0, 59), int(0, 59), 0);
+  const d = new Date(now.getTime() - daysAgo * 86400000 - 3 * 3600000);
+  d.setUTCHours(hour + 3, int(0, 59), int(0, 59), 0);
   return d > now ? new Date(now.getTime() - int(5, 120) * 60000) : d;
 }
 
@@ -92,9 +92,9 @@ async function main() {
     const c = await prisma.category.upsert({ where: { name }, update: {}, create: { name } });
     cats.set(name, c.id);
   }
-  const custRows = [];
+  const custRows: Customer[] = [];
   for (const c of customers) custRows.push(await prisma.customer.upsert({ where: { code: c.code }, update: {}, create: c }));
-  const supRows = [];
+  const supRows: Supplier[] = [];
   for (const s of suppliers) supRows.push(await prisma.supplier.upsert({ where: { document: s.document }, update: {}, create: s }));
 
   // 1) Produtos e histórico simulado em memória, em ordem cronológica por produto.
@@ -231,7 +231,7 @@ async function main() {
         })) },
       },
     });
-    await prisma.stockMovement.updateMany({ where: { id: { in: group.map((g) => g.movementId) } }, data: { reference: `Pedido #${order.number}` } });
+    await prisma.stockMovement.updateMany({ where: { id: { in: group.map((g) => g.movementId) } }, data: { reference: receiptId, notes: `Pedido PC-${order.number.toString().padStart(6, '0')} · ${sup.name}` } });
   }
 
   // 4) Um pedido enviado e ainda não recebido, para os itens que terminaram abaixo do mínimo.
