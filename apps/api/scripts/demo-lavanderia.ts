@@ -95,6 +95,11 @@ async function main() {
     prisma.product.updateMany({ where: { sku: { in: seedSkus } }, data: { active: false } }),
     prisma.stockMovement.updateMany({ where: { reference: { in: seedSkus.map((sku) => `seed:${sku}`) } }, data: { createdAt: seedAt } }),
   ]);
+  // Categorias do seed base: inativas apenas se nenhum produto ativo depender delas.
+  await prisma.category.updateMany({
+    where: { name: { in: ['Acessórios', 'Embalagens', 'Organização'] }, products: { none: { active: true } } },
+    data: { active: false },
+  });
 
   const cats = new Map<string, string>();
   for (const name of new Set(items.map((i) => i.category))) {
